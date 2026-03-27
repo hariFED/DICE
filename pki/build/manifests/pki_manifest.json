@@ -1,0 +1,149 @@
+{
+  "generated_at": "2026-03-25T21:21:57.499654+00:00",
+  "generated_by": "Abcom",
+  "mode": "devnet",
+  "device_count": 20,
+  "registry_path": "C:\\Users\\Abcom\\DICE\\pki\\device_registry.json",
+  "devices": [
+    {
+      "device_id": "dice-dev-001",
+      "pubkey_hex": "02543da667992abb5cc41f2550c2c7547a0cf6031dd0b92acf38b6cc12758a9e5f",
+      "cert_serial": "556C3370D2D542D2B035D49621CF3CFF",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.260233+00:00"
+    },
+    {
+      "device_id": "dice-dev-002",
+      "pubkey_hex": "027c35f0f87ff3d967e6b2f6f6da7897200ac9c164c982f8a8197c2246b64ca43d",
+      "cert_serial": "383D7F9453824F26B5306936CFBF425A",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.268332+00:00"
+    },
+    {
+      "device_id": "dice-dev-003",
+      "pubkey_hex": "03fa6f17b0392c4dd23fe1143f33a88a0dff05fae0aaa15eb29336c48f888f97dc",
+      "cert_serial": "47917C6B1B304F6C9336E4E64088791A",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.279333+00:00"
+    },
+    {
+      "device_id": "dice-dev-004",
+      "pubkey_hex": "026ec8b9c6104ae923a16f1cf330fcae618bbdb8322ec7c1f4298b9c000345036e",
+      "cert_serial": "ACF6189329B6468BAB48CADA6A4D093D",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.289443+00:00"
+    },
+    {
+      "device_id": "dice-dev-005",
+      "pubkey_hex": "031edf025789c36236079b802598b8a55e17d5752863dc5c21f901ab6d32bceea2",
+      "cert_serial": "69B1E83406DE4934AAC56FD9CFF930F5",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.297443+00:00"
+    },
+    {
+      "device_id": "dice-dev-006",
+      "pubkey_hex": "023949670ee326b2d0a9670207a027515fc4a7058c740920a0d35d3b704eae8659",
+      "cert_serial": "3B08E78D9FDA4BB7AE6B08B581684663",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.306557+00:00"
+    },
+    {
+      "device_id": "dice-dev-007",
+      "pubkey_hex": "038d430dddc9ac69e5ddf9521863b8676d4600d109df54c039548a59619afaa6d1",
+      "cert_serial": "EA9C114D182D4435859F878E1EB93F8A",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.314558+00:00"
+    },
+    {
+      "device_id": "dice-dev-008",
+      "pubkey_hex": "02d025af1368cea7c894747f1ca3edb46859661aa7af3d1ea03ac69349cc896b54",
+      "cert_serial": "0998AB2E5BED477FB613865EA46A103E",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.323667+00:00"
+    },
+    {
+      "device_id": "dice-dev-009",
+      "pubkey_hex": "03cbc779526a1e5ea22f8072728c23460764148353d7197ea1a752bb98f7ac5db8",
+      "cert_serial": "78D945BBD5BE43A194D7010A6F00C2AF",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.332670+00:00"
+    },
+    {
+      "device_id": "dice-dev-010",
+      "pubkey_hex": "026aae855420accf8db3970de28bc1b6faaeb934589672b56bd5e270519678b259",
+      "cert_serial": "3C8FBD1A6F4D43E6BB3E545BC68ACE45",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.342797+00:00"
+    },
+    {
+      "device_id": "dice-dev-011",
+      "pubkey_hex": "02ae2fc38effe7602f6ec39929126f8984b1af7ac05521bc06a8a6e73e24d8cf14",
+      "cert_serial": "6AB447246CD947FE95E3A1BB1AAF3BD3",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.353795+00:00"
+    },
+    {
+      "device_id": "dice-dev-012",
+      "pubkey_hex": "022e838a89ed5cd743754f07c7abb640802131708f6d0c02546ed537ab1d62331c",
+      "cert_serial": "7B0B08743F724E9B863B9E56D657D428",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.365798+00:00"
+    },
+    {
+      "device_id": "dice-dev-013",
+      "pubkey_hex": "025e4d0d2979e3f0bafba36c769bebc16883ce13128144541039c0a4d8507b6d10",
+      "cert_serial": "8ABDAE66AAC649FCB69CD9C469D95FCD",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.375909+00:00"
+    },
+    {
+      "device_id": "dice-dev-014",
+      "pubkey_hex": "02054dc71c8d6845eaad71c34fffbfc2cd4a7d0a509e2b10a708576c86b3e7c23e",
+      "cert_serial": "E412D140959A45268CE3D91B5BF56DA4",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.387909+00:00"
+    },
+    {
+      "device_id": "dice-dev-015",
+      "pubkey_hex": "02e3d7dfcf574145fa0e2fd8af7e4dc4e9a36967607a9b858675b50252b6a53b7d",
+      "cert_serial": "97871175ABD2431BB1226D32BE477BE7",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.398033+00:00"
+    },
+    {
+      "device_id": "dice-dev-016",
+      "pubkey_hex": "0319ecaa8ee466b1f26cdaf68e1185d014913a3866b95d05e5c96aa1a0f8107ef4",
+      "cert_serial": "06A2C8405F5B42FEA12FF504E3CE9036",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.411660+00:00"
+    },
+    {
+      "device_id": "dice-dev-017",
+      "pubkey_hex": "02b95b0b8d919fe6028a1b45df6ac07f1d5deef1375e159988621b6aa8700e0217",
+      "cert_serial": "4554BB54B0864A879FAAE98432F844D2",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.422665+00:00"
+    },
+    {
+      "device_id": "dice-dev-018",
+      "pubkey_hex": "03321dafe6a70cd64fa228a7dd4edd216a0f187cb18be5f3a4e195135a49f3219d",
+      "cert_serial": "802123C8A5864160BC68ED5D7F2057D0",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.435802+00:00"
+    },
+    {
+      "device_id": "dice-dev-019",
+      "pubkey_hex": "02e2bc4dffd5681f5d293fdcd60dacabbf09389ded09920f94d5162516cd290b69",
+      "cert_serial": "514A879FEB604A7FBE3F3D81DFBE1B1B",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.450911+00:00"
+    },
+    {
+      "device_id": "dice-dev-020",
+      "pubkey_hex": "02115ab80a4439b9716dfbb0d30e02328e87e22910c7a07903a48e199d3e6826f3",
+      "cert_serial": "AE4FD255875848D6AE183A429C590C0D",
+      "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provisioned_at": "2026-03-25T21:21:57.463913+00:00"
+    }
+  ]
+}

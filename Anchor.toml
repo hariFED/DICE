@@ -1,0 +1,29 @@
+[toolchain]
+anchor_version = "0.30.1"
+
+[features]
+seeds = true
+skip-lint = false
+
+[programs.localnet]
+dice = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+
+[programs.devnet]
+dice = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "npx ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[test]
+startup_wait = 15000
+shutdown_wait = 2000
+
+[test.validator]
+bind_address = "127.0.0.1"

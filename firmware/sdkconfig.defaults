@@ -1,0 +1,62 @@
+# DICE Firmware SDK Configuration Defaults
+# ESP32-S3 target
+
+CONFIG_IDF_TARGET="esp32s3"
+
+# System panic behavior: halt and print (not reset) so we can inspect failures
+CONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y
+
+# Watchdog timeout: 30 seconds
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=30
+
+# mbedTLS: enable ECDSA/ECDH/ECP with secp256k1 curve
+CONFIG_MBEDTLS_ECDH_C=y
+CONFIG_MBEDTLS_ECDSA_C=y
+CONFIG_MBEDTLS_ECP_C=y
+CONFIG_MBEDTLS_ECP_DP_SECP256K1_ENABLED=y
+CONFIG_MBEDTLS_SHA256_C=y
+
+# Allow mbedTLS to use hardware acceleration on ESP32-S3
+CONFIG_MBEDTLS_HARDWARE_SHA=y
+CONFIG_MBEDTLS_HARDWARE_AES=y
+
+# Main task stack size (bytes)
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# Enable both cores on ESP32-S3
+CONFIG_FREERTOS_UNICORE=n
+
+# WiFi RX buffers
+CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM=10
+CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM=32
+
+# Enable WPA3 for stronger WiFi security
+CONFIG_ESP_WIFI_ENABLE_WPA3_SAE=y
+
+# TLS: require TLS 1.2 minimum, disable weak ciphers
+CONFIG_MBEDTLS_TLS_CLIENT=y
+CONFIG_MBEDTLS_TLS_SERVER=n
+CONFIG_MBEDTLS_SSL_PROTO_TLS1_2=y
+CONFIG_MBEDTLS_SSL_PROTO_TLS1_3=y
+
+# Security: Secure Boot v2
+CONFIG_SECURE_BOOT=y
+CONFIG_SECURE_BOOT_V2_ENABLED=y
+
+# Security: Flash Encryption in Release mode
+CONFIG_SECURE_FLASH_ENC_ENABLED=y
+CONFIG_SECURE_FLASH_ENCRYPTION_MODE_RELEASE=y
+
+# Disable OTA — firmware is immutable, no update path
+CONFIG_OTA_ALLOW_HTTP=n
+
+# NVS partition: use encrypted NVS when flash encryption is enabled
+CONFIG_NVS_ENCRYPTION=y
+
+# Logging: Info level in production (reduce attack surface from verbose logs)
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+CONFIG_LOG_DEFAULT_LEVEL=3
+
+# Stack canaries and heap corruption detection
+CONFIG_ESP_SYSTEM_USE_EH_FRAME=n
+CONFIG_HEAP_CORRUPTION_DETECTION=y

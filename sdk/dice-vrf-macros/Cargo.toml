@@ -1,0 +1,18 @@
+[package]
+name        = "dice-vrf-macros"
+version     = "0.1.0"
+edition     = "2021"
+description = "Proc-macro support for dice-vrf (DiceVrfAccounts derive macro)"
+license     = "MIT"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn   = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"
+
+[dev-dependencies]
+# cargo-expand can be used to inspect macro output:
+#   cargo expand --package dice-vrf-macros

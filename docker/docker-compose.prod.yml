@@ -1,0 +1,120 @@
+version: "3.9"
+
+# DICE production/dev docker-compose
+# Infra Agent owns this file.
+
+services:
+
+  # ─── Coordinator ──────────────────────────────────────────────────────────
+  coordinator:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.coordinator
+    container_name: dice-coordinator
+    restart: unless-stopped
+    ports:
+      - "8443:8443"   # mTLS WebSocket (nodes)
+      - "8080:8080"   # Public REST API (developers querying results)
+      - "9090:9090"   # Prometheus metrics (localhost only in prod)
+    environment:
+      RUST_LOG: "info,dice_coordinator=debug"
+      DATABASE_URL: "postgresql://dice:${POSTGRES_PASSWORD}@postgres:5432/dice"
+      # Secrets are injected by HashiCorp Vault / SOPS at deploy time.
+      # Never hardcode here.
+    volumes:
+      - coordinator-logs:/var/log/dice
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dice-internal
+
+  # ─── PostgreSQL ───────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: dice-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       dice
+      POSTGRES_USER:     dice
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../coordinator/src/db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dice -d dice"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - dice-internal
+    # Never expose PostgreSQL externally
+    expose:
+      - "5432"
+
+  # ─── Prometheus ───────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: dice-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.listen-address=0.0.0.0:9091"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - dice-internal
+    expose:
+      - "9091"
+
+  # ─── Grafana ──────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: dice-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD must be set}
+      GF_USERS_ALLOW_SIGN_UP:    "false"
+    volumes:
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - dice-internal
+
+  # ─── step-ca (Intermediate CA — dev only) ─────────────────────────────────
+  # In production the intermediate CA runs on the provisioning station, not here.
+  # This service is for local development certificate issuance only.
+  step-ca:
+    image: smallstep/step-ca:0.26.1
+    container_name: dice-step-ca
+    restart: unless-stopped
+    environment:
+      DOCKER_STEPCA_INIT_NAME:      "DICE Dev CA"
+      DOCKER_STEPCA_INIT_DNS_NAMES: "step-ca,localhost"
+      DOCKER_STEPCA_INIT_REMOTE_MANAGEMENT: "true"
+    volumes:
+      - step-ca-data:/home/step
+    networks:
+      - dice-internal
+    expose:
+      - "9000"
+
+# ─── Volumes ────────────────────────────────────────────────────────────────
+volumes:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+  step-ca-data:
+  coordinator-logs:
+
+# ─── Networks ───────────────────────────────────────────────────────────────
+networks:
+  dice-internal:
+    driver: bridge

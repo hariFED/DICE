@@ -1,0 +1,12 @@
+{
+  "device_id": "dice-dev-012",
+  "device_pubkey_hex": "022e838a89ed5cd743754f07c7abb640802131708f6d0c02546ed537ab1d62331c",
+  "device_pubkey_b58": "ebCqCa754verNp6kA7CHssHKBW1F9uupq49LHMT4zbJb",
+  "cert_serial": "7B0B08743F724E9B863B9E56D657D428",
+  "cert_fingerprint": "4F453E47A0BD2B83AD220CD55AF59D871FBDFC0F47C54BE419845337D055D36E",
+  "firmware_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "provisioned_at": "2026-03-25T21:21:57.365798+00:00",
+  "mode": "devnet",
+  "instruction": "register_device",
+  "program_id": "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+}

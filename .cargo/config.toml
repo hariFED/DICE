@@ -1,0 +1,7 @@
+# Workaround: rustc 1.93.x–1.94.x has a bug in its annotate-snippets JSON
+# renderer that panics (ICE) when emitting future-incompat diagnostics for
+# some dependency crates.  Using human-readable output format avoids the ICE
+# without hiding real errors.  Run: cargo check --message-format=short
+# (or set CARGO_TERM_VERBOSE=false for CI).  Remove when the rustc ICE is fixed.
+[term]
+color = "auto"

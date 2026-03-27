@@ -1,0 +1,67 @@
+[workspace]
+members = [
+    "coordinator",
+    "programs/dice",
+    "sdk/dice-vrf",
+    "sdk/dice-vrf-macros",
+    "tests/harness/mock_firmware_node",
+    # load_generator is excluded below — its solana-client + spl-token-2022 transitive
+    # deps conflict with solana-sdk 1.18.26 across patch versions.
+    # Build it separately: cargo check --manifest-path tests/harness/load_generator/Cargo.toml
+]
+resolver = "2"
+
+# firmware/ is excluded — it is an ESP-IDF CMake project, not a Cargo member
+
+[workspace.dependencies]
+tokio          = { version = "1", features = ["full"] }
+serde          = { version = "1", features = ["derive"] }
+serde_json     = "1"
+anyhow         = "1"
+thiserror      = "1"
+tracing        = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+k256           = { version = "0.13", features = ["ecdsa"] }
+sha2           = "0.10"
+hex            = "0.4"
+# blake3 >=1.8 requires edition2024, incompatible with Solana BPF toolchain (cargo 1.84).
+blake3         = ">=1.5, <1.8"
+# borsh 1.3+ pulls in borsh-derive → proc-macro-crate ^3 → toml_edit ^0.25 (edition2024).
+# Pin to 1.2.x: borsh-derive 1.2.x uses proc-macro-crate ^2 → toml_edit =0.20 (safe).
+borsh          = ">=1.2.1, <1.3"
+# unicode-segmentation 1.13.x uses is_multiple_of (stabilized Rust 1.86); BPF toolchain is 1.84.
+unicode-segmentation = ">=1, <1.13"
+# NOTE: anchor-syn 0.30.1 uses proc_macro2::Span::source_file() which was removed in
+# proc_macro2 1.0.87 and doesn't compile with Rust 1.93+ via semver-exempt cfg.
+# IDL is maintained manually at target/idl/dice.json.
+# Build command: `anchor build --no-idl`  (omit --no-idl once anchor-cli is upgraded)
+ciborium       = "0.2"   # CBOR (shared message format with firmware)
+
+# Solana / Anchor
+anchor-lang    = "0.30"
+anchor-client  = "0.30"
+solana-sdk     = "=1.18.26"
+# solana-client is NOT a workspace dep — spl-token-2022 1.0.0 → solana-zk-token-sdk 1.17.6
+# → solana-program =1.17.6 conflicts with solana-sdk =1.18.26.
+# The coordinator uses a minimal reqwest-based JSON-RPC client instead.
+
+# Coordinator-specific
+# No TLS feature — coordinator handles TLS itself via tokio-rustls 0.24 / rustls 0.21.
+# Adding any rustls-tls-* feature here would pull in rustls 0.22 (incompatible with
+# solana-client 1.18 which requires rustls 0.21).
+tokio-tungstenite = { version = "0.21" }
+rustls         = "0.21"
+sqlx           = { version = "0.8", features = ["postgres", "runtime-tokio-rustls", "macros", "uuid", "chrono"] }
+axum           = "0.7"
+prometheus-client = "0.22"
+
+# Testing
+proptest       = "1"
+
+[profile.release]
+overflow-checks = true
+
+[patch.crates-io]
+# solana-sdk 1.18 uses curve25519-dalek 3.x which requires zeroize < 1.4.
+# This Solana-labs fork relaxes that bound to allow coexistence with rustls 0.21.
+curve25519-dalek = { git = "https://github.com/solana-labs/curve25519-dalek.git", rev = "b500cdc2a920cd5bff9e2dd974d7b97349d61464" }

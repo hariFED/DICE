@@ -1,0 +1,61 @@
+# DICE local development stack
+# Usage: docker compose up --build
+#
+# Starts:
+#   - PostgreSQL (port 5432)
+#   - Coordinator in simulation mode (ports 8080, 8443, 9090)
+#   - 7 mock firmware nodes
+#
+# Dashboard: http://localhost:8080
+# Trigger a round: curl -X POST http://localhost:8080/simulate
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dice
+      POSTGRES_PASSWORD: dice
+      POSTGRES_DB: dice
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dice"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  coordinator:
+    build:
+      context: .
+      dockerfile: Dockerfile.coordinator
+    ports:
+      - "8080:8080"   # REST API + Dashboard
+      - "8443:8443"   # WebSocket (plain in simulation)
+      - "9090:9090"   # Prometheus metrics
+    environment:
+      DICE_SIMULATION: "true"
+      DICE_WS_PORT: "8443"
+      DICE_API_PORT: "8080"
+      DICE_METRICS_PORT: "9090"
+      DATABASE_URL: "postgres://dice:dice@postgres/dice"
+      RUST_LOG: "info"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mock-nodes:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock-node
+    environment:
+      RUST_LOG: "info"
+    command: ["--count", "7", "--coordinator", "ws://coordinator:8443"]
+    depends_on:
+      - coordinator
+    # Wait a few seconds for coordinator to start
+    restart: on-failure
+
+volumes:
+  pgdata:

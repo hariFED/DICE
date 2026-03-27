@@ -1,0 +1,45 @@
+[package]
+name    = "dice-coordinator"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "dice-coordinator"
+path = "src/main.rs"
+
+[dependencies]
+tokio              = { workspace = true }
+serde              = { workspace = true }
+serde_json         = { workspace = true }
+anyhow             = { workspace = true }
+thiserror          = { workspace = true }
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
+k256               = { workspace = true }
+sha2               = { workspace = true }
+hex                = { workspace = true }
+ciborium           = { workspace = true }
+tokio-tungstenite  = { workspace = true }
+rustls             = { workspace = true }
+sqlx               = { workspace = true }
+axum               = { workspace = true }
+prometheus-client  = { workspace = true }
+solana-sdk         = { workspace = true }
+# Pin borsh 1.x to <1.3 to avoid proc-macro-crate ^3 → toml_edit 0.25 (edition2024).
+# Placed here rather than in programs/dice to avoid conflicting with anchor's borsh 0.x.
+borsh              = { workspace = true }
+
+clap             = { version = "4", features = ["derive", "env"] }
+reqwest          = { version = "0.12", features = ["json"] }
+base64           = "0.22"
+bincode          = "1"
+uuid             = { version = "1", features = ["v4", "serde"] }
+chrono           = { version = "0.4", features = ["serde"] }
+rand             = "0.8"
+futures-util     = "0.3"
+tokio-rustls     = "0.24"
+rustls-pemfile   = "1"
+
+[dev-dependencies]
+proptest = { workspace = true }
+tokio    = { workspace = true, features = ["test-util"] }

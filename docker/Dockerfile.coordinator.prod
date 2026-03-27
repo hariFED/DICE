@@ -1,0 +1,62 @@
+# DICE Coordinator Dockerfile
+# Uses a multi-stage build: compile in Rust image, run in minimal Debian.
+# Infra Agent owns this file.
+
+# ─── Build stage ──────────────────────────────────────────────────────────────
+FROM rust:1.78-bookworm AS builder
+
+WORKDIR /build
+
+# Cache dependencies separately from source
+COPY Cargo.toml Cargo.lock ./
+COPY coordinator/Cargo.toml ./coordinator/
+COPY programs/dice/Cargo.toml ./programs/dice/
+COPY sdk/dice-vrf/Cargo.toml ./sdk/dice-vrf/
+COPY sdk/dice-vrf-macros/Cargo.toml ./sdk/dice-vrf-macros/
+COPY tests/harness/mock_firmware_node/Cargo.toml ./tests/harness/mock_firmware_node/
+COPY tests/harness/load_generator/Cargo.toml ./tests/harness/load_generator/
+
+# Create stub lib/main files so cargo can resolve the workspace graph
+RUN mkdir -p coordinator/src programs/dice/src sdk/dice-vrf/src \
+             sdk/dice-vrf-macros/src \
+             tests/harness/mock_firmware_node/src \
+             tests/harness/load_generator/src && \
+    echo 'fn main(){}' > coordinator/src/main.rs && \
+    echo '' > programs/dice/src/lib.rs && \
+    echo '' > sdk/dice-vrf/src/lib.rs && \
+    echo 'extern crate proc_macro;use proc_macro::TokenStream;#[proc_macro_derive(DiceVrfAccounts)]pub fn d(_i:TokenStream)->TokenStream{_i}' > sdk/dice-vrf-macros/src/lib.rs && \
+    echo 'fn main(){}' > tests/harness/mock_firmware_node/src/main.rs && \
+    echo 'fn main(){}' > tests/harness/load_generator/src/main.rs
+
+RUN cargo build --release --package dice-coordinator 2>/dev/null || true
+
+# Now copy real source and rebuild (only coordinator layer changes)
+COPY coordinator ./coordinator
+COPY programs/dice ./programs/dice
+COPY sdk ./sdk
+
+RUN cargo build --release --package dice-coordinator
+
+# ─── Runtime stage ────────────────────────────────────────────────────────────
+FROM debian:bookworm-slim AS runtime
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libssl3 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Run as non-root user
+RUN useradd -r -s /bin/false -u 1001 dice
+USER dice
+
+WORKDIR /app
+
+COPY --from=builder /build/target/release/dice-coordinator /app/dice-coordinator
+
+# Expose ports
+EXPOSE 8443   # mTLS WebSocket (nodes)
+EXPOSE 8080   # Public REST API
+EXPOSE 9090   # Prometheus metrics
+
+ENTRYPOINT ["/app/dice-coordinator"]

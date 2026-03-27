@@ -1,0 +1,15 @@
+FROM rust:1.82-slim-bookworm AS builder
+WORKDIR /build
+RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+COPY Cargo.toml Cargo.lock ./
+COPY .cargo .cargo
+COPY coordinator coordinator
+COPY programs programs
+COPY sdk sdk
+COPY tests/harness tests/harness
+RUN cargo build --release --bin dice-coordinator --message-format=short
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /build/target/release/dice-coordinator /usr/local/bin/dice-coordinator
+ENTRYPOINT ["dice-coordinator"]

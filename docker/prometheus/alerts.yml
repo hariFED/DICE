@@ -1,0 +1,68 @@
+groups:
+
+  - name: dice-nodes
+    rules:
+
+      - alert: NodeDisconnected
+        expr: dice_nodes_connected < 15
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Fewer than 15 nodes connected ({{ $value }} active)"
+          description: "DICE network needs at least 15 nodes for reliable operation."
+
+      - alert: CriticalNodeDropout
+        expr: dice_nodes_connected < 4
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: fewer than 4 nodes connected ({{ $value }})"
+          description: "Cannot complete any randomness rounds. Immediate action required."
+
+  - name: dice-rounds
+    rules:
+
+      - alert: RoundFailureRateHigh
+        expr: rate(dice_rounds_failed_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Round failure rate above 10% over last 5 minutes"
+
+      - alert: RoundLatencyHigh
+        expr: histogram_quantile(0.99, dice_round_duration_seconds_bucket) > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p99 round latency above 30s"
+
+  - name: dice-coordinator
+    rules:
+
+      - alert: CoordinatorDown
+        expr: up{job="dice-coordinator"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Coordinator is down"
+
+      - alert: SolanaTransactionFailureRate
+        expr: rate(dice_solana_tx_failed_total[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Solana transaction failure rate above 5%"
+
+      - alert: FailedMTLSHandshakes
+        expr: rate(dice_mtls_handshake_failed_total[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elevated mTLS handshake failures — possible probing or cert issue"

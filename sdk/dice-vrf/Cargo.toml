@@ -1,0 +1,45 @@
+[package]
+name        = "dice-vrf"
+version     = "0.1.0"
+edition     = "2021"
+description = "SDK for integrating with the DICE verifiable randomness network on Solana"
+license     = "MIT"
+repository  = "https://github.com/dice-network/dice"
+keywords    = ["solana", "vrf", "randomness", "oracle", "anchor"]
+categories  = ["cryptography::cryptocurrencies"]
+
+[features]
+default = []
+# cpi    = on-chain CPI usage (for Anchor programs consuming randomness)
+cpi    = ["dep:dice"]
+# client = off-chain client usage (for servers/scripts requesting randomness)
+# Temporarily disabled — see solana-client comment below.
+# client = ["dep:solana-client", "dep:tokio"]
+
+[[example]]
+name = "request_and_poll"
+required-features = ["client"]
+
+[dependencies]
+anchor-lang  = { workspace = true }
+solana-sdk   = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+anyhow       = { workspace = true }
+thiserror    = { workspace = true }
+sha2         = { workspace = true }
+hex          = { workspace = true }
+
+# cpi feature
+dice = { path = "../../programs/dice", package = "dice", features = ["cpi"], optional = true }
+
+# solana-client is temporarily removed — solana-client 1.18.26 pulls in
+# spl-token-2022 1.0.0 → solana-zk-token-sdk 1.17.6 → solana-program =1.17.6
+# which conflicts with solana-sdk 1.18.26 → solana-program =1.18.26.
+# Re-enable once a compatible set of Solana 1.18.x crates is identified.
+# solana-client = { version = "=1.18.26", optional = true }
+tokio         = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio    = { workspace = true }
+proptest = { workspace = true }

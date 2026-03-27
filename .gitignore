@@ -1,0 +1,53 @@
+# Rust
+target/
+
+# Anchor / Solana
+.anchor/
+test-ledger/
+*.so
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Firmware
+firmware/build/
+firmware/managed_components/
+firmware/dependencies/
+firmware/.cache/
+sdkconfig
+sdkconfig.old
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+dist/
+.venv/
+venv/
+
+# Build artifacts
+build/reports/*.xml
+build/reports/*.html
+build/state.json
+
+# Secrets — NEVER commit these
+coordinator-keypair.json
+*-keypair.json
+*.key
+*.pem
+*.p12
+pki/certs/root_ca.key
+pki/certs/intermediate_ca.key
+infra/secrets/*.yaml
+!infra/secrets/.sops.yaml
+.env
+*.env
+
+# OS / IDE / Tools
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea/
+.claude/
