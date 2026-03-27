@@ -71,6 +71,84 @@ pub mod dice {
         instructions::init_escrow::handler(ctx, sequence)
     }
 
+    // ── v2.0 Channel-based instructions ─────────────────────────────────
+
+    /// Create a reusable DiceChannel PDA. Developer pays rent once.
+    /// `max_nodes` sets the capacity (4-50). `callback_program_id` for CPI callback.
+    pub fn init_channel(
+        ctx: Context<InitChannel>,
+        channel_index: u16,
+        max_nodes: u8,
+        callback_program_id: Pubkey,
+    ) -> Result<()> {
+        instructions::init_channel::handler(ctx, channel_index, max_nodes, callback_program_id)
+    }
+
+    /// Add SOL to a channel's prepaid balance for protocol fees.
+    pub fn fund_channel(ctx: Context<FundChannel>, amount: u64) -> Result<()> {
+        instructions::fund_channel::handler(ctx, amount)
+    }
+
+    /// Request randomness via a channel. Resets the channel, deducts fee from balance.
+    /// `node_count` must be between MIN_NODES_REQUIRED and channel.max_nodes.
+    pub fn request_randomness_v2(ctx: Context<RequestRandomnessV2>, node_count: u8) -> Result<()> {
+        instructions::request_randomness_v2::handler(ctx, node_count)
+    }
+
+    /// Submit a commit hash to a channel (inline, no separate PDA).
+    pub fn submit_commit_v2(
+        ctx: Context<SubmitCommitV2>,
+        round_id: u64,
+        device_id: [u8; 32],
+        device_pubkey: [u8; 33],
+        commit_hash: [u8; 32],
+    ) -> Result<()> {
+        instructions::submit_commit_v2::handler(ctx, round_id, device_id, device_pubkey, commit_hash)
+    }
+
+    /// Submit a reveal to a channel (inline, no separate PDA).
+    pub fn submit_reveal_v2(
+        ctx: Context<SubmitRevealV2>,
+        round_id: u64,
+        device_id: [u8; 32],
+        device_pubkey: [u8; 33],
+        entropy: [u8; 32],
+        signature: [u8; 64],
+    ) -> Result<()> {
+        instructions::submit_reveal_v2::handler(ctx, round_id, device_id, device_pubkey, entropy, signature)
+    }
+
+    /// Finalize randomness from inline reveals in the channel.
+    pub fn finalize_v2(ctx: Context<FinalizeV2>, round_id: u64) -> Result<()> {
+        instructions::finalize_v2::handler(ctx, round_id)
+    }
+
+    /// Deliver CPI callback to the developer's program (separate from finalize).
+    /// If callback fails, randomness is still finalized — developer can retry or poll.
+    pub fn deliver_callback<'info>(
+        ctx: Context<'_, '_, 'info, 'info, DeliverCallback<'info>>,
+        round_id: u64,
+    ) -> Result<()> {
+        instructions::deliver_callback::handler(ctx, round_id)
+    }
+
+    /// Withdraw prepaid balance from a channel (Idle state only).
+    pub fn withdraw_balance(ctx: Context<WithdrawBalance>, amount: u64) -> Result<()> {
+        instructions::withdraw_balance::handler(ctx, amount)
+    }
+
+    /// Close a channel and reclaim rent (Idle + zero balance only).
+    pub fn close_channel(ctx: Context<CloseChannel>) -> Result<()> {
+        instructions::close_channel::handler(ctx)
+    }
+
+    /// Resize a channel's max_nodes capacity (Idle state only).
+    pub fn resize_channel(ctx: Context<ResizeChannel>, new_max_nodes: u8) -> Result<()> {
+        instructions::resize_channel::handler(ctx, new_max_nodes)
+    }
+
+    // ── v1.0 Legacy instructions (kept for backwards compatibility) ──────
+
     /// Add lamports to an existing escrow account.
     pub fn fund_escrow(ctx: Context<FundEscrow>, amount: u64) -> Result<()> {
         instructions::fund_escrow::handler(ctx, amount)
