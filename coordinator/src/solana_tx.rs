@@ -18,6 +18,7 @@ pub fn compute_device_id(device_pubkey: &[u8; 33]) -> [u8; 32] {
 }
 
 // Seed constants — must match programs/dice/src/lib.rs exactly.
+const SEED_CHANNEL: &[u8] = b"channel";
 const SEED_REQUEST: &[u8] = b"request";
 const SEED_COMMIT:  &[u8] = b"commit";
 const SEED_REVEAL:  &[u8] = b"reveal";
@@ -25,12 +26,22 @@ const SEED_RESULT:  &[u8] = b"result";
 const SEED_ESCROW:  &[u8] = b"escrow";
 
 // Instruction discriminators — SHA-256("global:<snake_case_name>")[0..8]
-// Must match target/idl/dice.json exactly.
+
+// v1.0 (legacy)
 const DISC_REQUEST_RANDOMNESS:  [u8; 8] = [213,   5, 173, 166,  37, 236,  31,  18];
 const DISC_SUBMIT_COMMIT:       [u8; 8] = [213, 213, 149,  72, 230,  14,  23,  16];
 const DISC_SUBMIT_REVEAL:       [u8; 8] = [255, 153,  68,  56, 227,  55,  19, 157];
 const DISC_FINALIZE_RANDOMNESS: [u8; 8] = [ 29, 180, 158, 167,  45,  40,   8, 199];
 const DISC_CLAIM_REWARDS:       [u8; 8] = [  4, 144, 132,  71, 116,  23, 151,  80];
+
+// v2.0 (channel-based)
+const DISC_INIT_CHANNEL:        [u8; 8] = [ 21, 200, 152,  39,  19, 178,  76,  47];
+const DISC_FUND_CHANNEL:        [u8; 8] = [ 50,  67,   3,  71, 190, 169,  20, 207];
+const DISC_REQUEST_RANDOMNESS_V2: [u8; 8] = [52, 181, 7, 93, 31, 238, 117, 70];
+const DISC_SUBMIT_COMMIT_V2:    [u8; 8] = [ 21, 253, 125, 167, 234, 224, 182, 148];
+const DISC_SUBMIT_REVEAL_V2:    [u8; 8] = [201,  26,  38, 149, 248, 104, 142,   7];
+const DISC_FINALIZE_V2:         [u8; 8] = [101, 248,  68,  53,  48, 110, 126, 211];
+const DISC_DELIVER_CALLBACK:    [u8; 8] = [ 75, 178,  82, 149, 119,  28,  57, 254];
 
 /// Shared context for on-chain transaction submission.
 /// `None` means on-chain txs are disabled (pure in-memory simulation).
@@ -253,6 +264,161 @@ pub fn build_claim_rewards_ix(
             AccountMeta::new(*treasury, false),             // treasury — writable
             AccountMeta::new(*reserve, false),              // reserve — writable
             AccountMeta::new_readonly(system_program::id(), false),
+        ],
+        data,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// v2.0 Channel-based instruction builders
+// ---------------------------------------------------------------------------
+
+/// Derive the DiceChannel PDA.
+pub fn channel_pda(program_id: &Pubkey, authority: &Pubkey, channel_index: u16) -> Pubkey {
+    Pubkey::find_program_address(
+        &[SEED_CHANNEL, authority.as_ref(), &channel_index.to_le_bytes()],
+        program_id,
+    )
+    .0
+}
+
+/// Build `init_channel` instruction.
+pub fn build_init_channel_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    max_nodes: u8,
+    callback_program_id: &Pubkey,
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_INIT_CHANNEL.to_vec();
+    data.extend_from_slice(&channel_index.to_le_bytes());
+    data.push(max_nodes);
+    data.extend_from_slice(callback_program_id.as_ref());
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new(*authority, true),
+            AccountMeta::new(channel, false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
+        data,
+    }
+}
+
+/// Build `fund_channel` instruction.
+pub fn build_fund_channel_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    amount: u64,
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_FUND_CHANNEL.to_vec();
+    data.extend_from_slice(&amount.to_le_bytes());
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new(*authority, true),
+            AccountMeta::new(channel, false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
+        data,
+    }
+}
+
+/// Build `request_randomness_v2` instruction.
+pub fn build_request_randomness_v2_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    node_count: u8,
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_REQUEST_RANDOMNESS_V2.to_vec();
+    data.push(node_count);
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new(*authority, true),
+            AccountMeta::new(channel, false),
+        ],
+        data,
+    }
+}
+
+/// Build `submit_commit_v2` instruction.
+pub fn build_submit_commit_v2_ix(
+    program_id: &Pubkey,
+    coordinator: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    round_id: u64,
+    device_pubkey: &[u8; 33],
+    commit_hash: &[u8; 32],
+) -> Instruction {
+    let device_id = compute_device_id(device_pubkey);
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_SUBMIT_COMMIT_V2.to_vec();
+    data.extend_from_slice(&round_id.to_le_bytes());
+    data.extend_from_slice(&device_id);
+    data.extend_from_slice(device_pubkey);
+    data.extend_from_slice(commit_hash);
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(*coordinator, true),
+            AccountMeta::new(channel, false),
+        ],
+        data,
+    }
+}
+
+/// Build `submit_reveal_v2` instruction.
+pub fn build_submit_reveal_v2_ix(
+    program_id: &Pubkey,
+    coordinator: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    round_id: u64,
+    device_pubkey: &[u8; 33],
+    entropy: &[u8; 32],
+    signature: &[u8; 64],
+) -> Instruction {
+    let device_id = compute_device_id(device_pubkey);
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_SUBMIT_REVEAL_V2.to_vec();
+    data.extend_from_slice(&round_id.to_le_bytes());
+    data.extend_from_slice(&device_id);
+    data.extend_from_slice(device_pubkey);
+    data.extend_from_slice(entropy);
+    data.extend_from_slice(signature);
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(*coordinator, true),
+            AccountMeta::new(channel, false),
+        ],
+        data,
+    }
+}
+
+/// Build `finalize_v2` instruction.
+pub fn build_finalize_v2_ix(
+    program_id: &Pubkey,
+    coordinator: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    round_id: u64,
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_FINALIZE_V2.to_vec();
+    data.extend_from_slice(&round_id.to_le_bytes());
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(*coordinator, true),
+            AccountMeta::new(channel, false),
         ],
         data,
     }
