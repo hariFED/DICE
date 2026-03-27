@@ -2,6 +2,82 @@
 
 > **Last updated:** 2026-03-27
 > Reference document: `DICE_Complete_Architecture.docx`
+> **Repo:** https://github.com/hariFED/DICE (private)
+
+---
+
+## Version History
+
+| Version | Branch | Tag | Status | Description |
+|---------|--------|-----|--------|-------------|
+| **v1.0** | `v1.0` / `main` | `v1.0.0` | Released | Per-round PDA design. Deployed to devnet. 24 tests passing (13 Rust + 11 TypeScript). Full simulation working. |
+| **v2.0** | `v2.0-channel-design` | — | Design phase | Reusable DiceChannel PDA. 18x cheaper. See [CHANNEL_DESIGN.md](CHANNEL_DESIGN.md). |
+
+---
+
+## What was completed in v1.0
+
+### Smart Contract
+- 8 Anchor instructions (register_device, request_randomness, submit_commit, submit_reveal, finalize_randomness, claim_rewards, init_escrow, fund_escrow)
+- 6 account types with PDA derivation
+- CPI callback support (finalize_randomness invokes developer's dice_callback)
+- device_id = SHA-256(device_pubkey) fix for 32-byte PDA seed limit
+- 14 error codes including callback and device_id validation
+- Deployed to devnet: `78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv`
+
+### Coordinator
+- Full commit-reveal wiring (WebSocket → state machine → on-chain TX)
+- Simulation mode (--simulation) with plain WebSocket, no DB/TLS
+- On-chain TX submission (reqwest-based RPC client, bypasses solana-client dep conflict)
+- Solana watcher (polls for Pending requests, auto-dispatches rounds)
+- SelectionEngine wired to watcher for production mode
+- Round timeout watchdog (5s scan, broadcasts failure)
+- Live HTML dashboard with auto-refresh
+- REST API: GET /, /health, /nodes, /rounds, POST /simulate, GET /metrics
+
+### Mock Firmware Node
+- N async tasks with real k256 ECDSA keypairs
+- Full CBOR protocol (heartbeat, commit, reveal)
+- Auto-reconnect, configurable delays
+
+### SDK
+- CPI instruction builders with callback support
+- PDA derivation helpers, account abstraction
+- dice_callback discriminator export
+- decode_randomness_result (fixed offset bug)
+
+### Testing
+- 13 Rust unit tests (all passing)
+- 11 TypeScript integration tests on Solana devnet (10 passing, 1 skip)
+- Full simulation test: 10 nodes, 7 selected, round finalized in ~1s
+- request_randomness TX confirmed on Solana Explorer
+
+### Infrastructure
+- Docker compose (postgres + coordinator + mock nodes)
+- GitHub Actions CI (check, test, clippy, audit, fmt)
+- Project restructured: docs/, docker/, scripts/, .github/
+
+### Documentation
+- README.md with full local testing guide (9 sections)
+- SIMULATION.md — simulation guide with CLI reference
+- TEST_REPORT.md — full test results with on-chain accounts
+- CHANNEL_DESIGN.md — v2.0 reusable PDA design with security analysis
+- TODO.md — prioritized next steps
+
+---
+
+## What v2.0 (channel design) will change
+
+See [CHANNEL_DESIGN.md](CHANNEL_DESIGN.md) for full details.
+
+| Current (v1.0) | Proposed (v2.0) |
+|----------------|----------------|
+| New PDAs every round (16 accounts for 7 nodes) | Reusable DiceChannel (1 account, created once) |
+| Coordinator pays ~0.031 SOL/round | Coordinator pays ~0.00003 SOL/round |
+| Developer pays ~0.005 SOL/request | Developer pays ~0.002 SOL/request (from prepaid balance) |
+| Fixed 7 nodes per round | Developer chooses 4-50 nodes |
+| finalize + callback in 1 TX (reverts if callback fails) | finalize and deliver_callback split (randomness always saved) |
+| Sequence numbers tracked by developer | round_id auto-increments (simpler) |
 
 ---
 
