@@ -212,6 +212,8 @@ async fn dispatch_round(
             started_at: std::time::Instant::now(),
             requester: solana_sdk::pubkey::Pubkey::default(),
             sequence,
+            channel_authority: None,
+            channel_index: None,
         });
     }
 

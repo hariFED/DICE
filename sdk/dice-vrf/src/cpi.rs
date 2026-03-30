@@ -186,6 +186,45 @@ pub fn decode_channel_randomness(account_data: &[u8]) -> Option<[u8; 32]> {
     Some(randomness)
 }
 
+/// Build the `request_randomness_auto` CPI instruction.
+///
+/// Zero-friction: auto-creates channel if needed, auto-funds from developer wallet,
+/// starts a new round. This is the only instruction a developer needs.
+///
+/// # Arguments
+/// * `program_id` — the DICE program ID
+/// * `authority` — developer's wallet (signer, pays rent + fee)
+/// * `channel_index` — channel slot (use 0 for single-channel integrations)
+/// * `max_nodes` — channel capacity (4-50, only used on first call)
+/// * `node_count` — how many nodes for this round (4 to max_nodes)
+/// * `callback_program_id` — your program ID for CPI callback, or `Pubkey::default()` for polling
+pub fn request_randomness_auto_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    max_nodes: u8,
+    node_count: u8,
+    callback_program_id: &Pubkey,
+) -> Instruction {
+    let (channel, _) = crate::pda::channel_pda(authority, channel_index, program_id);
+    let mut data = Vec::with_capacity(44);
+    data.extend_from_slice(&instruction_discriminator("request_randomness_auto"));
+    data.extend_from_slice(&channel_index.to_le_bytes());
+    data.push(max_nodes);
+    data.push(node_count);
+    data.extend_from_slice(callback_program_id.as_ref());
+
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            solana_sdk::instruction::AccountMeta::new(*authority, true),
+            solana_sdk::instruction::AccountMeta::new(channel, false),
+            solana_sdk::instruction::AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        ],
+        data,
+    }
+}
+
 // ── Off-chain decode helper ──────────────────────────────────────────────────
 
 /// Decode the final randomness value from the raw bytes of a

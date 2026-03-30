@@ -11,6 +11,7 @@ mod selection;
 mod solana_rpc;
 mod solana_tx;
 mod solana_watcher;
+mod solana_ws;
 mod state_machine;
 
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
@@ -176,7 +177,8 @@ async fn main() -> Result<()> {
         })
     };
 
-    // 9. Spawn Solana watcher (production mode only — polls for Pending requests).
+    // 9. Spawn Solana WebSocket subscriber (production mode only — real-time log events).
+    //    Replaces the old 5-second polling watcher with ~500ms latency via logsSubscribe.
     let watcher_handle = if !cfg.simulation {
         let rpc = std::sync::Arc::new(solana_rpc::SolanaRpc::new(&cfg.solana_rpc_url));
         let keypair = std::sync::Arc::new(
@@ -186,6 +188,7 @@ async fn main() -> Result<()> {
         let program_id: solana_sdk::pubkey::Pubkey = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
             .parse()
             .expect("parse program ID");
+        let rpc_url = cfg.solana_rpc_url.clone();
         let reg = registry.clone();
         let r = rounds.clone();
         let m = metrics.clone();
@@ -193,13 +196,13 @@ async fn main() -> Result<()> {
         let max = cfg.max_nodes as usize;
         let timeout = std::time::Duration::from_secs(cfg.commit_timeout_secs);
         Some(tokio::spawn(async move {
-            solana_watcher::run_solana_watcher(
-                rpc, program_id, keypair, reg, r, m, min, max, timeout,
+            solana_ws::run_solana_ws_subscriber(
+                rpc, rpc_url, program_id, keypair, reg, r, m, min, max, timeout,
             )
             .await;
         }))
     } else {
-        info!("Solana watcher disabled in simulation mode");
+        info!("Solana WebSocket subscriber disabled in simulation mode");
         None
     };
 
@@ -211,7 +214,7 @@ async fn main() -> Result<()> {
     if cfg.simulation {
         println!("  Simulate  : curl -X POST http://localhost:{}/simulate", cfg.api_port);
     } else {
-        println!("  Solana    : watching for Pending requests on {}", cfg.solana_rpc_url);
+        println!("  Solana    : WebSocket subscriber on {}", cfg.solana_rpc_url);
     }
 
     // 11. Wait for any task to exit.
@@ -526,17 +529,31 @@ async fn handle_node_connection<S>(
                                 )
                                 .await;
                             }
-                            // Submit submit_commit on-chain.
+                            // Submit commit on-chain (v2.0 channel or v1.0 legacy).
                             if let Some(ref ctx) = on_chain {
                                 if entry_requester != solana_sdk::pubkey::Pubkey::default() {
-                                    let ix = solana_tx::build_submit_commit_ix(
-                                        &ctx.program_id,
-                                        &ctx.keypair.pubkey(),
-                                        &entry_requester,
-                                        entry_sequence,
-                                        &node_id,
-                                        &commit_hash,
-                                    );
+                                    let ix = if let (Some(auth), Some(idx)) = (entry.channel_authority, entry.channel_index) {
+                                        // v2.0 channel flow
+                                        solana_tx::build_submit_commit_v2_ix(
+                                            &ctx.program_id,
+                                            &ctx.keypair.pubkey(),
+                                            &auth,
+                                            idx,
+                                            entry_sequence,
+                                            &node_id,
+                                            &commit_hash,
+                                        )
+                                    } else {
+                                        // v1.0 legacy flow
+                                        solana_tx::build_submit_commit_ix(
+                                            &ctx.program_id,
+                                            &ctx.keypair.pubkey(),
+                                            &entry_requester,
+                                            entry_sequence,
+                                            &node_id,
+                                            &commit_hash,
+                                        )
+                                    };
                                     match ctx.rpc.sign_and_send(&ctx.keypair, vec![ix]).await {
                                         Ok(s) => info!(sig = %s, "submit_commit TX sent"),
                                         Err(e) => warn!(error = %e, "submit_commit TX failed"),
@@ -588,6 +605,8 @@ async fn handle_node_connection<S>(
                     if let Some(entry) = map.get_mut(&request_id) {
                         let entry_requester = entry.requester;
                         let entry_sequence = entry.sequence;
+                        let entry_channel_auth = entry.channel_authority;
+                        let entry_channel_idx = entry.channel_index;
                         match entry.round.handle_reveal(node_id, entropy, sig) {
                             Ok(Some(randomness)) => {
                                 let selected = entry.round.selected_nodes.clone();
@@ -601,7 +620,7 @@ async fn handle_node_connection<S>(
                                 );
                                 metrics.rounds_total.inc();
                                 metrics.round_duration_seconds.observe(duration.as_secs_f64());
-                                Some((randomness, selected, db_id, entry_requester, entry_sequence))
+                                Some((randomness, selected, db_id, entry_requester, entry_sequence, entry_channel_auth, entry_channel_idx))
                             }
                             Ok(None) => {
                                 info!(
@@ -631,25 +650,56 @@ async fn handle_node_connection<S>(
                     }
                 };
 
-                if let Some((randomness, selected_nodes, db_id, req_pubkey, req_seq)) = finalized {
+                if let Some((randomness, selected_nodes, db_id, req_pubkey, req_seq, channel_auth, channel_idx)) = finalized {
                     // Persist to DB if available.
                     if let Some(ref pool) = db {
                         let _ = db::queries::record_reveal(pool, db_id, &node_id, &entropy).await;
                         let _ = db::queries::finalize_round(pool, db_id, &randomness).await;
                     }
 
-                    // Submit finalize_randomness on-chain.
+                    // Submit finalize on-chain (v2.0 channel or v1.0 legacy).
                     if let Some(ref ctx) = on_chain {
                         if req_pubkey != solana_sdk::pubkey::Pubkey::default() {
-                            let ix = solana_tx::build_finalize_randomness_ix(
-                                &ctx.program_id,
-                                &ctx.keypair.pubkey(),
-                                &req_pubkey,
-                                req_seq,
-                            );
-                            match ctx.rpc.sign_and_send(&ctx.keypair, vec![ix]).await {
-                                Ok(s) => info!(sig = %s, "finalize_randomness TX sent"),
-                                Err(e) => warn!(error = %e, "finalize_randomness TX failed"),
+                            if let (Some(auth), Some(idx)) = (channel_auth, channel_idx) {
+                                // v2.0: finalize_v2 + deliver_callback
+                                let ix_finalize = solana_tx::build_finalize_v2_ix(
+                                    &ctx.program_id,
+                                    &ctx.keypair.pubkey(),
+                                    &auth,
+                                    idx,
+                                    req_seq,
+                                );
+                                match ctx.rpc.sign_and_send(&ctx.keypair, vec![ix_finalize]).await {
+                                    Ok(s) => {
+                                        info!(sig = %s, "finalize_v2 TX sent");
+                                        // Follow up with deliver_callback
+                                        let ix_callback = solana_tx::build_deliver_callback_ix(
+                                            &ctx.program_id,
+                                            &ctx.keypair.pubkey(),
+                                            &auth,
+                                            idx,
+                                            req_seq,
+                                            vec![],
+                                        );
+                                        match ctx.rpc.sign_and_send(&ctx.keypair, vec![ix_callback]).await {
+                                            Ok(s2) => info!(sig = %s2, "deliver_callback TX sent"),
+                                            Err(e) => warn!(error = %e, "deliver_callback TX failed (randomness still saved)"),
+                                        }
+                                    }
+                                    Err(e) => warn!(error = %e, "finalize_v2 TX failed"),
+                                }
+                            } else {
+                                // v1.0 legacy flow
+                                let ix = solana_tx::build_finalize_randomness_ix(
+                                    &ctx.program_id,
+                                    &ctx.keypair.pubkey(),
+                                    &req_pubkey,
+                                    req_seq,
+                                );
+                                match ctx.rpc.sign_and_send(&ctx.keypair, vec![ix]).await {
+                                    Ok(s) => info!(sig = %s, "finalize_randomness TX sent"),
+                                    Err(e) => warn!(error = %e, "finalize_randomness TX failed"),
+                                }
                             }
                         }
                     }

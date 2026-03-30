@@ -27,8 +27,12 @@ pub struct RoundEntry {
     pub started_at: Instant,
     /// On-chain requester pubkey (for PDA derivation). Default = Pubkey::default().
     pub requester: solana_sdk::pubkey::Pubkey,
-    /// On-chain sequence number (for PDA derivation).
+    /// On-chain sequence number (for v1.0 PDA derivation) or round_id (for v2.0).
     pub sequence: u64,
+    /// v2.0: channel authority (for channel PDA derivation). None = v1.0 flow.
+    pub channel_authority: Option<solana_sdk::pubkey::Pubkey>,
+    /// v2.0: channel index (for channel PDA derivation).
+    pub channel_index: Option<u16>,
 }
 
 // ---------------------------------------------------------------------------

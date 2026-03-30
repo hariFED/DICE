@@ -543,6 +543,8 @@ async fn simulate(State(state): State<AppState>) -> Response {
                 started_at: std::time::Instant::now(),
                 requester,
                 sequence,
+                channel_authority: None,
+                channel_index: None,
             },
         );
     }

@@ -95,6 +95,18 @@ pub mod dice {
         instructions::request_randomness_v2::handler(ctx, node_count)
     }
 
+    /// Zero-friction randomness request. Auto-creates channel if needed, auto-funds
+    /// from developer wallet, starts round. Developer only needs this one instruction.
+    pub fn request_randomness_auto(
+        ctx: Context<RequestRandomnessAuto>,
+        channel_index: u16,
+        max_nodes: u8,
+        node_count: u8,
+        callback_program_id: Pubkey,
+    ) -> Result<()> {
+        instructions::request_randomness_auto::handler(ctx, channel_index, max_nodes, node_count, callback_program_id)
+    }
+
     /// Submit a commit hash to a channel (inline, no separate PDA).
     pub fn submit_commit_v2(
         ctx: Context<SubmitCommitV2>,

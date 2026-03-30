@@ -46,6 +46,7 @@ const DISC_WITHDRAW_BALANCE:   [u8; 8] = [140,  79,  65,  53,  68,  73, 241, 211
 const DISC_CLOSE_CHANNEL:      [u8; 8] = [  0, 104,  36,   1,  66,   0, 103, 157];
 const DISC_RESIZE_CHANNEL:     [u8; 8] = [ 44, 224, 158,  10, 139, 248,  77,  22];
 const DISC_SELECT_NODES:       [u8; 8] = [ 45, 118, 200,  26, 149,  67, 185,   1];
+const DISC_REQUEST_RANDOMNESS_AUTO: [u8; 8] = [139,  28, 100, 177, 156, 141, 117, 153];
 
 /// Shared context for on-chain transaction submission.
 /// `None` means on-chain txs are disabled (pure in-memory simulation).
@@ -542,6 +543,34 @@ pub fn build_select_nodes_ix(
     Instruction {
         program_id: *program_id,
         accounts,
+        data,
+    }
+}
+
+/// Build `request_randomness_auto` instruction.
+///
+/// Zero-friction: auto-creates channel if needed, auto-funds from authority wallet.
+pub fn build_request_randomness_auto_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    max_nodes: u8,
+    node_count: u8,
+    callback_program_id: &Pubkey,
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_REQUEST_RANDOMNESS_AUTO.to_vec();
+    data.extend_from_slice(&channel_index.to_le_bytes());
+    data.push(max_nodes);
+    data.push(node_count);
+    data.extend_from_slice(callback_program_id.as_ref());
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new(*authority, true),
+            AccountMeta::new(channel, false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
         data,
     }
 }
