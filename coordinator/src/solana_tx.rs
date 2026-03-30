@@ -574,3 +574,358 @@ pub fn build_request_randomness_auto_ix(
         data,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sha2::{Digest, Sha256};
+    use std::collections::HashSet;
+
+    /// A deterministic test program ID.
+    fn test_program_id() -> Pubkey {
+        Pubkey::new_from_array([1u8; 32])
+    }
+
+    /// A deterministic test pubkey.
+    fn test_pubkey_a() -> Pubkey {
+        Pubkey::new_from_array([0xAA; 32])
+    }
+
+    fn test_pubkey_b() -> Pubkey {
+        Pubkey::new_from_array([0xBB; 32])
+    }
+
+    // -----------------------------------------------------------------------
+    // compute_device_id
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_compute_device_id_deterministic() {
+        let pk = [0x02u8; 33]; // dummy compressed pubkey
+        let id1 = compute_device_id(&pk);
+        let id2 = compute_device_id(&pk);
+        assert_eq!(id1, id2, "compute_device_id must be deterministic");
+
+        // Verify it matches raw SHA-256
+        let expected: [u8; 32] = Sha256::digest(pk).into();
+        assert_eq!(id1, expected, "should equal SHA-256(pubkey)");
+    }
+
+    #[test]
+    fn test_compute_device_id_differs() {
+        let pk_a = [0x02u8; 33];
+        let mut pk_b = [0x02u8; 33];
+        pk_b[32] = 0x03; // flip last byte
+
+        let id_a = compute_device_id(&pk_a);
+        let id_b = compute_device_id(&pk_b);
+        assert_ne!(
+            id_a, id_b,
+            "different pubkeys must produce different device IDs"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // PDA helpers
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_request_pda_deterministic() {
+        let pid = test_program_id();
+        let req = test_pubkey_a();
+        let seq = 42u64;
+
+        let pda1 = request_pda(&pid, &req, seq);
+        let pda2 = request_pda(&pid, &req, seq);
+        assert_eq!(pda1, pda2, "request_pda must be deterministic");
+
+        // Different sequence => different PDA
+        let pda3 = request_pda(&pid, &req, seq + 1);
+        assert_ne!(pda1, pda3, "different sequence should yield different PDA");
+    }
+
+    #[test]
+    fn test_channel_pda_deterministic() {
+        let pid = test_program_id();
+        let auth = test_pubkey_a();
+        let idx = 7u16;
+
+        let pda1 = channel_pda(&pid, &auth, idx);
+        let pda2 = channel_pda(&pid, &auth, idx);
+        assert_eq!(pda1, pda2, "channel_pda must be deterministic");
+    }
+
+    #[test]
+    fn test_channel_pda_differs_by_index() {
+        let pid = test_program_id();
+        let auth = test_pubkey_a();
+
+        let pda0 = channel_pda(&pid, &auth, 0);
+        let pda1 = channel_pda(&pid, &auth, 1);
+        let pda2 = channel_pda(&pid, &auth, 2);
+
+        assert_ne!(pda0, pda1, "different index should yield different PDA");
+        assert_ne!(pda1, pda2, "different index should yield different PDA");
+        assert_ne!(pda0, pda2, "different index should yield different PDA");
+    }
+
+    #[test]
+    fn test_channel_pda_differs_by_authority() {
+        let pid = test_program_id();
+        let auth_a = test_pubkey_a();
+        let auth_b = test_pubkey_b();
+        let idx = 5u16;
+
+        let pda_a = channel_pda(&pid, &auth_a, idx);
+        let pda_b = channel_pda(&pid, &auth_b, idx);
+        assert_ne!(
+            pda_a, pda_b,
+            "different authority should yield different channel PDA"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Instruction data layout tests
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_build_init_channel_ix_data_layout() {
+        let pid = test_program_id();
+        let auth = test_pubkey_a();
+        let channel_index: u16 = 42;
+        let max_nodes: u8 = 7;
+        let callback = test_pubkey_b();
+
+        let ix = build_init_channel_ix(&pid, &auth, channel_index, max_nodes, &callback);
+
+        // Total data = 8 (disc) + 2 (channel_index) + 1 (max_nodes) + 32 (callback) = 43
+        assert_eq!(ix.data.len(), 43, "init_channel data should be 43 bytes");
+
+        // Discriminator
+        assert_eq!(&ix.data[0..8], &DISC_INIT_CHANNEL, "discriminator mismatch");
+
+        // channel_index at offset 8..10 (u16 LE)
+        let ci = u16::from_le_bytes([ix.data[8], ix.data[9]]);
+        assert_eq!(ci, channel_index, "channel_index in data should match");
+
+        // max_nodes at offset 10
+        assert_eq!(ix.data[10], max_nodes, "max_nodes in data should match");
+
+        // callback_program_id at offset 11..43
+        assert_eq!(
+            &ix.data[11..43],
+            callback.as_ref(),
+            "callback_program_id in data should match"
+        );
+
+        // Verify accounts
+        assert_eq!(ix.program_id, pid);
+        assert_eq!(ix.accounts.len(), 3);
+        assert_eq!(ix.accounts[0].pubkey, auth);
+        assert!(ix.accounts[0].is_signer);
+    }
+
+    #[test]
+    fn test_build_request_randomness_v2_ix_data_layout() {
+        let pid = test_program_id();
+        let auth = test_pubkey_a();
+        let channel_index: u16 = 3;
+        let node_count: u8 = 5;
+
+        let ix = build_request_randomness_v2_ix(&pid, &auth, channel_index, node_count);
+
+        // Total data = 8 (disc) + 1 (node_count) = 9
+        assert_eq!(ix.data.len(), 9, "request_randomness_v2 data should be 9 bytes");
+
+        assert_eq!(
+            &ix.data[0..8],
+            &DISC_REQUEST_RANDOMNESS_V2,
+            "discriminator mismatch"
+        );
+
+        assert_eq!(ix.data[8], node_count, "node_count in data should match");
+
+        // Verify accounts: authority (signer) + channel PDA
+        assert_eq!(ix.accounts.len(), 2);
+        assert!(ix.accounts[0].is_signer);
+        let expected_channel = channel_pda(&pid, &auth, channel_index);
+        assert_eq!(ix.accounts[1].pubkey, expected_channel);
+    }
+
+    #[test]
+    fn test_build_submit_commit_v2_ix_data_layout() {
+        let pid = test_program_id();
+        let coordinator = test_pubkey_a();
+        let authority = test_pubkey_b();
+        let channel_index: u16 = 1;
+        let round_id: u64 = 999;
+        let device_pubkey = [0x03u8; 33];
+        let commit_hash = [0xFFu8; 32];
+
+        let ix = build_submit_commit_v2_ix(
+            &pid,
+            &coordinator,
+            &authority,
+            channel_index,
+            round_id,
+            &device_pubkey,
+            &commit_hash,
+        );
+
+        // Total data = 8 (disc) + 8 (round_id) + 32 (device_id) + 33 (device_pubkey) + 32 (commit_hash) = 113
+        assert_eq!(
+            ix.data.len(),
+            113,
+            "submit_commit_v2 data should be 113 bytes"
+        );
+
+        // Discriminator
+        assert_eq!(&ix.data[0..8], &DISC_SUBMIT_COMMIT_V2, "discriminator mismatch");
+
+        // round_id at offset 8..16 (u64 LE)
+        let rid = u64::from_le_bytes(ix.data[8..16].try_into().unwrap());
+        assert_eq!(rid, round_id, "round_id in data should match");
+
+        // device_id at offset 16..48 (SHA-256 of device_pubkey)
+        let expected_device_id = compute_device_id(&device_pubkey);
+        assert_eq!(
+            &ix.data[16..48],
+            &expected_device_id,
+            "device_id in data should match SHA-256(device_pubkey)"
+        );
+
+        // device_pubkey at offset 48..81
+        assert_eq!(
+            &ix.data[48..81],
+            &device_pubkey,
+            "device_pubkey in data should match"
+        );
+
+        // commit_hash at offset 81..113
+        assert_eq!(
+            &ix.data[81..113],
+            &commit_hash,
+            "commit_hash in data should match"
+        );
+
+        // Verify accounts
+        assert_eq!(ix.accounts.len(), 2);
+        assert_eq!(ix.accounts[0].pubkey, coordinator);
+        assert!(ix.accounts[0].is_signer);
+        let expected_channel = channel_pda(&pid, &authority, channel_index);
+        assert_eq!(ix.accounts[1].pubkey, expected_channel);
+    }
+
+    #[test]
+    fn test_build_finalize_v2_ix_data_layout() {
+        let pid = test_program_id();
+        let coordinator = test_pubkey_a();
+        let authority = test_pubkey_b();
+        let channel_index: u16 = 10;
+        let round_id: u64 = 12345;
+
+        let ix = build_finalize_v2_ix(&pid, &coordinator, &authority, channel_index, round_id);
+
+        // Total data = 8 (disc) + 8 (round_id) = 16
+        assert_eq!(ix.data.len(), 16, "finalize_v2 data should be 16 bytes");
+
+        assert_eq!(&ix.data[0..8], &DISC_FINALIZE_V2, "discriminator mismatch");
+
+        let rid = u64::from_le_bytes(ix.data[8..16].try_into().unwrap());
+        assert_eq!(rid, round_id, "round_id in data should match");
+
+        // Verify accounts
+        assert_eq!(ix.accounts.len(), 2);
+        assert!(ix.accounts[0].is_signer);
+    }
+
+    #[test]
+    fn test_build_request_randomness_auto_ix_data_layout() {
+        let pid = test_program_id();
+        let auth = test_pubkey_a();
+        let channel_index: u16 = 0;
+        let max_nodes: u8 = 5;
+        let node_count: u8 = 3;
+        let callback = test_pubkey_b();
+
+        let ix = build_request_randomness_auto_ix(
+            &pid,
+            &auth,
+            channel_index,
+            max_nodes,
+            node_count,
+            &callback,
+        );
+
+        // Total data = 8 (disc) + 2 (channel_index) + 1 (max_nodes) + 1 (node_count) + 32 (callback) = 44
+        assert_eq!(
+            ix.data.len(),
+            44,
+            "request_randomness_auto data should be 44 bytes"
+        );
+
+        assert_eq!(
+            &ix.data[0..8],
+            &DISC_REQUEST_RANDOMNESS_AUTO,
+            "discriminator mismatch"
+        );
+
+        // channel_index at offset 8..10
+        let ci = u16::from_le_bytes([ix.data[8], ix.data[9]]);
+        assert_eq!(ci, channel_index, "channel_index in data should match");
+
+        // max_nodes at offset 10
+        assert_eq!(ix.data[10], max_nodes, "max_nodes in data should match");
+
+        // node_count at offset 11
+        assert_eq!(ix.data[11], node_count, "node_count in data should match");
+
+        // callback at offset 12..44
+        assert_eq!(
+            &ix.data[12..44],
+            callback.as_ref(),
+            "callback_program_id in data should match"
+        );
+
+        // Verify accounts: authority (signer) + channel + system_program
+        assert_eq!(ix.accounts.len(), 3);
+        assert!(ix.accounts[0].is_signer);
+        assert_eq!(ix.accounts[2].pubkey, system_program::id());
+    }
+
+    #[test]
+    fn test_all_v2_discriminators_unique() {
+        let discs: Vec<(&str, [u8; 8])> = vec![
+            ("DISC_INIT_CHANNEL", DISC_INIT_CHANNEL),
+            ("DISC_FUND_CHANNEL", DISC_FUND_CHANNEL),
+            ("DISC_REQUEST_RANDOMNESS_V2", DISC_REQUEST_RANDOMNESS_V2),
+            ("DISC_SUBMIT_COMMIT_V2", DISC_SUBMIT_COMMIT_V2),
+            ("DISC_SUBMIT_REVEAL_V2", DISC_SUBMIT_REVEAL_V2),
+            ("DISC_FINALIZE_V2", DISC_FINALIZE_V2),
+            ("DISC_DELIVER_CALLBACK", DISC_DELIVER_CALLBACK),
+            ("DISC_WITHDRAW_BALANCE", DISC_WITHDRAW_BALANCE),
+            ("DISC_CLOSE_CHANNEL", DISC_CLOSE_CHANNEL),
+            ("DISC_RESIZE_CHANNEL", DISC_RESIZE_CHANNEL),
+            ("DISC_SELECT_NODES", DISC_SELECT_NODES),
+            ("DISC_REQUEST_RANDOMNESS_AUTO", DISC_REQUEST_RANDOMNESS_AUTO),
+            // Also include v1.0 discriminators to make sure no collisions across versions
+            ("DISC_REQUEST_RANDOMNESS", DISC_REQUEST_RANDOMNESS),
+            ("DISC_SUBMIT_COMMIT", DISC_SUBMIT_COMMIT),
+            ("DISC_SUBMIT_REVEAL", DISC_SUBMIT_REVEAL),
+            ("DISC_FINALIZE_RANDOMNESS", DISC_FINALIZE_RANDOMNESS),
+            ("DISC_CLAIM_REWARDS", DISC_CLAIM_REWARDS),
+        ];
+
+        let mut seen = HashSet::new();
+        for (name, disc) in &discs {
+            assert!(
+                seen.insert(*disc),
+                "discriminator collision detected: {} has the same value as a previously seen discriminator",
+                name
+            );
+        }
+
+        // Sanity: we checked all 17 discriminators
+        assert_eq!(seen.len(), 17, "should have checked 17 unique discriminators");
+    }
+}

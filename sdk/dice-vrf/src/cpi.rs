@@ -333,4 +333,175 @@ mod tests {
         let d = dice_callback_discriminator();
         assert_eq!(d, [128, 131, 129, 45, 53, 113, 215, 151]);
     }
+
+    // ── v2.0 instruction data layout tests ──────────────────────────────────
+
+    #[test]
+    fn test_init_channel_ix_data_layout() {
+        let program_id = Pubkey::new_unique();
+        let authority = Pubkey::new_unique();
+        let callback = Pubkey::new_unique();
+        let ix = init_channel_ix(&program_id, &authority, 7, 10, &callback);
+
+        // 8 discriminator + 2 channel_index(u16 LE) + 1 max_nodes + 32 callback_program_id = 43 bytes
+        assert_eq!(ix.data.len(), 43, "init_channel data should be 43 bytes");
+        // First 8 bytes: discriminator
+        let disc = instruction_discriminator("init_channel");
+        assert_eq!(&ix.data[0..8], &disc);
+        // Bytes 8..10: channel_index in LE
+        assert_eq!(&ix.data[8..10], &7u16.to_le_bytes());
+        // Byte 10: max_nodes
+        assert_eq!(ix.data[10], 10);
+        // Bytes 11..43: callback_program_id
+        assert_eq!(&ix.data[11..43], callback.as_ref());
+    }
+
+    #[test]
+    fn test_fund_channel_ix_data_layout() {
+        let program_id = Pubkey::new_unique();
+        let authority = Pubkey::new_unique();
+        let amount: u64 = 2_000_000; // 0.002 SOL in lamports
+        let ix = fund_channel_ix(&program_id, &authority, 0, amount);
+
+        // 8 discriminator + 8 amount(u64 LE) = 16 bytes
+        assert_eq!(ix.data.len(), 16, "fund_channel data should be 16 bytes");
+        let disc = instruction_discriminator("fund_channel");
+        assert_eq!(&ix.data[0..8], &disc);
+        assert_eq!(&ix.data[8..16], &amount.to_le_bytes());
+    }
+
+    #[test]
+    fn test_request_randomness_v2_ix_data_layout() {
+        let program_id = Pubkey::new_unique();
+        let authority = Pubkey::new_unique();
+        let ix = request_randomness_v2_ix(&program_id, &authority, 3, 5);
+
+        // 8 discriminator + 1 node_count = 9 bytes
+        assert_eq!(ix.data.len(), 9, "request_randomness_v2 data should be 9 bytes");
+        let disc = instruction_discriminator("request_randomness_v2");
+        assert_eq!(&ix.data[0..8], &disc);
+        assert_eq!(ix.data[8], 5); // node_count
+    }
+
+    #[test]
+    fn test_request_randomness_auto_ix_data_layout() {
+        let program_id = Pubkey::new_unique();
+        let authority = Pubkey::new_unique();
+        let callback = Pubkey::new_unique();
+        let ix = request_randomness_auto_ix(&program_id, &authority, 1, 8, 4, &callback);
+
+        // 8 discriminator + 2 channel_index + 1 max_nodes + 1 node_count + 32 callback = 44 bytes
+        assert_eq!(ix.data.len(), 44, "request_randomness_auto data should be 44 bytes");
+        let disc = instruction_discriminator("request_randomness_auto");
+        assert_eq!(&ix.data[0..8], &disc);
+        assert_eq!(&ix.data[8..10], &1u16.to_le_bytes());
+        assert_eq!(ix.data[10], 8); // max_nodes
+        assert_eq!(ix.data[11], 4); // node_count
+        assert_eq!(&ix.data[12..44], callback.as_ref());
+    }
+
+    // ── decode_channel_randomness tests ─────────────────────────────────────
+
+    #[test]
+    fn test_decode_channel_randomness_too_short() {
+        // Anything less than 143 bytes should return None
+        assert_eq!(decode_channel_randomness(&[0u8; 0]), None);
+        assert_eq!(decode_channel_randomness(&[0u8; 42]), None);
+        assert_eq!(decode_channel_randomness(&[0u8; 142]), None);
+    }
+
+    #[test]
+    fn test_decode_channel_randomness_not_finalized() {
+        // Build a 143-byte buffer with non-zero randomness at [111..143]
+        let mut data = vec![0u8; 143];
+        data[111..143].fill(0xBB);
+
+        // status=1 (Pending) should return None
+        data[43] = 1;
+        assert_eq!(decode_channel_randomness(&data), None);
+
+        // status=2 (CommitPhase) should return None
+        data[43] = 2;
+        assert_eq!(decode_channel_randomness(&data), None);
+
+        // status=3 (RevealPhase) should return None
+        data[43] = 3;
+        assert_eq!(decode_channel_randomness(&data), None);
+
+        // status=5 (Failed) should return None
+        data[43] = 5;
+        assert_eq!(decode_channel_randomness(&data), None);
+    }
+
+    #[test]
+    fn test_decode_channel_randomness_zeroed() {
+        // status=4 (Finalized) but randomness is all zeros => None
+        let mut data = vec![0u8; 143];
+        data[43] = 4; // Finalized
+        // randomness at [111..143] is already all zeros
+        assert_eq!(decode_channel_randomness(&data), None);
+    }
+
+    #[test]
+    fn test_decode_channel_randomness_valid() {
+        let mut data = vec![0u8; 143];
+        data[43] = 4; // status = Finalized
+        data[111..143].fill(0xCD);
+        let result = decode_channel_randomness(&data);
+        assert!(result.is_some(), "Finalized with non-zero randomness should return Some");
+        assert_eq!(result.unwrap(), [0xCDu8; 32]);
+    }
+
+    #[test]
+    fn test_decode_channel_randomness_idle_with_result() {
+        // status=0 (Idle) means callback delivered, result still readable
+        let mut data = vec![0u8; 143];
+        data[43] = 0; // Idle
+        data[111..143].fill(0xEF);
+        let result = decode_channel_randomness(&data);
+        assert!(result.is_some(), "Idle with non-zero randomness should return Some");
+        assert_eq!(result.unwrap(), [0xEFu8; 32]);
+    }
+
+    // ── discriminator uniqueness tests ──────────────────────────────────────
+
+    #[test]
+    fn test_all_discriminators_are_8_bytes() {
+        let names = [
+            "request_randomness",
+            "finalize_randomness",
+            "dice_callback",
+            "init_channel",
+            "fund_channel",
+            "request_randomness_v2",
+            "request_randomness_auto",
+        ];
+        for name in names {
+            let disc = instruction_discriminator(name);
+            assert_eq!(disc.len(), 8, "discriminator for '{}' must be 8 bytes", name);
+        }
+    }
+
+    #[test]
+    fn test_discriminators_unique() {
+        let names = [
+            "request_randomness",
+            "finalize_randomness",
+            "dice_callback",
+            "init_channel",
+            "fund_channel",
+            "request_randomness_v2",
+            "request_randomness_auto",
+        ];
+        let discs: Vec<[u8; 8]> = names.iter().map(|n| instruction_discriminator(n)).collect();
+        for i in 0..discs.len() {
+            for j in (i + 1)..discs.len() {
+                assert_ne!(
+                    discs[i], discs[j],
+                    "discriminators for '{}' and '{}' must not collide",
+                    names[i], names[j]
+                );
+            }
+        }
+    }
 }

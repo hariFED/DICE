@@ -328,3 +328,301 @@ impl Round {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use k256::ecdsa::{signature::Signer, Signature, SigningKey};
+    use sha2::{Digest, Sha256};
+    use std::time::Duration;
+
+    /// Helper: generate a new random ECDSA signing key and return
+    /// (signing_key, compressed_pubkey_33_bytes).
+    fn gen_node() -> (SigningKey, [u8; 33]) {
+        let sk = SigningKey::random(&mut rand::thread_rng());
+        let pk = sk.verifying_key().to_encoded_point(true);
+        let mut pubkey = [0u8; 33];
+        pubkey.copy_from_slice(pk.as_bytes());
+        (sk, pubkey)
+    }
+
+    /// Helper: produce a valid commit (commit_hash, entropy, signature).
+    /// commit_hash = SHA-256(entropy), signature = ECDSA(signing_key, commit_hash).
+    fn make_commit(sk: &SigningKey) -> ([u8; 32], [u8; 32], [u8; 64]) {
+        let mut entropy = [0u8; 32];
+        rand::RngCore::fill_bytes(&mut rand::thread_rng(), &mut entropy);
+        let commit_hash: [u8; 32] = Sha256::digest(entropy).into();
+        let sig: Signature = sk.sign(&commit_hash);
+        let mut sig_bytes = [0u8; 64];
+        sig_bytes.copy_from_slice(&sig.to_bytes());
+        (commit_hash, entropy, sig_bytes)
+    }
+
+    fn make_round(nodes: &[[u8; 33]], min_required: usize, timeout: Duration) -> Round {
+        Round::new([0xAA; 32], nodes.to_vec(), min_required, timeout)
+    }
+
+    // -------------------------------------------------------------------
+    // Basic construction
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn test_new_round_starts_in_collecting_commits() {
+        let (_, pk) = gen_node();
+        let round = make_round(&[pk], 1, Duration::from_secs(60));
+        assert!(
+            matches!(round.state, RoundState::CollectingCommits { .. }),
+            "new round should start in CollectingCommits state"
+        );
+    }
+
+    // -------------------------------------------------------------------
+    // Progress counts
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn test_progress_counts_initial() {
+        let (_, pk1) = gen_node();
+        let (_, pk2) = gen_node();
+        let round = make_round(&[pk1, pk2], 2, Duration::from_secs(60));
+        let (commits, reveals) = round.progress_counts();
+        assert_eq!(commits, 0);
+        assert_eq!(reveals, 0);
+    }
+
+    #[test]
+    fn test_progress_counts_after_commits() {
+        let (sk1, pk1) = gen_node();
+        let (sk2, pk2) = gen_node();
+        let mut round = make_round(&[pk1, pk2], 2, Duration::from_secs(60));
+
+        let (ch1, _, sig1) = make_commit(&sk1);
+        round.handle_commit(pk1, ch1, sig1).unwrap();
+
+        let (commits, reveals) = round.progress_counts();
+        assert_eq!(commits, 1, "should have 1 commit after one node committed");
+        assert_eq!(reveals, 0, "reveals should still be 0 in commit phase");
+
+        // Commit second node — transitions to reveals
+        let (ch2, _, sig2) = make_commit(&sk2);
+        round.handle_commit(pk2, ch2, sig2).unwrap();
+
+        let (commits2, reveals2) = round.progress_counts();
+        assert_eq!(commits2, 2, "should have 2 commits in reveal phase");
+        assert_eq!(reveals2, 0, "no reveals yet");
+    }
+
+    #[test]
+    fn test_progress_counts_after_finalization() {
+        let (sk1, pk1) = gen_node();
+        let (sk2, pk2) = gen_node();
+        let mut round = make_round(&[pk1, pk2], 2, Duration::from_secs(60));
+
+        let (ch1, ent1, sig1) = make_commit(&sk1);
+        let (ch2, ent2, sig2) = make_commit(&sk2);
+        round.handle_commit(pk1, ch1, sig1).unwrap();
+        round.handle_commit(pk2, ch2, sig2).unwrap();
+
+        round.handle_reveal(pk1, ent1, [0u8; 64]).unwrap();
+        round.handle_reveal(pk2, ent2, [0u8; 64]).unwrap();
+
+        let (commits, reveals) = round.progress_counts();
+        assert_eq!(commits, 2, "finalized round shows full commit count");
+        assert_eq!(reveals, 2, "finalized round shows full reveal count");
+    }
+
+    // -------------------------------------------------------------------
+    // Status string
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn test_status_str_all_states() {
+        let (sk1, pk1) = gen_node();
+        let (sk2, pk2) = gen_node();
+
+        // CollectingCommits
+        let mut round = make_round(&[pk1, pk2], 2, Duration::from_secs(60));
+        assert_eq!(round.status_str(), "collecting_commits");
+
+        // CollectingReveals
+        let (ch1, _, sig1) = make_commit(&sk1);
+        let (ch2, _, sig2) = make_commit(&sk2);
+        round.handle_commit(pk1, ch1, sig1).unwrap();
+        round.handle_commit(pk2, ch2, sig2).unwrap();
+        assert_eq!(round.status_str(), "collecting_reveals");
+
+        // Finalized — construct manually
+        let finalized = Round {
+            request_id: [0; 32],
+            selected_nodes: vec![pk1],
+            min_required: 1,
+            state: RoundState::Finalized {
+                randomness: [0xBB; 32],
+            },
+        };
+        assert_eq!(finalized.status_str(), "finalized");
+
+        // Failed
+        let failed = Round {
+            request_id: [0; 32],
+            selected_nodes: vec![pk1],
+            min_required: 1,
+            state: RoundState::Failed {
+                reason: "test".into(),
+            },
+        };
+        assert_eq!(failed.status_str(), "failed");
+    }
+
+    // -------------------------------------------------------------------
+    // handle_commit edge cases
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn test_handle_commit_rejects_non_participant() {
+        let (_, pk1) = gen_node();
+        let (sk_outsider, pk_outsider) = gen_node();
+        let mut round = make_round(&[pk1], 1, Duration::from_secs(60));
+
+        let (ch, _, sig) = make_commit(&sk_outsider);
+        let err = round.handle_commit(pk_outsider, ch, sig);
+        assert!(err.is_err(), "should reject non-participant");
+        assert!(
+            err.unwrap_err().to_string().contains("not a participant"),
+            "error should mention 'not a participant'"
+        );
+    }
+
+    #[test]
+    fn test_handle_commit_rejects_duplicate() {
+        let (sk1, pk1) = gen_node();
+        let (_, pk2) = gen_node();
+        let mut round = make_round(&[pk1, pk2], 2, Duration::from_secs(60));
+
+        let (ch1, _, sig1) = make_commit(&sk1);
+        round.handle_commit(pk1, ch1, sig1).unwrap();
+
+        // Try to commit again with the same node
+        let (ch1b, _, sig1b) = make_commit(&sk1);
+        let err = round.handle_commit(pk1, ch1b, sig1b);
+        assert!(err.is_err(), "should reject duplicate commit");
+        assert!(
+            err.unwrap_err().to_string().contains("already committed"),
+            "error should mention 'already committed'"
+        );
+    }
+
+    #[test]
+    fn test_handle_commit_transitions_to_reveals_when_all_committed() {
+        let (sk1, pk1) = gen_node();
+        let (sk2, pk2) = gen_node();
+        let (sk3, pk3) = gen_node();
+        let mut round = make_round(&[pk1, pk2, pk3], 2, Duration::from_secs(60));
+
+        let (ch1, _, sig1) = make_commit(&sk1);
+        let (ch2, _, sig2) = make_commit(&sk2);
+        let (ch3, _, sig3) = make_commit(&sk3);
+
+        round.handle_commit(pk1, ch1, sig1).unwrap();
+        assert!(
+            matches!(round.state, RoundState::CollectingCommits { .. }),
+            "should stay in CollectingCommits after 1/3"
+        );
+
+        round.handle_commit(pk2, ch2, sig2).unwrap();
+        assert!(
+            matches!(round.state, RoundState::CollectingCommits { .. }),
+            "should stay in CollectingCommits after 2/3"
+        );
+
+        round.handle_commit(pk3, ch3, sig3).unwrap();
+        assert!(
+            matches!(round.state, RoundState::CollectingReveals { .. }),
+            "should transition to CollectingReveals after 3/3"
+        );
+    }
+
+    // -------------------------------------------------------------------
+    // handle_reveal edge cases
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn test_handle_reveal_rejects_wrong_state() {
+        let (_, pk1) = gen_node();
+        let mut round = make_round(&[pk1], 1, Duration::from_secs(60));
+
+        // Round is in CollectingCommits — reveal should fail
+        let entropy = [0x42u8; 32];
+        let err = round.handle_reveal(pk1, entropy, [0u8; 64]);
+        assert!(err.is_err(), "should reject reveal in CollectingCommits state");
+        assert!(
+            err.unwrap_err()
+                .to_string()
+                .contains("not in RevealCollection state"),
+            "error should mention wrong state"
+        );
+    }
+
+    // -------------------------------------------------------------------
+    // Randomness accessor
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn test_randomness_none_before_finalization() {
+        let (_, pk1) = gen_node();
+        let round = make_round(&[pk1], 1, Duration::from_secs(60));
+        assert!(
+            round.randomness().is_none(),
+            "randomness should be None before finalization"
+        );
+    }
+
+    #[test]
+    fn test_randomness_some_after_finalization() {
+        let (sk1, pk1) = gen_node();
+        let mut round = make_round(&[pk1], 1, Duration::from_secs(60));
+
+        let (ch1, ent1, sig1) = make_commit(&sk1);
+        round.handle_commit(pk1, ch1, sig1).unwrap();
+
+        let result = round.handle_reveal(pk1, ent1, [0u8; 64]).unwrap();
+        assert!(result.is_some(), "reveal should finalize with min_required=1");
+
+        let randomness = round.randomness();
+        assert!(randomness.is_some(), "randomness should be Some after finalization");
+        assert_eq!(
+            randomness.unwrap(),
+            result.unwrap(),
+            "randomness accessor should return same value as handle_reveal"
+        );
+    }
+
+    // -------------------------------------------------------------------
+    // Timeout
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn test_check_timeout_triggers_after_deadline() {
+        let (_, pk1) = gen_node();
+        // Create round with zero timeout — already expired
+        let mut round = make_round(&[pk1], 1, Duration::from_millis(0));
+
+        // Spin briefly to ensure Instant::now() is past the deadline
+        std::thread::sleep(Duration::from_millis(5));
+
+        let timed_out = round.check_timeout();
+        assert!(timed_out, "should detect timeout after deadline has passed");
+        assert!(
+            matches!(round.state, RoundState::Failed { .. }),
+            "state should be Failed after timeout"
+        );
+        assert_eq!(round.status_str(), "failed");
+
+        // A non-timed-out round should return false
+        let mut fresh = make_round(&[pk1], 1, Duration::from_secs(3600));
+        assert!(
+            !fresh.check_timeout(),
+            "should not timeout with a long deadline"
+        );
+    }
+}
