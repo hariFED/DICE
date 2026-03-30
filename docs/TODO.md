@@ -139,7 +139,19 @@ DICE does NOT know about your players, your game, or your logic. It only gives y
 
 ---
 
-## Priority 5 — Infrastructure (when ready for mainnet)
+## Priority 5 — Future Enhancements (post-launch)
+
+### Payment
+- [ ] `FeePayer::User` mode — 0.002 SOL fee added to end user's TX instead of developer's channel balance. Zero developer overhead, user pays per request.
+- [ ] Auto-refill channel when balance drops below threshold
+
+### Performance
+- [ ] Geyser plugin detector — replace WebSocket `logsSubscribe` with Geyser gRPC stream for ~100ms detection latency (vs ~500ms WebSocket). Pluggable via `RequestDetector` trait so it's a config change, not a rewrite.
+- [ ] Geyser-as-a-service integration (Helius, Triton) for teams without self-hosted validators
+
+---
+
+## Priority 6 — Infrastructure (when ready for mainnet)
 
 - [ ] Physical PKI: root CA (air-gapped), intermediate CA, device certs
 - [ ] Provisioning scripts: `esptool.py` + `espefuse.py` + `step-ca`
