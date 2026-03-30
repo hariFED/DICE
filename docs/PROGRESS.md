@@ -66,11 +66,11 @@
 
 ---
 
-## What v2.0 (channel design) will change
+## What v2.0 (channel design) changes
 
 See [CHANNEL_DESIGN.md](CHANNEL_DESIGN.md) for full details.
 
-| Current (v1.0) | Proposed (v2.0) |
+| Current (v1.0) | v2.0 |
 |----------------|----------------|
 | New PDAs every round (16 accounts for 7 nodes) | Reusable DiceChannel (1 account, created once) |
 | Coordinator pays ~0.031 SOL/round | Coordinator pays ~0.00003 SOL/round |
@@ -78,6 +78,28 @@ See [CHANNEL_DESIGN.md](CHANNEL_DESIGN.md) for full details.
 | Fixed 7 nodes per round | Developer chooses 4-50 nodes |
 | finalize + callback in 1 TX (reverts if callback fails) | finalize and deliver_callback split (randomness always saved) |
 | Sequence numbers tracked by developer | round_id auto-increments (simpler) |
+| Coordinator selects nodes (centralized) | `select_nodes` instruction uses SlotHashes for on-chain selection |
+
+### v2.0 Implementation Status
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **DiceChannel state** | ✅ | `state/dice_channel.rs` — inline arrays, `reset_for_new_round()`, `space()` |
+| **init_channel** | ✅ | Creates reusable PDA, validates max_nodes 4-50 |
+| **fund_channel** | ✅ | CPI transfer, balance tracking |
+| **request_randomness_v2** | ✅ | Fee deduction, round reset, deadline setting |
+| **submit_commit_v2** | ✅ | Inline storage, duplicate/replay protection |
+| **submit_reveal_v2** | ✅ | Hash verification, phase transition |
+| **finalize_v2** | ✅ | SHA-256 entropy combination, min-reveal check |
+| **deliver_callback** | ✅ | Decoupled from finalize, CPI with remaining_accounts |
+| **withdraw_balance** | ✅ | Idle-only, checked subtraction |
+| **close_channel** | ✅ | Idle + zero balance check, rent refund |
+| **resize_channel** | ✅ | Anchor realloc, re-init arrays |
+| **select_nodes** | ✅ | SlotHashes sysvar, Fisher-Yates shuffle, DeviceRegistry scan |
+| **Coordinator builders** | ✅ | All 12 v2.0 instruction builders in `solana_tx.rs` |
+| **SDK v2.0** | ✅ | Channel PDA helper, CPI builders, decode helpers, types |
+| **IDL + TS types** | ✅ | Updated with all v2.0 instructions + DiceChannel account |
+| **TypeScript tests** | ✅ | `tests/dice_v2.ts` — 12 tests covering full channel lifecycle |
 
 ---
 

@@ -26,7 +26,7 @@ pub enum DiceError {
     #[msg("Node is not authorized for this round")]
     UnauthorizedNode,
 
-    #[msg("Invalid node count: must be between 5 and 7")]
+    #[msg("Invalid node count: must be between 4 and 50")]
     InvalidNodeCount,
 
     #[msg("Round has already been finalized")]

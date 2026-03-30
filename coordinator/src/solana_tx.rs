@@ -42,6 +42,10 @@ const DISC_SUBMIT_COMMIT_V2:    [u8; 8] = [ 21, 253, 125, 167, 234, 224, 182, 14
 const DISC_SUBMIT_REVEAL_V2:    [u8; 8] = [201,  26,  38, 149, 248, 104, 142,   7];
 const DISC_FINALIZE_V2:         [u8; 8] = [101, 248,  68,  53,  48, 110, 126, 211];
 const DISC_DELIVER_CALLBACK:    [u8; 8] = [ 75, 178,  82, 149, 119,  28,  57, 254];
+const DISC_WITHDRAW_BALANCE:   [u8; 8] = [140,  79,  65,  53,  68,  73, 241, 211];
+const DISC_CLOSE_CHANNEL:      [u8; 8] = [  0, 104,  36,   1,  66,   0, 103, 157];
+const DISC_RESIZE_CHANNEL:     [u8; 8] = [ 44, 224, 158,  10, 139, 248,  77,  22];
+const DISC_SELECT_NODES:       [u8; 8] = [ 45, 118, 200,  26, 149,  67, 185,   1];
 
 /// Shared context for on-chain transaction submission.
 /// `None` means on-chain txs are disabled (pure in-memory simulation).
@@ -420,6 +424,124 @@ pub fn build_finalize_v2_ix(
             AccountMeta::new_readonly(*coordinator, true),
             AccountMeta::new(channel, false),
         ],
+        data,
+    }
+}
+
+/// Build `deliver_callback` instruction.
+///
+/// `remaining_accounts` should contain the callback program as the first entry,
+/// followed by any additional accounts the callback needs.
+pub fn build_deliver_callback_ix(
+    program_id: &Pubkey,
+    coordinator: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    round_id: u64,
+    remaining_accounts: Vec<AccountMeta>,
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_DELIVER_CALLBACK.to_vec();
+    data.extend_from_slice(&round_id.to_le_bytes());
+
+    let mut accounts = vec![
+        AccountMeta::new_readonly(*coordinator, true),
+        AccountMeta::new(channel, false),
+    ];
+    accounts.extend(remaining_accounts);
+
+    Instruction {
+        program_id: *program_id,
+        accounts,
+        data,
+    }
+}
+
+/// Build `withdraw_balance` instruction.
+pub fn build_withdraw_balance_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    amount: u64,
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_WITHDRAW_BALANCE.to_vec();
+    data.extend_from_slice(&amount.to_le_bytes());
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new(*authority, true),
+            AccountMeta::new(channel, false),
+        ],
+        data,
+    }
+}
+
+/// Build `close_channel` instruction.
+pub fn build_close_channel_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new(*authority, true),
+            AccountMeta::new(channel, false),
+        ],
+        data: DISC_CLOSE_CHANNEL.to_vec(),
+    }
+}
+
+/// Build `resize_channel` instruction.
+pub fn build_resize_channel_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    new_max_nodes: u8,
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_RESIZE_CHANNEL.to_vec();
+    data.push(new_max_nodes);
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new(*authority, true),
+            AccountMeta::new(channel, false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
+        data,
+    }
+}
+
+/// Build `select_nodes` instruction.
+///
+/// `device_registry_accounts` are passed as remaining accounts for on-chain selection.
+pub fn build_select_nodes_ix(
+    program_id: &Pubkey,
+    coordinator: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    round_id: u64,
+    device_registry_accounts: Vec<Pubkey>,
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = DISC_SELECT_NODES.to_vec();
+    data.extend_from_slice(&round_id.to_le_bytes());
+
+    let mut accounts = vec![
+        AccountMeta::new_readonly(*coordinator, true),
+        AccountMeta::new(channel, false),
+    ];
+    // Pass all DeviceRegistry PDAs as remaining_accounts (read-only)
+    for registry in &device_registry_accounts {
+        accounts.push(AccountMeta::new_readonly(*registry, false));
+    }
+
+    Instruction {
+        program_id: *program_id,
+        accounts,
         data,
     }
 }

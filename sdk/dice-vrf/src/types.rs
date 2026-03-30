@@ -62,6 +62,46 @@ pub struct DiceConfig {
     pub payment_model: PaymentModel,
 }
 
+/// The lifecycle status of a DiceChannel (v2.0).
+///
+/// Mirrors `programs/dice/src/state/dice_channel.rs::ChannelStatus`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ChannelStatus {
+    /// Ready for a new request.
+    Idle,
+    /// Request submitted, waiting for commits.
+    Pending,
+    /// At least one commit received.
+    CommitPhase,
+    /// All commits received, waiting for reveals.
+    RevealPhase,
+    /// Randomness computed and written. Awaiting callback delivery.
+    Finalized,
+    /// Round failed (timeout or insufficient nodes).
+    Failed,
+}
+
+/// A view of a `DiceChannel` account fetched from the chain (v2.0).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiceChannelInfo {
+    /// The PDA address of this channel.
+    pub channel_address: Pubkey,
+    /// Channel owner.
+    pub authority: Pubkey,
+    /// Index for multiple channels per developer.
+    pub channel_index: u16,
+    /// Maximum nodes this channel supports.
+    pub max_nodes: u8,
+    /// Current lifecycle status.
+    pub status: ChannelStatus,
+    /// Current round ID.
+    pub round_id: u64,
+    /// Prepaid fee balance in lamports.
+    pub balance: u64,
+    /// The 32-byte randomness from the last finalized round.
+    pub randomness: Option<[u8; 32]>,
+}
+
 /// Controls who funds the 0.002 SOL per-request fee.
 #[derive(Debug, Clone)]
 pub enum PaymentModel {

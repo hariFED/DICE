@@ -62,13 +62,18 @@ const DASHBOARD_HTML: &str = r#"<!DOCTYPE html>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Courier New', monospace; background: #0d0d0d; color: #e0e0e0; padding: 2rem; }
     h1 { color: #00ff88; font-size: 1.6rem; margin-bottom: 0.25rem; }
-    .subtitle { color: #555; font-size: 0.85rem; margin-bottom: 2rem; }
+    .subtitle { color: #555; font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .version-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-bottom: 1.5rem; background: #002211; color: #00ff88; border: 1px solid #004422; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
     .card { border: 1px solid #1e1e1e; background: #111; padding: 1.25rem; border-radius: 6px; }
     .card h2 { color: #aaa; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
     .card.full { grid-column: 1 / -1; }
     .stat { font-size: 2.5rem; color: #00ff88; font-weight: bold; }
+    .stat-sm { font-size: 1.8rem; color: #00ff88; font-weight: bold; }
     .stat-label { color: #555; font-size: 0.75rem; margin-top: 0.25rem; }
+    .stat-accent { color: #ffaa00; }
     table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
     th { color: #555; text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid #1e1e1e; font-weight: normal; }
     td { padding: 0.4rem 0.5rem; border-bottom: 1px solid #1a1a1a; }
@@ -81,6 +86,7 @@ const DASHBOARD_HTML: &str = r#"<!DOCTYPE html>
     .pill-warn { background: #332200; color: #ffaa00; border: 1px solid #553300; }
     .pill-fail { background: #330011; color: #ff4444; border: 1px solid #550022; }
     .pill-pending { background: #1a1a2e; color: #8888ff; border: 1px solid #2a2a5e; }
+    .pill-idle { background: #1a1a1a; color: #666; border: 1px solid #333; }
     button {
       background: #00ff88; color: #000; border: none; padding: 0.5rem 1.25rem;
       cursor: pointer; font-family: monospace; font-size: 0.9rem; border-radius: 4px;
@@ -94,53 +100,166 @@ const DASHBOARD_HTML: &str = r#"<!DOCTYPE html>
     .ticker { position: fixed; top: 1rem; right: 1.5rem; font-size: 0.7rem; color: #333; }
     .ticker.live { color: #00ff44; }
     .empty { color: #333; font-style: italic; padding: 0.5rem 0; font-size: 0.8rem; }
+    .section-title { color: #555; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.75rem; margin-top: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1a1a1a; }
+    /* Pipeline visualization */
+    .pipeline { display: flex; align-items: center; gap: 0; margin: 1rem 0; }
+    .pipeline-step { flex: 1; text-align: center; padding: 0.6rem 0.25rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid #1e1e1e; position: relative; }
+    .pipeline-step.active { background: #002211; color: #00ff88; border-color: #004422; }
+    .pipeline-step.done { background: #001a0e; color: #007744; border-color: #003322; }
+    .pipeline-step.waiting { background: #111; color: #333; }
+    .pipeline-step.failed { background: #1a0008; color: #ff4444; border-color: #330011; }
+    .pipeline-arrow { color: #333; font-size: 0.8rem; padding: 0 0.15rem; flex-shrink: 0; }
+    .pipeline-arrow.active { color: #00ff88; }
+    /* Progress bar */
+    .progress-wrap { background: #1a1a1a; border-radius: 4px; height: 6px; margin-top: 0.5rem; overflow: hidden; }
+    .progress-bar { height: 100%; background: #00ff88; border-radius: 4px; transition: width 0.3s; }
+    .progress-bar.warn { background: #ffaa00; }
+    /* Cost ticker */
+    .cost-saved { color: #00ff88; font-size: 0.75rem; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
-  <h1>⚡ DICE Coordinator</h1>
-  <p class="subtitle">Distributed Infrastructure for Cryptographic Entropy — Simulation Dashboard</p>
-  <div class="ticker" id="ticker">○ connecting...</div>
+  <h1>DICE Coordinator</h1>
+  <p class="subtitle">Distributed Infrastructure for Cryptographic Entropy</p>
+  <div class="version-badge">v2.0 CHANNEL DESIGN</div>
+  <div class="ticker" id="ticker">connecting...</div>
 
-  <div class="grid">
+  <!-- Top stats row -->
+  <div class="grid-4">
     <div class="card">
       <h2>Nodes Online</h2>
-      <div class="stat" id="stat-nodes">—</div>
+      <div class="stat-sm" id="stat-nodes">--</div>
       <div class="stat-label">connected via WebSocket</div>
     </div>
     <div class="card">
       <h2>Rounds Completed</h2>
-      <div class="stat" id="stat-rounds">—</div>
-      <div class="stat-label">in this session</div>
+      <div class="stat-sm" id="stat-rounds">--</div>
+      <div class="stat-label">finalized this session</div>
+    </div>
+    <div class="card">
+      <h2>Success Rate</h2>
+      <div class="stat-sm" id="stat-success">--</div>
+      <div class="stat-label">finalized / total</div>
+    </div>
+    <div class="card">
+      <h2>SOL Saved (v2)</h2>
+      <div class="stat-sm stat-accent" id="stat-saved">--</div>
+      <div class="stat-label">vs v1.0 per-PDA model</div>
     </div>
   </div>
 
+  <!-- Round lifecycle pipeline -->
+  <div class="section-title">Round Lifecycle Pipeline</div>
   <div class="card" style="margin-bottom:1.5rem">
-    <h2>Connected Nodes</h2>
-    <div id="nodes-body"><p class="empty">No nodes connected yet</p></div>
+    <div class="pipeline" id="pipeline">
+      <div class="pipeline-step waiting" id="pipe-idle">Idle</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step waiting" id="pipe-request">Request</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step waiting" id="pipe-select">Select Nodes</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step waiting" id="pipe-commit">Commits</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step waiting" id="pipe-reveal">Reveals</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step waiting" id="pipe-finalize">Finalize</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step waiting" id="pipe-callback">Callback</div>
+    </div>
+    <div class="grid" style="margin-top:1rem;margin-bottom:0">
+      <div>
+        <span style="color:#555;font-size:0.7rem">COMMITS</span>
+        <div style="display:flex;align-items:center;gap:0.5rem">
+          <span style="font-size:1rem;color:#00ff88" id="commit-count">0/0</span>
+          <div class="progress-wrap" style="flex:1"><div class="progress-bar" id="commit-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div>
+        <span style="color:#555;font-size:0.7rem">REVEALS</span>
+        <div style="display:flex;align-items:center;gap:0.5rem">
+          <span style="font-size:1rem;color:#00ff88" id="reveal-count">0/0</span>
+          <div class="progress-wrap" style="flex:1"><div class="progress-bar" id="reveal-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <!-- Connected nodes -->
+  <div class="section-title">Connected Nodes</div>
   <div class="card" style="margin-bottom:1.5rem">
-    <h2>Simulate Round</h2>
+    <div id="nodes-body"><p class="empty">No nodes connected yet -- start mock-firmware-node</p></div>
+  </div>
+
+  <!-- Simulate -->
+  <div class="section-title">Simulation</div>
+  <div class="card" style="margin-bottom:1.5rem">
+    <h2>Trigger Round</h2>
     <p style="color:#666;font-size:0.8rem;margin-bottom:0.5rem">
-      Dispatches a JobAssignment to all connected nodes and runs the commit-reveal protocol.
+      Dispatches a JobAssignment to connected nodes. Uses v2.0 channel design -- no new PDAs created per round.
     </p>
-    <button id="sim-btn" onclick="simulate()">▶ POST /simulate</button>
+    <button id="sim-btn" onclick="simulate()">POST /simulate</button>
     <div id="sim-result"></div>
   </div>
 
+  <!-- Recent rounds -->
+  <div class="section-title">Recent Rounds</div>
   <div class="card">
-    <h2>Recent Rounds</h2>
-    <div id="rounds-body"><p class="empty">No rounds yet — click Simulate Round above</p></div>
+    <div id="rounds-body"><p class="empty">No rounds yet -- click Simulate Round above</p></div>
   </div>
 
   <script>
-    let roundCount = 0;
+    const COST_V1_PER_ROUND = 0.036;
+    const COST_V2_PER_ROUND = 0.002;
 
     function pillClass(status) {
       if (status === 'finalized') return 'pill-ok';
       if (status === 'failed') return 'pill-fail';
       if (status === 'collecting_commits' || status === 'collecting_reveals') return 'pill-pending';
       return 'pill-warn';
+    }
+
+    function updatePipeline(latestRound) {
+      const steps = ['pipe-idle','pipe-request','pipe-select','pipe-commit','pipe-reveal','pipe-finalize','pipe-callback'];
+      const arrows = document.querySelectorAll('.pipeline-arrow');
+      steps.forEach(id => { document.getElementById(id).className = 'pipeline-step waiting'; });
+      arrows.forEach(a => a.className = 'pipeline-arrow');
+
+      if (!latestRound) {
+        document.getElementById('pipe-idle').className = 'pipeline-step active';
+        return;
+      }
+
+      const s = latestRound.status;
+      const stageMap = {
+        'collecting_commits': 3,
+        'collecting_reveals': 4,
+        'finalized': 6,
+        'failed': -1
+      };
+      const stage = stageMap[s] ?? 1;
+
+      if (stage === -1) {
+        steps.forEach(id => { document.getElementById(id).className = 'pipeline-step failed'; });
+        return;
+      }
+
+      for (let i = 0; i < steps.length; i++) {
+        const el = document.getElementById(steps[i]);
+        if (i < stage) { el.className = 'pipeline-step done'; }
+        else if (i === stage) { el.className = 'pipeline-step active'; }
+      }
+      for (let i = 0; i < arrows.length; i++) {
+        if (i < stage) arrows[i].className = 'pipeline-arrow active';
+      }
+
+      // Update commit/reveal counts
+      const nc = latestRound.node_count || 0;
+      const cc = latestRound.commits_received || 0;
+      const rc = latestRound.reveals_received || 0;
+      document.getElementById('commit-count').textContent = cc + '/' + nc;
+      document.getElementById('reveal-count').textContent = rc + '/' + nc;
+      document.getElementById('commit-bar').style.width = nc ? (cc/nc*100)+'%' : '0%';
+      document.getElementById('reveal-bar').style.width = nc ? (rc/nc*100)+'%' : '0%';
     }
 
     async function refresh() {
@@ -152,17 +271,28 @@ const DASHBOARD_HTML: &str = r#"<!DOCTYPE html>
         const rounds = rd.rounds || [];
 
         document.getElementById('stat-nodes').textContent = nodes.length;
-        const done = rounds.filter(r => r.status === 'finalized' || r.status === 'failed').length;
-        document.getElementById('stat-rounds').textContent = done;
+        const finalized = rounds.filter(r => r.status === 'finalized').length;
+        const total = rounds.filter(r => r.status === 'finalized' || r.status === 'failed').length;
+        document.getElementById('stat-rounds').textContent = finalized;
+        document.getElementById('stat-success').textContent = total > 0 ? Math.round(finalized/total*100) + '%' : '--';
 
+        // Cost savings vs v1.0
+        const saved = finalized * (COST_V1_PER_ROUND - COST_V2_PER_ROUND);
+        document.getElementById('stat-saved').textContent = saved > 0 ? saved.toFixed(3) + ' SOL' : '--';
+
+        // Pipeline
+        const latest = rounds.length > 0 ? rounds[0] : null;
+        updatePipeline(latest);
+
+        // Nodes table
         if (nodes.length === 0) {
-          document.getElementById('nodes-body').innerHTML = '<p class="empty">No nodes connected yet — start mock-firmware-node</p>';
+          document.getElementById('nodes-body').innerHTML = '<p class="empty">No nodes connected yet -- start mock-firmware-node</p>';
         } else {
           document.getElementById('nodes-body').innerHTML =
             '<table><thead><tr><th>Node ID</th><th>Latency</th><th>Uptime</th><th>Jobs</th><th>Connected</th></tr></thead><tbody>' +
             nodes.map(n =>
               `<tr>
-                <td class="mono">${n.node_id.substring(0,20)}…</td>
+                <td class="mono">${n.node_id.substring(0,20)}...</td>
                 <td>${n.latency_ms} ms</td>
                 <td>${n.uptime_secs} s</td>
                 <td>${n.jobs_completed}</td>
@@ -171,25 +301,28 @@ const DASHBOARD_HTML: &str = r#"<!DOCTYPE html>
             ).join('') + '</tbody></table>';
         }
 
+        // Rounds table
         if (rounds.length === 0) {
           document.getElementById('rounds-body').innerHTML = '<p class="empty">No rounds yet</p>';
         } else {
           document.getElementById('rounds-body').innerHTML =
-            '<table><thead><tr><th>Request ID</th><th>Status</th><th>Nodes</th><th>Randomness</th></tr></thead><tbody>' +
-            rounds.map(r =>
-              `<tr>
-                <td class="mono">${r.request_id.substring(0,20)}…</td>
+            '<table><thead><tr><th>Request ID</th><th>Status</th><th>Nodes</th><th>Time</th><th>Randomness</th></tr></thead><tbody>' +
+            rounds.map(r => {
+              const elapsed = r.elapsed_ms < 1000 ? r.elapsed_ms+'ms' : (r.elapsed_ms/1000).toFixed(1)+'s';
+              return `<tr>
+                <td class="mono">${r.request_id.substring(0,16)}...</td>
                 <td><span class="pill ${pillClass(r.status)}">${r.status}</span></td>
                 <td>${r.node_count}</td>
-                <td class="mono">${r.randomness ? r.randomness.substring(0,24)+'…' : '—'}</td>
-              </tr>`
-            ).join('') + '</tbody></table>';
+                <td>${elapsed}</td>
+                <td class="mono">${r.randomness ? r.randomness.substring(0,20)+'...' : '--'}</td>
+              </tr>`;
+            }).join('') + '</tbody></table>';
         }
 
-        document.getElementById('ticker').textContent = '● live  ' + new Date().toLocaleTimeString();
+        document.getElementById('ticker').textContent = 'LIVE  ' + new Date().toLocaleTimeString();
         document.getElementById('ticker').className = 'ticker live';
       } catch(e) {
-        document.getElementById('ticker').textContent = '○ offline';
+        document.getElementById('ticker').textContent = 'OFFLINE';
         document.getElementById('ticker').className = 'ticker';
       }
     }
@@ -197,7 +330,7 @@ const DASHBOARD_HTML: &str = r#"<!DOCTYPE html>
     async function simulate() {
       const btn = document.getElementById('sim-btn');
       btn.disabled = true;
-      btn.textContent = '⏳ dispatching...';
+      btn.textContent = 'dispatching...';
       document.getElementById('sim-result').innerHTML = '';
       try {
         const resp = await fetch('/simulate', { method: 'POST' });
@@ -215,7 +348,7 @@ const DASHBOARD_HTML: &str = r#"<!DOCTYPE html>
           `<span style="color:#ff4444">Network error: ${e.message}</span>`;
       } finally {
         btn.disabled = false;
-        btn.textContent = '▶ POST /simulate';
+        btn.textContent = 'POST /simulate';
       }
     }
 
@@ -248,10 +381,13 @@ async fn list_rounds(State(state): State<AppState>) -> Response {
     let mut items: Vec<serde_json::Value> = map
         .values()
         .map(|entry| {
+            let (commits_received, reveals_received) = entry.round.progress_counts();
             json!({
                 "request_id": hex::encode(entry.round.request_id),
                 "status": entry.round.status_str(),
                 "node_count": entry.round.selected_nodes.len(),
+                "commits_received": commits_received,
+                "reveals_received": reveals_received,
                 "randomness": entry.round.randomness().map(hex::encode),
                 "elapsed_ms": entry.started_at.elapsed().as_millis() as u64,
             })

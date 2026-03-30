@@ -306,6 +306,16 @@ impl Round {
         }
     }
 
+    /// Return (commits_received, reveals_received) for progress tracking.
+    pub fn progress_counts(&self) -> (usize, usize) {
+        match &self.state {
+            RoundState::CollectingCommits { commits, .. } => (commits.len(), 0),
+            RoundState::CollectingReveals { commits, reveals, .. } => (commits.len(), reveals.len()),
+            RoundState::Finalized { .. } => (self.selected_nodes.len(), self.selected_nodes.len()),
+            RoundState::Failed { .. } => (0, 0),
+        }
+    }
+
     /// Extract the final randomness value, if the round is finalized.
     pub fn randomness(&self) -> Option<[u8; 32]> {
         match &self.state {

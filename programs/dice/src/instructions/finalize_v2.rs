@@ -19,7 +19,7 @@ pub struct FinalizeV2<'info> {
 }
 
 pub fn handler(ctx: Context<FinalizeV2>, round_id: u64) -> Result<()> {
-    let clock = Clock::get()?;
+    let _clock = Clock::get()?;
     let channel = &mut ctx.accounts.channel;
 
     // Validate round_id

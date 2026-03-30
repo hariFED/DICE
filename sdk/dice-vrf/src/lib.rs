@@ -13,7 +13,7 @@ pub mod client;
 // ── Public re-exports ────────────────────────────────────────────────────────
 
 pub use accounts::DiceVrfAccounts;
-pub use types::{DiceConfig, DiceVrfError, PaymentModel, RandomnessRequestInfo, RequestStatus};
+pub use types::{ChannelStatus, DiceChannelInfo, DiceConfig, DiceVrfError, PaymentModel, RandomnessRequestInfo, RequestStatus};
 pub use pda::*;
 
 #[cfg(feature = "client")]

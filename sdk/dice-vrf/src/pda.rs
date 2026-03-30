@@ -11,6 +11,7 @@ pub const SEED_COMMIT:  &[u8] = b"commit";
 pub const SEED_REVEAL:  &[u8] = b"reveal";
 pub const SEED_RESULT:  &[u8] = b"result";
 pub const SEED_ESCROW:  &[u8] = b"escrow";
+pub const SEED_CHANNEL: &[u8] = b"channel";
 
 /// Derive the `DeviceRegistry` PDA for a given ESP32-S3 device public key.
 ///
@@ -132,6 +133,26 @@ pub fn escrow_pda(
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[SEED_ESCROW, requester.as_ref(), &sequence.to_le_bytes()],
+        program_id,
+    )
+}
+
+// ── v2.0 Channel PDA ────────────────────────────────────────────────────────
+
+/// Derive the `DiceChannel` PDA for a given authority and channel index.
+///
+/// A DiceChannel is a persistent, reusable account that holds everything for
+/// one randomness round at a time. The developer creates it once with
+/// `init_channel` and reuses it for every request — no new PDAs per round.
+///
+/// Seeds: `["channel", authority, &channel_index.to_le_bytes()]`
+pub fn channel_pda(
+    authority: &Pubkey,
+    channel_index: u16,
+    program_id: &Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[SEED_CHANNEL, authority.as_ref(), &channel_index.to_le_bytes()],
         program_id,
     )
 }

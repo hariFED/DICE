@@ -77,6 +77,115 @@ pub fn dice_callback_discriminator() -> [u8; 8] {
     instruction_discriminator("dice_callback")
 }
 
+// ── v2.0 Channel CPI helpers ────────────────────────────────────────────────
+
+/// Build the `init_channel` CPI instruction (v2.0).
+///
+/// Creates a reusable DiceChannel PDA. Developer pays rent once.
+pub fn init_channel_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    max_nodes: u8,
+    callback_program_id: &Pubkey,
+) -> Instruction {
+    let (channel, _) = crate::pda::channel_pda(authority, channel_index, program_id);
+    let mut data = Vec::with_capacity(51);
+    data.extend_from_slice(&instruction_discriminator("init_channel"));
+    data.extend_from_slice(&channel_index.to_le_bytes());
+    data.push(max_nodes);
+    data.extend_from_slice(callback_program_id.as_ref());
+
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            solana_sdk::instruction::AccountMeta::new(*authority, true),
+            solana_sdk::instruction::AccountMeta::new(channel, false),
+            solana_sdk::instruction::AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        ],
+        data,
+    }
+}
+
+/// Build the `fund_channel` CPI instruction (v2.0).
+pub fn fund_channel_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    amount: u64,
+) -> Instruction {
+    let (channel, _) = crate::pda::channel_pda(authority, channel_index, program_id);
+    let mut data = Vec::with_capacity(16);
+    data.extend_from_slice(&instruction_discriminator("fund_channel"));
+    data.extend_from_slice(&amount.to_le_bytes());
+
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            solana_sdk::instruction::AccountMeta::new(*authority, true),
+            solana_sdk::instruction::AccountMeta::new(channel, false),
+            solana_sdk::instruction::AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        ],
+        data,
+    }
+}
+
+/// Build the `request_randomness_v2` CPI instruction (v2.0).
+///
+/// Resets the channel, deducts fee from prepaid balance.
+pub fn request_randomness_v2_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    node_count: u8,
+) -> Instruction {
+    let (channel, _) = crate::pda::channel_pda(authority, channel_index, program_id);
+    let mut data = Vec::with_capacity(9);
+    data.extend_from_slice(&instruction_discriminator("request_randomness_v2"));
+    data.push(node_count);
+
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            solana_sdk::instruction::AccountMeta::new(*authority, true),
+            solana_sdk::instruction::AccountMeta::new(channel, false),
+        ],
+        data,
+    }
+}
+
+/// Decode the channel status and randomness from a raw `DiceChannel` account.
+///
+/// Returns `Some(randomness)` if the channel has been finalized, `None` otherwise.
+///
+/// DiceChannel layout (relevant offsets):
+/// ```text
+/// [0..8]     discriminator
+/// [8..40]    authority
+/// [40..42]   channel_index
+/// [42]       max_nodes
+/// [43]       status (0=Idle, 1=Pending, 2=CommitPhase, 3=RevealPhase, 4=Finalized, 5=Failed)
+/// [44..52]   round_id
+/// ...
+/// [111..143] randomness [u8; 32]
+/// ```
+pub fn decode_channel_randomness(account_data: &[u8]) -> Option<[u8; 32]> {
+    if account_data.len() < 143 {
+        return None;
+    }
+    // Status byte at offset 43
+    let status = account_data[43];
+    // Status 4 = Finalized, Status 0 = Idle (callback delivered, result available)
+    if status != 4 && status != 0 {
+        return None;
+    }
+    let randomness: [u8; 32] = account_data[111..143].try_into().ok()?;
+    if randomness == [0u8; 32] {
+        return None;
+    }
+    Some(randomness)
+}
+
 // ── Off-chain decode helper ──────────────────────────────────────────────────
 
 /// Decode the final randomness value from the raw bytes of a

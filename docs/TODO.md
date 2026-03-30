@@ -24,15 +24,15 @@
 **Why:** The coordinator currently picks which nodes participate. A compromised coordinator could select colluding nodes. Moving selection on-chain makes it trustless.
 
 **What to build:**
-- [ ] New `select_nodes` instruction in the smart contract
+- [x] New `select_nodes` instruction in the smart contract
   - Reads `SlotHashes` sysvar for unpredictable seed
-  - `seed = SHA-256(slot_hash || request_id || block_height)`
-  - Deterministically selects N nodes from registered DeviceRegistry accounts
-  - Writes selection to `RandomnessRequest.selected_nodes`
+  - `seed = SHA-256(slot_hash || channel_key || round_id || block_height)`
+  - Deterministically selects N nodes from registered DeviceRegistry accounts via Fisher-Yates shuffle
+  - Writes selection to `DiceChannel.device_ids` and `DiceChannel.device_pubkeys`
   - All DeviceRegistry PDAs passed as `remaining_accounts`
 - [ ] Update coordinator to call `select_nodes` on-chain before dispatching jobs
-- [ ] `submit_commit` already checks `selected_nodes` — no change needed there
-- [ ] Add TypeScript test for `select_nodes`
+- [x] Coordinator instruction builder for `select_nodes` (`build_select_nodes_ix`)
+- [ ] Add TypeScript test for `select_nodes` (needs local validator with SlotHashes)
 - [ ] Redeploy to devnet
 
 **Design validated:** SlotHashes sysvar is accessible on-chain, gives 512 recent slot hashes that no one can predict. Combined with existing ECDSA + commit-reveal protections, this makes the system robust even against a fully compromised coordinator.

@@ -147,6 +147,17 @@ pub mod dice {
         instructions::resize_channel::handler(ctx, new_max_nodes)
     }
 
+    /// On-chain verifiable node selection using SlotHashes sysvar.
+    /// Deterministically selects `channel.node_count` nodes from registered DeviceRegistry
+    /// accounts passed as remaining_accounts. Uses SHA-256(slot_hash || channel || round_id || block_height)
+    /// as seed for Fisher-Yates shuffle — no one can predict or manipulate the selection.
+    pub fn select_nodes<'info>(
+        ctx: Context<'_, '_, 'info, 'info, SelectNodes<'info>>,
+        round_id: u64,
+    ) -> Result<()> {
+        instructions::select_nodes::handler(ctx, round_id)
+    }
+
     // ── v1.0 Legacy instructions (kept for backwards compatibility) ──────
 
     /// Add lamports to an existing escrow account.
