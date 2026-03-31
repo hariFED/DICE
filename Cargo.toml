@@ -2,6 +2,7 @@
 members = [
     "coordinator",
     "programs/dice",
+    "programs/coin-toss",
     "sdk/dice-vrf",
     "sdk/dice-vrf-macros",
     "tests/harness/mock_firmware_node",

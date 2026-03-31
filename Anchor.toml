@@ -7,9 +7,11 @@ skip-lint = false
 
 [programs.localnet]
 dice = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+coin_toss = "3oJL6bXFaVJhegSU2ah9y1zqGmbFZZu4peQwr9XmfUtn"
 
 [programs.devnet]
 dice = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+coin_toss = "3oJL6bXFaVJhegSU2ah9y1zqGmbFZZu4peQwr9XmfUtn"
 
 [registry]
 url = "https://api.apr.dev"
