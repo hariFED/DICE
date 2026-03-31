@@ -18,6 +18,8 @@
 #include "heartbeat.h"
 #include "commit_reveal.h"
 #include "dice_protocol.h"
+#include "captive_portal.h"
+#include "led_status.h"
 
 static const char *TAG = "dice_main";
 
@@ -135,8 +137,18 @@ static void wifi_init_sta(void)
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "WiFi connected");
     } else if (bits & WIFI_FAIL_BIT) {
-        ESP_LOGE(TAG, "WiFi connection failed — halting");
-        abort();
+        ESP_LOGE(TAG, "WiFi connection failed — clearing credentials and rebooting into setup mode");
+        /* Clear WiFi creds so next boot enters captive portal */
+        nvs_handle_t nvs;
+        if (nvs_open("dice", NVS_READWRITE, &nvs) == ESP_OK) {
+            nvs_erase_key(nvs, "wifi_ssid");
+            nvs_erase_key(nvs, "wifi_pass");
+            nvs_commit(nvs);
+            nvs_close(nvs);
+        }
+        dice_led_set(LED_STATUS_ERROR);
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        esp_restart();
     } else {
         ESP_LOGE(TAG, "Unexpected WiFi event bits: 0x%lx", (unsigned long)bits);
         abort();
@@ -203,9 +215,6 @@ void app_main(void)
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
         err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        /* NVS partition was truncated/changed — erase and re-init.
-         * Note: this should not happen in production (Flash Encryption
-         * is enabled), but we handle it defensively. */
         ESP_LOGW(TAG, "NVS partition issue (%s), erasing and reinitialising",
                  esp_err_to_name(err));
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -215,11 +224,31 @@ void app_main(void)
     ESP_LOGI(TAG, "NVS flash initialised");
 
     /* ----------------------------------------------------------------
+     * 1b. Initialize LED status indicators
+     * -------------------------------------------------------------- */
+    dice_led_init();
+
+    /* ----------------------------------------------------------------
+     * 1c. First-boot detection — if not provisioned, start captive portal
+     *     This blocks until the user configures WiFi via the web UI.
+     *     After config is saved, the device reboots into normal mode.
+     * -------------------------------------------------------------- */
+    if (!dice_is_provisioned()) {
+        ESP_LOGI(TAG, "Device not provisioned — starting captive portal");
+        dice_captive_portal_start();
+        /* Never reaches here — captive_portal_start blocks until reboot */
+    }
+    ESP_LOGI(TAG, "Device is provisioned — normal boot");
+
+    /* ----------------------------------------------------------------
      * 2. Initialise crypto (loads device key from NVS)
      *    Done before WiFi so the key is in RAM before network is up.
      * -------------------------------------------------------------- */
+    dice_led_set(LED_STATUS_CONNECTING);
+
     if (!dice_crypto_init()) {
         ESP_LOGE(TAG, "Crypto init FAILED — halting");
+        dice_led_set(LED_STATUS_ERROR);
         abort();
     }
     ESP_LOGI(TAG, "Crypto initialised");
@@ -229,6 +258,7 @@ void app_main(void)
      * -------------------------------------------------------------- */
     if (!dice_entropy_selftest()) {
         ESP_LOGE(TAG, "Entropy self-test FAILED — halting");
+        dice_led_set(LED_STATUS_ERROR);
         abort();
     }
 
@@ -260,9 +290,11 @@ void app_main(void)
      * -------------------------------------------------------------- */
     if (!dice_ws_connect(coord_uri, on_message)) {
         ESP_LOGE(TAG, "WebSocket connect failed — halting");
+        dice_led_set(LED_STATUS_ERROR);
         abort();
     }
     ESP_LOGI(TAG, "WebSocket client started");
+    dice_led_set(LED_STATUS_ONLINE);
 
     /* ----------------------------------------------------------------
      * 7. Start heartbeat timer

@@ -60,3 +60,13 @@ CONFIG_LOG_DEFAULT_LEVEL=3
 # Stack canaries and heap corruption detection
 CONFIG_ESP_SYSTEM_USE_EH_FRAME=n
 CONFIG_HEAP_CORRUPTION_DETECTION=y
+
+# HTTP server for captive portal setup page
+CONFIG_HTTPD_MAX_REQ_HDR_LEN=1024
+CONFIG_HTTPD_MAX_URI_LEN=512
+
+# WiFi AP mode for captive portal (SoftAP + Station)
+CONFIG_ESP_WIFI_SOFTAP_SUPPORT=y
+
+# LED strip (WS2812 on GPIO48 for ESP32-S3-N16R8)
+CONFIG_LED_STRIP_ENABLED=y
