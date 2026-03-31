@@ -14,6 +14,9 @@ mod solana_watcher;
 mod solana_ws;
 mod state_machine;
 
+#[cfg(test)]
+mod integration_tests;
+
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
 use anyhow::{Context, Result};
