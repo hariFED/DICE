@@ -127,8 +127,8 @@ pub fn handler(
 
     require!(compressed == device_pubkey, DiceError::InvalidSignature);
 
-    // Record the reveal (drop req borrow first to avoid conflict)
-    drop(req);
+    // Record the reveal (release req reference to avoid borrow conflict)
+    let _ = req;
 
     let reveal = &mut ctx.accounts.reveal_record;
     reveal.request = request_key;

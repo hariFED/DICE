@@ -27,24 +27,19 @@ use crate::{
 /// SHA-256("account:DiceChannel")[0..8]
 const DICE_CHANNEL_DISC: [u8; 8] = [13, 92, 61, 143, 179, 94, 32, 52];
 
-/// DiceChannel status field offset:
-///   8 (disc) + 32 (authority) + 2 (channel_index) + 1 (max_nodes) = 43
-const CHANNEL_STATUS_OFFSET: usize = 43;
+/// DiceChannel layout offsets (must match programs/dice/src/state/dice_channel.rs):
+///   8 (disc) + 32 (authority) + 32 (coordinator) + 2 (channel_index) + 1 (max_nodes)
+///   + 1 (status) + 8 (round_id) + 1 (node_count) + ...
+const AUTHORITY_OFFSET: usize = 8;
+const COORDINATOR_OFFSET: usize = 40; // 8 + 32
+const CHANNEL_INDEX_OFFSET: usize = 72; // 8 + 32 + 32
+// max_nodes at 74
+const CHANNEL_STATUS_OFFSET: usize = 75; // 8 + 32 + 32 + 2 + 1
+const ROUND_ID_OFFSET: usize = 76; // status + 1
+const NODE_COUNT_OFFSET: usize = 84; // round_id + 8
 
 /// ChannelStatus::Pending = enum variant index 1
 const STATUS_PENDING: u8 = 1;
-
-/// DiceChannel round_id offset: status_offset + 1 (status) = 44
-const ROUND_ID_OFFSET: usize = 44;
-
-/// DiceChannel node_count offset: round_id_offset + 8 (round_id) = 52
-const NODE_COUNT_OFFSET: usize = 52;
-
-/// DiceChannel authority offset: 8 (disc) = 8
-const AUTHORITY_OFFSET: usize = 8;
-
-/// DiceChannel channel_index offset: 8 + 32 = 40
-const CHANNEL_INDEX_OFFSET: usize = 40;
 
 /// Log message emitted by request_randomness_v2 that we match on.
 const REQUEST_LOG_PREFIX: &str = "Program log: Randomness requested on channel";
@@ -299,7 +294,7 @@ async fn find_pending_channels(
 
     let mut results = Vec::new();
     for (pubkey, data) in accounts {
-        if data.len() < 53 {
+        if data.len() < 85 { // need at least through node_count offset
             continue;
         }
 
