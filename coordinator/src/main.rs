@@ -16,6 +16,8 @@ mod state_machine;
 
 #[cfg(test)]
 mod integration_tests;
+#[cfg(test)]
+mod vrf_proof_tests;
 
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
