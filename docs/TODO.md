@@ -105,7 +105,65 @@ DICE does NOT know about your players, your game, or your logic. It only gives y
 
 ---
 
-## Priority 3 — Remaining Code Tasks
+## Priority 3 — Hardware Firmware & Onboarding (ESP32-S3-N16R8) 🔴 HIGH
+
+**Target board:** ESP32-S3-N16R8 (16MB Flash, 8MB PSRAM)
+
+**Goal:** Plug-and-play experience. User plugs in device, connects to its WiFi, opens a browser page, enters WiFi + wallet address, done — device starts earning.
+
+### Captive Portal Setup Flow
+- [ ] WiFi AP mode — device broadcasts `DICE-XXXX` hotspot (last 4 hex of device ID)
+- [ ] HTTP server on `192.168.4.1` — serves setup page when user connects
+- [ ] Setup web page (embedded HTML/CSS/JS in firmware):
+  - WiFi network name + password input
+  - Solana wallet address input (paste)
+  - Device ID display (read-only)
+  - Firmware version display
+  - "Save & Connect" button
+- [ ] NVS encrypted storage — save WiFi creds + wallet address + device keypair
+- [ ] WiFi station mode — after setup, connect to user's router automatically
+- [ ] Auto-reconnect — if WiFi drops, retry with backoff; if fails 5x, revert to AP mode for reconfiguration
+- [ ] DNS redirect — redirect all DNS queries to `192.168.4.1` so captive portal auto-opens on any browser
+
+### LED Status Indicators
+- [ ] 🔵 Blue = Setup mode (captive portal active, waiting for config)
+- [ ] 🟡 Yellow = Connecting to WiFi / coordinator
+- [ ] 🟢 Green = Online, connected to coordinator, waiting for jobs
+- [ ] 💚 Green blink = Actively participating in a commit-reveal round
+- [ ] 🔴 Red = Error (no WiFi, coordinator unreachable, key missing)
+- [ ] GPIO pin assignment for N16R8 onboard RGB LED (GPIO48 or Neopixel)
+
+### Commit-Reveal Protocol (firmware)
+- [ ] WebSocket client — connect to coordinator via WSS (mTLS in production)
+- [ ] CBOR message encode/decode — heartbeat, job assignment, commit, reveal, round result
+- [ ] Hardware RNG entropy — `esp_random()` accumulator, 32 bytes per round
+- [ ] ECDSA secp256k1 signing — sign commits and entropy with device keypair (mbedTLS)
+- [ ] SHA-256 commit hash — `commit_hash = SHA-256(entropy)`
+- [ ] Heartbeat task — periodic heartbeat with node_id, latency, uptime, jobs_completed
+
+### Factory Provisioning
+- [ ] Provisioning Python script (`scripts/provision_device.py`):
+  - Flash firmware via `esptool.py`
+  - Generate device ECDSA keypair (secp256k1)
+  - Write keypair + coordinator CA cert to encrypted NVS partition
+  - Burn Secure Boot v2 eFuses via `espefuse.py`
+  - Burn Flash Encryption eFuses
+  - Register device on-chain (`register_device` instruction)
+  - Log device ID + wallet + serial to provisioning database
+- [ ] Provisioning station setup guide (LUKS FDE, step-ca, air-gapped root CA)
+- [ ] Batch provisioning — flash 20 devices with unique keys in sequence
+- [ ] Device manifest JSON — track all provisioned devices (ID, pubkey, cert hash, flash date)
+
+### Build & Test
+- [ ] ESP-IDF v5.x CMakeLists.txt — validate `idf.py build` compiles clean
+- [ ] Unit tests for commit-reveal state machine (C, runs on host)
+- [ ] Unit tests for ECDSA signing (C, runs on host)
+- [ ] Integration test — device connects to coordinator simulation, completes a round
+- [ ] OTA update mechanism — firmware update without re-provisioning keys
+
+---
+
+## Priority 4 — Remaining Code Tasks
 
 ### Smart Contract
 - [ ] Add `select_nodes` instruction (Priority 1 above)
@@ -130,7 +188,7 @@ DICE does NOT know about your players, your game, or your logic. It only gives y
 
 ---
 
-## Priority 4 — Documentation & Developer Experience
+## Priority 5 — Documentation & Developer Experience
 
 - [ ] Quickstart guide: zero to working randomness in 10 minutes
 - [ ] Coin-flip example program (full Anchor project with DICE integration)
@@ -139,7 +197,7 @@ DICE does NOT know about your players, your game, or your logic. It only gives y
 
 ---
 
-## Priority 5 — Future Enhancements (post-launch)
+## Priority 6 — Future Enhancements (post-launch)
 
 ### Payment
 - [ ] `FeePayer::User` mode — 0.002 SOL fee added to end user's TX instead of developer's channel balance. Zero developer overhead, user pays per request.
@@ -151,7 +209,7 @@ DICE does NOT know about your players, your game, or your logic. It only gives y
 
 ---
 
-## Priority 6 — Infrastructure (when ready for mainnet)
+## Priority 7 — Infrastructure (when ready for mainnet)
 
 - [ ] Physical PKI: root CA (air-gapped), intermediate CA, device certs
 - [ ] Provisioning scripts: `esptool.py` + `espefuse.py` + `step-ca`
