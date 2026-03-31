@@ -30,7 +30,13 @@ pub fn handler<'info>(
     ctx: Context<'_, '_, 'info, 'info, DeliverCallback<'info>>,
     round_id: u64,
 ) -> Result<()> {
-    let channel = &ctx.accounts.channel;
+    let channel = &mut ctx.accounts.channel;
+
+    // Validate coordinator is authorized for this channel
+    require!(
+        ctx.accounts.coordinator.key() == channel.coordinator,
+        DiceError::UnauthorizedCoordinator
+    );
 
     // Validate round_id
     require!(channel.round_id == round_id, DiceError::RoundAlreadyFinalized);
@@ -47,11 +53,15 @@ pub fn handler<'info>(
 
     // If no callback program set, just transition to Idle
     if callback_pid == Pubkey::default() {
-        let channel_mut = &mut ctx.accounts.channel;
-        channel_mut.status = ChannelStatus::Idle;
+        channel.status = ChannelStatus::Idle;
         msg!("No callback configured — channel set to Idle");
         return Ok(());
     }
+
+    // REENTRANCY FIX: Set status to Idle BEFORE the CPI call.
+    // This prevents the callback program from calling back into DICE
+    // while the channel is still in Finalized state.
+    channel.status = ChannelStatus::Idle;
 
     // Verify callback program is in remaining_accounts
     let remaining = ctx.remaining_accounts;
@@ -62,6 +72,9 @@ pub fn handler<'info>(
         callback_program.key() == callback_pid,
         DiceError::CallbackProgramMismatch
     );
+
+    // Validate callback program is executable
+    require!(callback_program.executable, DiceError::CallbackProgramMissing);
 
     // Build callback instruction data:
     //   [0..8]   discriminator
@@ -95,12 +108,17 @@ pub fn handler<'info>(
     }
     account_infos.push(callback_program.clone());
 
-    invoke(&ix, &account_infos).map_err(|_| error!(DiceError::CallbackFailed))?;
-
-    // Transition to Idle after successful callback
-    let channel_mut = &mut ctx.accounts.channel;
-    channel_mut.status = ChannelStatus::Idle;
-
-    msg!("Callback delivered, channel set to Idle");
-    Ok(())
+    // If CPI fails, revert status back to Finalized so it can be retried
+    match invoke(&ix, &account_infos) {
+        Ok(()) => {
+            msg!("Callback delivered, channel is Idle");
+            Ok(())
+        }
+        Err(_) => {
+            // Revert status so callback can be retried
+            let channel = &mut ctx.accounts.channel;
+            channel.status = ChannelStatus::Finalized;
+            err!(DiceError::CallbackFailed)
+        }
+    }
 }

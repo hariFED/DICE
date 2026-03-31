@@ -718,6 +718,12 @@ async fn handle_node_connection<S>(
                             }
                         }
                     }
+
+                    // Remove finalized round from map to prevent memory leak.
+                    {
+                        let mut map = rounds.lock().await;
+                        map.remove(&request_id);
+                    }
                 }
             }
 
@@ -742,8 +748,8 @@ async fn handle_node_connection<S>(
 // ---------------------------------------------------------------------------
 
 /// Background task that periodically checks all active rounds for timeouts.
-/// Timed-out rounds are marked as failed and a `RoundResult` with status
-/// "failed" is broadcast to all selected nodes.
+/// Timed-out rounds are marked as failed, a `RoundResult` with status
+/// "failed" is broadcast to all selected nodes, and the round is removed.
 async fn round_timeout_watchdog(
     rounds: RoundMap,
     metrics: Metrics,
@@ -766,6 +772,10 @@ async fn round_timeout_watchdog(
                     expired.push((*request_id, selected));
                 }
             }
+            // Remove timed-out rounds to prevent unbounded memory growth
+            for (request_id, _) in &expired {
+                map.remove(request_id);
+            }
             expired
         };
 
@@ -773,7 +783,7 @@ async fn round_timeout_watchdog(
         for (request_id, selected_nodes) in timed_out_rounds {
             warn!(
                 request = hex::encode(request_id),
-                "round timed out — broadcasting failure"
+                "round timed out — removed from map, broadcasting failure"
             );
             let result_msg = DiceMessage::RoundResult(RoundResult {
                 request_id: request_id.to_vec(),

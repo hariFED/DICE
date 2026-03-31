@@ -31,6 +31,9 @@ pub struct DiceChannel {
     // ── Identity ──────────────────────────────────────────────────────────
     /// Channel owner — required signer on request_randomness, fund, withdraw, close.
     pub authority: Pubkey,
+    /// Authorized coordinator — required signer on submit_commit, submit_reveal,
+    /// finalize, select_nodes, deliver_callback. Set at init_channel.
+    pub coordinator: Pubkey,
     /// Index for multiple channels per developer (0, 1, 2, ...).
     pub channel_index: u16,
     /// Maximum nodes this channel supports (set at init, changeable via resize).
@@ -107,6 +110,7 @@ impl DiceChannel {
         let n = max_nodes as usize;
         8   // discriminator
         + 32  // authority
+        + 32  // coordinator
         + 2   // channel_index
         + 1   // max_nodes
         + 1   // status
@@ -156,6 +160,7 @@ mod tests {
         let n = max_nodes as usize;
         DiceChannel {
             authority: Pubkey::new_unique(),
+            coordinator: Pubkey::new_unique(),
             channel_index: 0,
             max_nodes,
             status: ChannelStatus::Idle,
@@ -182,28 +187,28 @@ mod tests {
     #[test]
     fn test_space_calculation_min_nodes() {
         // max_nodes = 4 (MIN_NODES_REQUIRED)
-        // Fixed: 8 (disc) + 32 (authority) + 2 (channel_index) + 1 (max_nodes)
+        // Fixed: 8 (disc) + 32 (authority) + 32 (coordinator) + 2 (channel_index) + 1 (max_nodes)
         //   + 1 (status) + 8 (round_id) + 1 (node_count) + 1 (commits_received)
         //   + 1 (reveals_received) + 8 (created_slot) + 8 (commit_deadline_slot)
         //   + 8 (reveal_deadline_slot) + 8 (balance) + 32 (callback_program_id)
-        //   + 32 (randomness) = 151 bytes
+        //   + 32 (randomness) = 183 bytes
         // Vec length prefixes: 5 * 4 = 20
         // Per-node data: 4 * (32 + 33 + 32 + 32 + 64) = 4 * 193 = 772
-        // Total: 151 + 20 + 772 = 943
-        let fixed = 151usize;
+        // Total: 183 + 20 + 772 = 975
+        let fixed = 183usize;
         let vec_prefix = 20usize;
         let space = DiceChannel::space(4);
         assert_eq!(space, fixed + vec_prefix + 4 * 193);
-        assert_eq!(space, 943);
+        assert_eq!(space, 975);
     }
 
     #[test]
     fn test_space_calculation_max_nodes() {
         // max_nodes = 50 (MAX_CHANNEL_NODES)
-        // Total: 151 + 20 + 50 * 193 = 9821
+        // Total: 183 + 20 + 50 * 193 = 9853
         let space = DiceChannel::space(50);
-        assert_eq!(space, 151 + 20 + 50 * 193);
-        assert_eq!(space, 9821);
+        assert_eq!(space, 183 + 20 + 50 * 193);
+        assert_eq!(space, 9853);
         // Must fit within Solana's 10 KB account init limit (10240 bytes)
         assert!(space <= 10_240, "space for 50 nodes must fit in 10 KB");
     }
@@ -212,22 +217,22 @@ mod tests {
     fn test_space_calculation_single_node() {
         // max_nodes = 1 — won't pass validation (min is 4) but space() should compute
         let space = DiceChannel::space(1);
-        assert_eq!(space, 151 + 20 + 1 * 193);
-        assert_eq!(space, 364);
+        assert_eq!(space, 183 + 20 + 1 * 193);
+        assert_eq!(space, 396);
     }
 
     #[test]
     fn test_space_zero_nodes() {
         // Edge case: 0 nodes. Only fixed overhead + vec prefixes, no per-node data.
         let space = DiceChannel::space(0);
-        assert_eq!(space, 151 + 20);
-        assert_eq!(space, 171);
+        assert_eq!(space, 183 + 20);
+        assert_eq!(space, 203);
     }
 
     #[test]
     fn test_space_monotonically_increases() {
         // Every additional node should add exactly 193 bytes.
-        for n in 1..=50u8 {
+        for n in 1..=49u8 {
             let prev = DiceChannel::space(n - 1);
             let curr = DiceChannel::space(n);
             assert_eq!(curr - prev, 193, "each node adds exactly 193 bytes");

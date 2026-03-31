@@ -22,13 +22,18 @@ pub fn handler(ctx: Context<FinalizeV2>, round_id: u64) -> Result<()> {
     let _clock = Clock::get()?;
     let channel = &mut ctx.accounts.channel;
 
+    // Validate coordinator is authorized for this channel
+    require!(
+        ctx.accounts.coordinator.key() == channel.coordinator,
+        DiceError::UnauthorizedCoordinator
+    );
+
     // Validate round_id
     require!(channel.round_id == round_id, DiceError::RoundAlreadyFinalized);
 
-    // Must be in RevealPhase or CommitPhase (if enough reveals came in)
+    // Must be in RevealPhase (all commits received, reveals in progress)
     require!(
-        channel.status == ChannelStatus::RevealPhase
-            || channel.status == ChannelStatus::CommitPhase,
+        channel.status == ChannelStatus::RevealPhase,
         DiceError::RoundAlreadyFinalized
     );
 

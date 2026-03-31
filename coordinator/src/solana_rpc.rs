@@ -32,6 +32,7 @@ impl SolanaRpc {
     }
 
     /// Send a JSON-RPC request and return the `result` field.
+    /// Retries up to 3 times with exponential backoff on transient failures.
     async fn rpc(&self, method: &str, params: Value) -> Result<Value> {
         let body = json!({
             "jsonrpc": "2.0",
@@ -40,23 +41,48 @@ impl SolanaRpc {
             "params": params,
         });
 
-        let resp = self
-            .client
-            .post(&self.url)
-            .json(&body)
-            .send()
-            .await
-            .context("RPC request failed")?;
+        let delays = [500, 1000, 2000]; // ms backoff
+        let mut last_err = anyhow!("RPC request failed");
 
-        let json: Value = resp.json().await.context("RPC response parse failed")?;
+        for (attempt, delay_ms) in std::iter::once(0).chain(delays.iter().copied()).enumerate() {
+            if attempt > 0 {
+                debug!(attempt, delay_ms, method, "RPC retry after backoff");
+                tokio::time::sleep(std::time::Duration::from_millis(delay_ms as u64)).await;
+            }
 
-        if let Some(err) = json.get("error") {
-            return Err(anyhow!("RPC error: {}", err));
+            let resp = match self.client.post(&self.url).json(&body).send().await {
+                Ok(r) => r,
+                Err(e) => {
+                    last_err = anyhow!("RPC request failed: {}", e);
+                    continue;
+                }
+            };
+
+            // Check for rate limiting (429)
+            if resp.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
+                last_err = anyhow!("RPC rate limited (429)");
+                continue;
+            }
+
+            let json: Value = match resp.json().await {
+                Ok(j) => j,
+                Err(e) => {
+                    last_err = anyhow!("RPC response parse failed: {}", e);
+                    continue;
+                }
+            };
+
+            if let Some(err) = json.get("error") {
+                // Don't retry application-level errors (invalid params, etc.)
+                return Err(anyhow!("RPC error: {}", err));
+            }
+
+            return json.get("result")
+                .cloned()
+                .ok_or_else(|| anyhow!("RPC response missing 'result'"));
         }
 
-        json.get("result")
-            .cloned()
-            .ok_or_else(|| anyhow!("RPC response missing 'result'"))
+        Err(last_err.context(format!("RPC {} failed after retries", method)))
     }
 
     // -----------------------------------------------------------------------

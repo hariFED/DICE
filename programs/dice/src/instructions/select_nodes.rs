@@ -32,6 +32,12 @@ pub fn handler<'info>(
 ) -> Result<()> {
     let channel = &ctx.accounts.channel;
 
+    // Validate coordinator is authorized for this channel
+    require!(
+        ctx.accounts.coordinator.key() == channel.coordinator,
+        DiceError::UnauthorizedCoordinator
+    );
+
     // Validate round_id matches
     require!(
         channel.round_id == round_id,
@@ -78,6 +84,9 @@ pub fn handler<'info>(
     ]);
     let seed_bytes = seed_hash.to_bytes();
 
+    // DeviceRegistry account discriminator: SHA-256("account:DeviceRegistry")[0..8]
+    const DEVICE_REGISTRY_DISC: [u8; 8] = [103, 245, 70, 187, 154, 60, 208, 216];
+
     // Filter to active registries and collect their device info
     let mut candidates: Vec<([u8; 32], [u8; 33])> = Vec::with_capacity(remaining.len());
     for acc in remaining.iter() {
@@ -86,6 +95,12 @@ pub fn handler<'info>(
         if data.len() < 58 {
             continue;
         }
+
+        // Validate account discriminator to prevent arbitrary data injection
+        if data[0..8] != DEVICE_REGISTRY_DISC {
+            continue;
+        }
+
         let is_active = data[57] != 0;
         if !is_active {
             continue;

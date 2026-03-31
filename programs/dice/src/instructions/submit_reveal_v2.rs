@@ -29,6 +29,12 @@ pub fn handler(
     let clock = Clock::get()?;
     let channel = &mut ctx.accounts.channel;
 
+    // Validate coordinator is authorized for this channel
+    require!(
+        ctx.accounts.coordinator.key() == channel.coordinator,
+        DiceError::UnauthorizedCoordinator
+    );
+
     // Validate round_id
     require!(channel.round_id == round_id, DiceError::RoundAlreadyFinalized);
 

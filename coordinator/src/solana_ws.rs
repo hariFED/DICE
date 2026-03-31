@@ -224,8 +224,13 @@ async fn run_subscription(
 
         info!("request_randomness_v2 detected via log subscription");
 
+        // Short delay to allow RPC state propagation before querying accounts.
+        // Solana RPC nodes may have a slight lag between committing a log and
+        // the account state becoming visible at "confirmed" commitment.
+        tokio::time::sleep(Duration::from_millis(500)).await;
+
         // The log tells us a request was made, but we need the channel details.
-        // Scan for Pending DiceChannel accounts.
+        // Scan for Pending DiceChannel accounts. Retry once on empty result.
         match find_pending_channels(rpc, program_id).await {
             Ok(channels) => {
                 for (channel_pubkey, authority, channel_index, round_id, node_count) in channels {

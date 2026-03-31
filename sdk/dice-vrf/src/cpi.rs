@@ -161,25 +161,33 @@ pub fn request_randomness_v2_ix(
 /// DiceChannel layout (relevant offsets):
 /// ```text
 /// [0..8]     discriminator
-/// [8..40]    authority
-/// [40..42]   channel_index
-/// [42]       max_nodes
-/// [43]       status (0=Idle, 1=Pending, 2=CommitPhase, 3=RevealPhase, 4=Finalized, 5=Failed)
-/// [44..52]   round_id
-/// ...
-/// [111..143] randomness [u8; 32]
+/// [8..40]    authority (32)
+/// [40..72]   coordinator (32)
+/// [72..74]   channel_index (u16)
+/// [74]       max_nodes (u8)
+/// [75]       status (0=Idle, 1=Pending, 2=CommitPhase, 3=RevealPhase, 4=Finalized, 5=Failed)
+/// [76..84]   round_id (u64)
+/// [84]       node_count (u8)
+/// [85]       commits_received (u8)
+/// [86]       reveals_received (u8)
+/// [87..95]   created_slot (u64)
+/// [95..103]  commit_deadline_slot (u64)
+/// [103..111] reveal_deadline_slot (u64)
+/// [111..119] balance (u64)
+/// [119..151] callback_program_id (32)
+/// [151..183] randomness [u8; 32]
 /// ```
 pub fn decode_channel_randomness(account_data: &[u8]) -> Option<[u8; 32]> {
-    if account_data.len() < 143 {
+    if account_data.len() < 183 {
         return None;
     }
-    // Status byte at offset 43
-    let status = account_data[43];
+    // Status byte at offset 75
+    let status = account_data[75];
     // Status 4 = Finalized, Status 0 = Idle (callback delivered, result available)
     if status != 4 && status != 0 {
         return None;
     }
-    let randomness: [u8; 32] = account_data[111..143].try_into().ok()?;
+    let randomness: [u8; 32] = account_data[151..183].try_into().ok()?;
     if randomness == [0u8; 32] {
         return None;
     }
@@ -188,31 +196,24 @@ pub fn decode_channel_randomness(account_data: &[u8]) -> Option<[u8; 32]> {
 
 /// Build the `request_randomness_auto` CPI instruction.
 ///
-/// Zero-friction: auto-creates channel if needed, auto-funds from developer wallet,
-/// starts a new round. This is the only instruction a developer needs.
+/// Auto-funds from developer wallet if channel balance is insufficient.
+/// Channel must already exist (call `init_channel` first).
 ///
 /// # Arguments
 /// * `program_id` — the DICE program ID
-/// * `authority` — developer's wallet (signer, pays rent + fee)
+/// * `authority` — developer's wallet (signer, pays fee if balance insufficient)
 /// * `channel_index` — channel slot (use 0 for single-channel integrations)
-/// * `max_nodes` — channel capacity (4-50, only used on first call)
 /// * `node_count` — how many nodes for this round (4 to max_nodes)
-/// * `callback_program_id` — your program ID for CPI callback, or `Pubkey::default()` for polling
 pub fn request_randomness_auto_ix(
     program_id: &Pubkey,
     authority: &Pubkey,
     channel_index: u16,
-    max_nodes: u8,
     node_count: u8,
-    callback_program_id: &Pubkey,
 ) -> Instruction {
     let (channel, _) = crate::pda::channel_pda(authority, channel_index, program_id);
-    let mut data = Vec::with_capacity(44);
+    let mut data = Vec::with_capacity(9);
     data.extend_from_slice(&instruction_discriminator("request_randomness_auto"));
-    data.extend_from_slice(&channel_index.to_le_bytes());
-    data.push(max_nodes);
     data.push(node_count);
-    data.extend_from_slice(callback_program_id.as_ref());
 
     Instruction {
         program_id: *program_id,
@@ -387,66 +388,61 @@ mod tests {
     fn test_request_randomness_auto_ix_data_layout() {
         let program_id = Pubkey::new_unique();
         let authority = Pubkey::new_unique();
-        let callback = Pubkey::new_unique();
-        let ix = request_randomness_auto_ix(&program_id, &authority, 1, 8, 4, &callback);
+        let ix = request_randomness_auto_ix(&program_id, &authority, 1, 4);
 
-        // 8 discriminator + 2 channel_index + 1 max_nodes + 1 node_count + 32 callback = 44 bytes
-        assert_eq!(ix.data.len(), 44, "request_randomness_auto data should be 44 bytes");
+        // 8 discriminator + 1 node_count = 9 bytes
+        assert_eq!(ix.data.len(), 9, "request_randomness_auto data should be 9 bytes");
         let disc = instruction_discriminator("request_randomness_auto");
         assert_eq!(&ix.data[0..8], &disc);
-        assert_eq!(&ix.data[8..10], &1u16.to_le_bytes());
-        assert_eq!(ix.data[10], 8); // max_nodes
-        assert_eq!(ix.data[11], 4); // node_count
-        assert_eq!(&ix.data[12..44], callback.as_ref());
+        assert_eq!(ix.data[8], 4); // node_count
     }
 
     // ── decode_channel_randomness tests ─────────────────────────────────────
 
     #[test]
     fn test_decode_channel_randomness_too_short() {
-        // Anything less than 143 bytes should return None
+        // Anything less than 183 bytes should return None
         assert_eq!(decode_channel_randomness(&[0u8; 0]), None);
         assert_eq!(decode_channel_randomness(&[0u8; 42]), None);
-        assert_eq!(decode_channel_randomness(&[0u8; 142]), None);
+        assert_eq!(decode_channel_randomness(&[0u8; 182]), None);
     }
 
     #[test]
     fn test_decode_channel_randomness_not_finalized() {
-        // Build a 143-byte buffer with non-zero randomness at [111..143]
-        let mut data = vec![0u8; 143];
-        data[111..143].fill(0xBB);
+        // Build a 183-byte buffer with non-zero randomness at [151..183]
+        let mut data = vec![0u8; 183];
+        data[151..183].fill(0xBB);
 
         // status=1 (Pending) should return None
-        data[43] = 1;
+        data[75] = 1;
         assert_eq!(decode_channel_randomness(&data), None);
 
         // status=2 (CommitPhase) should return None
-        data[43] = 2;
+        data[75] = 2;
         assert_eq!(decode_channel_randomness(&data), None);
 
         // status=3 (RevealPhase) should return None
-        data[43] = 3;
+        data[75] = 3;
         assert_eq!(decode_channel_randomness(&data), None);
 
         // status=5 (Failed) should return None
-        data[43] = 5;
+        data[75] = 5;
         assert_eq!(decode_channel_randomness(&data), None);
     }
 
     #[test]
     fn test_decode_channel_randomness_zeroed() {
         // status=4 (Finalized) but randomness is all zeros => None
-        let mut data = vec![0u8; 143];
-        data[43] = 4; // Finalized
-        // randomness at [111..143] is already all zeros
+        let mut data = vec![0u8; 183];
+        data[75] = 4; // Finalized
         assert_eq!(decode_channel_randomness(&data), None);
     }
 
     #[test]
     fn test_decode_channel_randomness_valid() {
-        let mut data = vec![0u8; 143];
-        data[43] = 4; // status = Finalized
-        data[111..143].fill(0xCD);
+        let mut data = vec![0u8; 183];
+        data[75] = 4; // status = Finalized
+        data[151..183].fill(0xCD);
         let result = decode_channel_randomness(&data);
         assert!(result.is_some(), "Finalized with non-zero randomness should return Some");
         assert_eq!(result.unwrap(), [0xCDu8; 32]);
@@ -455,9 +451,9 @@ mod tests {
     #[test]
     fn test_decode_channel_randomness_idle_with_result() {
         // status=0 (Idle) means callback delivered, result still readable
-        let mut data = vec![0u8; 143];
-        data[43] = 0; // Idle
-        data[111..143].fill(0xEF);
+        let mut data = vec![0u8; 183];
+        data[75] = 0; // Idle
+        data[151..183].fill(0xEF);
         let result = decode_channel_randomness(&data);
         assert!(result.is_some(), "Idle with non-zero randomness should return Some");
         assert_eq!(result.unwrap(), [0xEFu8; 32]);

@@ -27,6 +27,7 @@ pub fn handler(
     channel_index: u16,
     max_nodes: u8,
     callback_program_id: Pubkey,
+    coordinator: Pubkey,
 ) -> Result<()> {
     require!(
         max_nodes >= MIN_NODES_REQUIRED && max_nodes <= MAX_NODES_SELECTED,
@@ -37,6 +38,7 @@ pub fn handler(
     let channel = &mut ctx.accounts.channel;
 
     channel.authority = ctx.accounts.authority.key();
+    channel.coordinator = coordinator;
     channel.channel_index = channel_index;
     channel.max_nodes = max_nodes;
     channel.status = ChannelStatus::Idle;

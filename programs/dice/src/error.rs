@@ -43,4 +43,10 @@ pub enum DiceError {
 
     #[msg("Device ID does not match SHA-256(device_pubkey)")]
     InvalidDeviceId,
+
+    #[msg("Signer is not the authorized coordinator for this channel")]
+    UnauthorizedCoordinator,
+
+    #[msg("Node has already revealed for this round")]
+    AlreadyRevealed,
 }

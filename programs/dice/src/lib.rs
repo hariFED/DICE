@@ -80,8 +80,9 @@ pub mod dice {
         channel_index: u16,
         max_nodes: u8,
         callback_program_id: Pubkey,
+        coordinator: Pubkey,
     ) -> Result<()> {
-        instructions::init_channel::handler(ctx, channel_index, max_nodes, callback_program_id)
+        instructions::init_channel::handler(ctx, channel_index, max_nodes, callback_program_id, coordinator)
     }
 
     /// Add SOL to a channel's prepaid balance for protocol fees.
@@ -95,16 +96,13 @@ pub mod dice {
         instructions::request_randomness_v2::handler(ctx, node_count)
     }
 
-    /// Zero-friction randomness request. Auto-creates channel if needed, auto-funds
-    /// from developer wallet, starts round. Developer only needs this one instruction.
+    /// Auto-fund randomness request. Channel must exist (call init_channel first).
+    /// Automatically tops up channel balance from developer wallet if insufficient.
     pub fn request_randomness_auto(
         ctx: Context<RequestRandomnessAuto>,
-        channel_index: u16,
-        max_nodes: u8,
         node_count: u8,
-        callback_program_id: Pubkey,
     ) -> Result<()> {
-        instructions::request_randomness_auto::handler(ctx, channel_index, max_nodes, node_count, callback_program_id)
+        instructions::request_randomness_auto::handler(ctx, node_count)
     }
 
     /// Submit a commit hash to a channel (inline, no separate PDA).
@@ -152,6 +150,12 @@ pub mod dice {
     /// Close a channel and reclaim rent (Idle + zero balance only).
     pub fn close_channel(ctx: Context<CloseChannel>) -> Result<()> {
         instructions::close_channel::handler(ctx)
+    }
+
+    /// Mark a stuck round as failed and reset channel to Idle.
+    /// Can be called by authority or coordinator when deadline has passed.
+    pub fn fail_round(ctx: Context<FailRound>) -> Result<()> {
+        instructions::fail_round::handler(ctx)
     }
 
     /// Resize a channel's max_nodes capacity (Idle state only).

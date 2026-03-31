@@ -46,7 +46,9 @@ pub fn handler(ctx: Context<RequestRandomnessV2>, node_count: u8) -> Result<()> 
     // Reset the channel for a new round
     channel.reset_for_new_round(node_count);
     channel.created_slot = clock.slot;
-    channel.commit_deadline_slot = clock.slot + COMMIT_TIMEOUT_SLOTS;
+    channel.commit_deadline_slot = clock.slot
+        .checked_add(COMMIT_TIMEOUT_SLOTS)
+        .ok_or(error!(DiceError::RoundTimedOut))?;
     channel.reveal_deadline_slot = 0; // set when commit phase ends
 
     msg!(

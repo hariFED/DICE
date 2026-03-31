@@ -294,12 +294,14 @@ pub fn build_init_channel_ix(
     channel_index: u16,
     max_nodes: u8,
     callback_program_id: &Pubkey,
+    coordinator: &Pubkey,
 ) -> Instruction {
     let channel = channel_pda(program_id, authority, channel_index);
     let mut data = DISC_INIT_CHANNEL.to_vec();
     data.extend_from_slice(&channel_index.to_le_bytes());
     data.push(max_nodes);
     data.extend_from_slice(callback_program_id.as_ref());
+    data.extend_from_slice(coordinator.as_ref());
     Instruction {
         program_id: *program_id,
         accounts: vec![
@@ -550,20 +552,18 @@ pub fn build_select_nodes_ix(
 /// Build `request_randomness_auto` instruction.
 ///
 /// Zero-friction: auto-creates channel if needed, auto-funds from authority wallet.
+/// Build `request_randomness_auto` instruction.
+///
+/// Auto-funds from authority wallet. Channel must already exist.
 pub fn build_request_randomness_auto_ix(
     program_id: &Pubkey,
     authority: &Pubkey,
     channel_index: u16,
-    max_nodes: u8,
     node_count: u8,
-    callback_program_id: &Pubkey,
 ) -> Instruction {
     let channel = channel_pda(program_id, authority, channel_index);
     let mut data = DISC_REQUEST_RANDOMNESS_AUTO.to_vec();
-    data.extend_from_slice(&channel_index.to_le_bytes());
-    data.push(max_nodes);
     data.push(node_count);
-    data.extend_from_slice(callback_program_id.as_ref());
     Instruction {
         program_id: *program_id,
         accounts: vec![
@@ -696,10 +696,11 @@ mod tests {
         let max_nodes: u8 = 7;
         let callback = test_pubkey_b();
 
-        let ix = build_init_channel_ix(&pid, &auth, channel_index, max_nodes, &callback);
+        let coordinator = test_pubkey_a();
+        let ix = build_init_channel_ix(&pid, &auth, channel_index, max_nodes, &callback, &coordinator);
 
-        // Total data = 8 (disc) + 2 (channel_index) + 1 (max_nodes) + 32 (callback) = 43
-        assert_eq!(ix.data.len(), 43, "init_channel data should be 43 bytes");
+        // Total data = 8 (disc) + 2 (channel_index) + 1 (max_nodes) + 32 (callback) + 32 (coordinator) = 75
+        assert_eq!(ix.data.len(), 75, "init_channel data should be 75 bytes");
 
         // Discriminator
         assert_eq!(&ix.data[0..8], &DISC_INIT_CHANNEL, "discriminator mismatch");
@@ -844,24 +845,20 @@ mod tests {
         let pid = test_program_id();
         let auth = test_pubkey_a();
         let channel_index: u16 = 0;
-        let max_nodes: u8 = 5;
         let node_count: u8 = 3;
-        let callback = test_pubkey_b();
 
         let ix = build_request_randomness_auto_ix(
             &pid,
             &auth,
             channel_index,
-            max_nodes,
             node_count,
-            &callback,
         );
 
-        // Total data = 8 (disc) + 2 (channel_index) + 1 (max_nodes) + 1 (node_count) + 32 (callback) = 44
+        // Total data = 8 (disc) + 1 (node_count) = 9
         assert_eq!(
             ix.data.len(),
-            44,
-            "request_randomness_auto data should be 44 bytes"
+            9,
+            "request_randomness_auto data should be 9 bytes"
         );
 
         assert_eq!(
@@ -870,22 +867,8 @@ mod tests {
             "discriminator mismatch"
         );
 
-        // channel_index at offset 8..10
-        let ci = u16::from_le_bytes([ix.data[8], ix.data[9]]);
-        assert_eq!(ci, channel_index, "channel_index in data should match");
-
-        // max_nodes at offset 10
-        assert_eq!(ix.data[10], max_nodes, "max_nodes in data should match");
-
-        // node_count at offset 11
-        assert_eq!(ix.data[11], node_count, "node_count in data should match");
-
-        // callback at offset 12..44
-        assert_eq!(
-            &ix.data[12..44],
-            callback.as_ref(),
-            "callback_program_id in data should match"
-        );
+        // node_count at offset 8
+        assert_eq!(ix.data[8], node_count, "node_count in data should match");
 
         // Verify accounts: authority (signer) + channel + system_program
         assert_eq!(ix.accounts.len(), 3);

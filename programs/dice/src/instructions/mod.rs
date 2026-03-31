@@ -1,6 +1,7 @@
 // v2.0 channel-based instructions
 pub mod close_channel;
 pub mod deliver_callback;
+pub mod fail_round;
 pub mod finalize_v2;
 pub mod fund_channel;
 pub mod init_channel;
@@ -25,6 +26,7 @@ pub mod submit_reveal;
 // v2.0 exports
 pub use close_channel::*;
 pub use deliver_callback::*;
+pub use fail_round::*;
 pub use finalize_v2::*;
 pub use fund_channel::*;
 pub use init_channel::*;
