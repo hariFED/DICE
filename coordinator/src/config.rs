@@ -26,6 +26,11 @@ pub struct Config {
     #[arg(long, env = "DICE_SIMULATION", default_value_t = false)]
     pub simulation: bool,
 
+    /// Enable mTLS WebSocket even in simulation mode.
+    /// Requires --tls-cert-path, --tls-key-path, and --ca-cert-path.
+    #[arg(long, env = "DICE_TLS", default_value_t = false)]
+    pub tls: bool,
+
     /// PostgreSQL connection URL (required unless --simulation)
     #[arg(long, env = "DATABASE_URL", default_value = "postgres://dice:dice@localhost/dice")]
     pub database_url: String,

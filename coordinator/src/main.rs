@@ -152,8 +152,12 @@ async fn main() -> Result<()> {
         })
     };
 
-    // 7. Spawn WebSocket server: plain for simulation, mTLS for production.
-    let ws_handle = if cfg.simulation {
+    // 7. Spawn WebSocket server: plain WS or mTLS.
+    //    - simulation + no --tls → plain WS
+    //    - simulation + --tls   → mTLS (test certs with no DB)
+    //    - production (no --simulation) → always mTLS
+    let use_tls = !cfg.simulation || cfg.tls;
+    let ws_handle = if !use_tls {
         let reg = registry.clone();
         let m = metrics.clone();
         let r = rounds.clone();
@@ -228,7 +232,7 @@ async fn main() -> Result<()> {
     // 10. Ready banner.
     println!("DICE Coordinator ready:");
     println!("  Dashboard : http://localhost:{}/", cfg.api_port);
-    println!("  WebSocket : {}://localhost:{}/", if cfg.simulation { "ws" } else { "wss" }, cfg.ws_port);
+    println!("  WebSocket : {}://localhost:{}/", if use_tls { "wss" } else { "ws" }, cfg.ws_port);
     println!("  Metrics   : http://localhost:{}/metrics", cfg.metrics_port);
     if cfg.simulation {
         println!("  Simulate  : curl -X POST http://localhost:{}/simulate", cfg.api_port);
