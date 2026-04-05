@@ -23,6 +23,9 @@ CONFIG_MBEDTLS_HARDWARE_AES=y
 # Main task stack size (bytes)
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
 
+# Timer task stack size — heartbeat callback encodes CBOR + sends over WebSocket
+CONFIG_FREERTOS_TIMER_TASK_STACK_DEPTH=4096
+
 # Enable both cores on ESP32-S3
 CONFIG_FREERTOS_UNICORE=n
 
@@ -39,19 +42,19 @@ CONFIG_MBEDTLS_TLS_SERVER=n
 CONFIG_MBEDTLS_SSL_PROTO_TLS1_2=y
 CONFIG_MBEDTLS_SSL_PROTO_TLS1_3=y
 
-# Security: Secure Boot v2
-CONFIG_SECURE_BOOT=y
-CONFIG_SECURE_BOOT_V2_ENABLED=y
+# Security: Secure Boot v2 (DISABLED for development — enable for production)
+# CONFIG_SECURE_BOOT=y
+# CONFIG_SECURE_BOOT_V2_ENABLED=y
 
-# Security: Flash Encryption in Release mode
-CONFIG_SECURE_FLASH_ENC_ENABLED=y
-CONFIG_SECURE_FLASH_ENCRYPTION_MODE_RELEASE=y
+# Security: Flash Encryption (DISABLED for development — enable for production)
+# CONFIG_SECURE_FLASH_ENC_ENABLED=y
+# CONFIG_SECURE_FLASH_ENCRYPTION_MODE_RELEASE=y
 
 # Disable OTA — firmware is immutable, no update path
 CONFIG_OTA_ALLOW_HTTP=n
 
-# NVS partition: use encrypted NVS when flash encryption is enabled
-CONFIG_NVS_ENCRYPTION=y
+# NVS partition: use encrypted NVS when flash encryption is enabled (DISABLED for dev)
+# CONFIG_NVS_ENCRYPTION=y
 
 # Logging: Info level in production (reduce attack surface from verbose logs)
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y

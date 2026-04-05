@@ -7,6 +7,7 @@ mod db;
 mod metrics;
 mod node_session;
 mod protocol;
+pub mod queue;
 mod selection;
 mod solana_rpc;
 mod solana_tx;
@@ -113,12 +114,21 @@ async fn main() -> Result<()> {
         None
     };
 
+    // 4c. Round history buffer for dashboard.
+    let round_history: api::routes::RoundHistory =
+        Arc::new(tokio::sync::Mutex::new(Vec::with_capacity(100)));
+
+    // 4d. Request queue for burst handling.
+    let request_queue = queue::new_queue();
+
     // 5. Spawn Axum REST API server.
     let api_state = AppState {
         registry: registry.clone(),
         metrics: metrics.clone(),
         db: pool.clone(),
         rounds: rounds.clone(),
+        round_history: round_history.clone(),
+        request_queue: request_queue.clone(),
         on_chain: on_chain.clone(),
     };
     let api_handle = {
@@ -147,11 +157,13 @@ async fn main() -> Result<()> {
         let reg = registry.clone();
         let m = metrics.clone();
         let r = rounds.clone();
+        let rh = round_history.clone();
+        let rq = request_queue.clone();
         let port = cfg.ws_port;
         let db_opt = pool.clone();
         let oc = on_chain.clone();
         tokio::spawn(async move {
-            if let Err(e) = serve_websocket_plain(reg, r, m, db_opt, oc, port).await {
+            if let Err(e) = serve_websocket_plain(reg, r, rh, rq, m, db_opt, oc, port).await {
                 error!(?e, "plain WebSocket server error");
             }
         })
@@ -159,6 +171,8 @@ async fn main() -> Result<()> {
         let reg = registry.clone();
         let m = metrics.clone();
         let r = rounds.clone();
+        let rh = round_history.clone();
+        let rq = request_queue.clone();
         let port = cfg.ws_port;
         let tls_cert = cfg.tls_cert_path.clone();
         let tls_key = cfg.tls_key_path.clone();
@@ -166,7 +180,7 @@ async fn main() -> Result<()> {
         let db_opt = pool.clone();
         let oc = on_chain.clone();
         tokio::spawn(async move {
-            if let Err(e) = serve_websocket_mtls(reg, r, m, db_opt, oc, port, tls_cert, tls_key, ca_cert).await {
+            if let Err(e) = serve_websocket_mtls(reg, r, rh, rq, m, db_opt, oc, port, tls_cert, tls_key, ca_cert).await {
                 error!(?e, "mTLS WebSocket server error");
             }
         })
@@ -288,6 +302,8 @@ async fn serve_metrics(metrics: Metrics, port: u16) -> Result<()> {
 async fn serve_websocket_plain(
     registry: NodeRegistry,
     rounds: RoundMap,
+    round_history: api::routes::RoundHistory,
+    request_queue: queue::SharedQueue,
     metrics: Metrics,
     db: Option<sqlx::PgPool>,
     on_chain: Option<OnChainCtx>,
@@ -305,6 +321,8 @@ async fn serve_websocket_plain(
 
         let registry = registry.clone();
         let rounds = rounds.clone();
+        let round_history = round_history.clone();
+        let request_queue = request_queue.clone();
         let metrics = metrics.clone();
         let db = db.clone();
         let oc = on_chain.clone();
@@ -312,7 +330,7 @@ async fn serve_websocket_plain(
         tokio::spawn(async move {
             match accept_async(tcp_stream).await {
                 Ok(ws) => {
-                    handle_node_connection(ws, registry, rounds, metrics, db, oc).await;
+                    handle_node_connection(ws, registry, rounds, round_history, request_queue, metrics, db, oc).await;
                 }
                 Err(e) => warn!(%peer_addr, ?e, "WebSocket upgrade failed"),
             }
@@ -327,6 +345,8 @@ async fn serve_websocket_plain(
 async fn serve_websocket_mtls(
     registry: NodeRegistry,
     rounds: RoundMap,
+    round_history: api::routes::RoundHistory,
+    request_queue: queue::SharedQueue,
     metrics: Metrics,
     db: Option<sqlx::PgPool>,
     on_chain: Option<OnChainCtx>,
@@ -386,6 +406,8 @@ async fn serve_websocket_mtls(
         let tls_acceptor = tls_acceptor.clone();
         let registry = registry.clone();
         let rounds = rounds.clone();
+        let round_history = round_history.clone();
+        let request_queue = request_queue.clone();
         let metrics = metrics.clone();
         let db = db.clone();
         let oc = on_chain.clone();
@@ -396,7 +418,7 @@ async fn serve_websocket_mtls(
                     info!(%peer_addr, "mTLS handshake success");
                     match accept_async_with_config(tls_stream, None).await {
                         Ok(ws) => {
-                            handle_node_connection(ws, registry, rounds, metrics, db, oc).await;
+                            handle_node_connection(ws, registry, rounds, round_history, request_queue, metrics, db, oc).await;
                         }
                         Err(e) => warn!(%peer_addr, ?e, "WebSocket upgrade failed"),
                     }
@@ -419,6 +441,8 @@ async fn handle_node_connection<S>(
     ws: tokio_tungstenite::WebSocketStream<S>,
     registry: NodeRegistry,
     rounds: RoundMap,
+    round_history: api::routes::RoundHistory,
+    request_queue: queue::SharedQueue,
     metrics: Metrics,
     db: Option<sqlx::PgPool>,
     on_chain: Option<OnChainCtx>,
@@ -522,6 +546,8 @@ async fn handle_node_connection<S>(
                     let entry_sequence = entry.sequence;
                     match entry.round.handle_commit(node_id, commit_hash, sig) {
                         Ok(()) => {
+                            let now_in_reveal = entry.round.status_str() == "collecting_reveals";
+                            let selected_for_reveal = entry.round.selected_nodes.clone();
                             info!(
                                 request = hex::encode(request_id),
                                 node = hex::encode(node_id),
@@ -534,6 +560,29 @@ async fn handle_node_connection<S>(
                                 )
                                 .await;
                             }
+
+                            // If all commits collected, broadcast "reveal" signal to all nodes.
+                            if now_in_reveal {
+                                let reveal_msg = DiceMessage::RoundResult(RoundResult {
+                                    request_id: request_id.to_vec(),
+                                    status: "reveal".to_string(),
+                                    randomness: vec![0u8; 32], // 32 zero bytes (firmware expects exactly 32)
+                                });
+                                if let Ok(encoded) = reveal_msg.encode() {
+                                    let reg = registry.read().await;
+                                    for nid in &selected_for_reveal {
+                                        if let Some(session) = reg.get(nid) {
+                                            let _ = session.tx.try_send(encoded.clone());
+                                        }
+                                    }
+                                    info!(
+                                        request = hex::encode(request_id),
+                                        "broadcast reveal signal to {} nodes",
+                                        selected_for_reveal.len()
+                                    );
+                                }
+                            }
+
                             // Submit commit on-chain (v2.0 channel or v1.0 legacy).
                             if let Some(ref ctx) = on_chain {
                                 if entry_requester != solana_sdk::pubkey::Pubkey::default() {
@@ -724,10 +773,78 @@ async fn handle_node_connection<S>(
                         }
                     }
 
-                    // Remove finalized round from map to prevent memory leak.
+                    // Save to round history for dashboard, then remove from active map.
+                    let elapsed_ms = {
+                        let map = rounds.lock().await;
+                        map.get(&request_id)
+                            .map(|e| e.started_at.elapsed().as_millis() as u64)
+                            .unwrap_or(0)
+                    };
+                    {
+                        use crate::api::routes::CompletedRound;
+                        let mut hist = round_history.lock().await;
+                        let ts = std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_secs();
+                        hist.push(CompletedRound {
+                            request_id: hex::encode(request_id),
+                            randomness: hex::encode(randomness),
+                            node_count: selected_nodes.len(),
+                            elapsed_ms,
+                            timestamp: ts,
+                            status: "finalized".to_string(),
+                        });
+                        let hlen = hist.len();
+                        if hlen > 100 { hist.drain(..hlen - 100); }
+                    }
                     {
                         let mut map = rounds.lock().await;
                         map.remove(&request_id);
+                    }
+
+                    // Drain queue: dispatch pending requests to nodes that just freed up.
+                    for nid in &selected_nodes {
+                        let queued = {
+                            let mut q = request_queue.lock().await;
+                            q.mark_completed(nid)
+                        };
+                        for qr in queued {
+                            info!(
+                                request = hex::encode(qr.request_id),
+                                node = hex::encode(nid),
+                                "dispatching queued request"
+                            );
+                            let qr_round = crate::state_machine::Round::new(
+                                qr.request_id,
+                                vec![*nid],
+                                1,
+                                std::time::Duration::from_secs(60),
+                            );
+                            {
+                                let mut map = rounds.lock().await;
+                                map.insert(qr.request_id, crate::state_machine::RoundEntry {
+                                    round: qr_round,
+                                    db_id: qr.db_id,
+                                    started_at: std::time::Instant::now(),
+                                    requester: qr.requester,
+                                    sequence: qr.sequence,
+                                    channel_authority: None,
+                                    channel_index: None,
+                                });
+                            }
+                            let job = DiceMessage::JobAssignment(protocol::messages::JobAssignment {
+                                request_id: qr.request_id.to_vec(),
+                                round_seq: qr.sequence,
+                                deadline_ts: qr.deadline_ts,
+                            });
+                            if let Ok(encoded) = job.encode() {
+                                let reg = registry.read().await;
+                                if let Some(session) = reg.get(nid) {
+                                    let _ = session.tx.try_send(encoded);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -744,6 +861,11 @@ async fn handle_node_connection<S>(
     if let Some(id) = node_id_opt {
         deregister(&registry, &id).await;
         metrics.nodes_connected.dec();
+        // Clear queue tracking for this node.
+        {
+            let mut q = request_queue.lock().await;
+            q.node_disconnected(&id);
+        }
         info!(node = hex::encode(id), "node disconnected");
     }
 }

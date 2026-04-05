@@ -12,13 +12,13 @@ idf_component_register(
     REQUIRES
         esp_wifi
         nvs_flash
-        esp_tls
-        esp_websocket_client
+        esp-tls
         esp_http_server
         mbedtls
         esp_timer
         freertos
         esp_adc
-        led_strip
+        esp_event
+        esp_netif
         dice_protocol
 )

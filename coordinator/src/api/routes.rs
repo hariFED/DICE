@@ -23,12 +23,28 @@ use crate::{
 // Shared application state
 // ---------------------------------------------------------------------------
 
+/// A completed round kept in history.
+#[derive(Clone, serde::Serialize)]
+pub struct CompletedRound {
+    pub request_id: String,
+    pub randomness: String,
+    pub node_count: usize,
+    pub elapsed_ms: u64,
+    pub timestamp: u64,
+    pub status: String,
+}
+
+/// Ring buffer of recently completed rounds (in-memory, no DB needed).
+pub type RoundHistory = std::sync::Arc<tokio::sync::Mutex<Vec<CompletedRound>>>;
+
 #[derive(Clone)]
 pub struct AppState {
     pub registry: NodeRegistry,
     pub metrics: Metrics,
     pub db: Option<sqlx::PgPool>,
     pub rounds: RoundMap,
+    pub round_history: RoundHistory,
+    pub request_queue: crate::queue::SharedQueue,
     /// If set, transactions are submitted to Solana devnet/mainnet.
     pub on_chain: Option<OnChainCtx>,
 }
@@ -44,6 +60,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/nodes", get(list_nodes))
         .route("/rounds", get(list_rounds))
         .route("/rounds/:id", get(get_round_handler))
+        .route("/queue", get(queue_status))
         .route("/simulate", post(simulate))
         .route("/metrics", get(metrics_handler))
         .with_state(state)
@@ -377,6 +394,7 @@ async fn list_nodes(State(state): State<AppState>) -> Response {
 
 /// `GET /rounds` — list in-memory rounds (most recent first, capped at 50).
 async fn list_rounds(State(state): State<AppState>) -> Response {
+    // Active rounds (in progress)
     let map = state.rounds.lock().await;
     let mut items: Vec<serde_json::Value> = map
         .values()
@@ -393,10 +411,25 @@ async fn list_rounds(State(state): State<AppState>) -> Response {
             })
         })
         .collect();
-    // Most recent entries first (by elapsed time ascending = most recent last inserted).
-    items.sort_by_key(|v| v["elapsed_ms"].as_u64().unwrap_or(0));
-    items.truncate(50);
     drop(map);
+
+    // Completed rounds from history (most recent first)
+    let history = state.round_history.lock().await;
+    for cr in history.iter().rev().take(50) {
+        items.push(json!({
+            "request_id": cr.request_id,
+            "status": cr.status,
+            "node_count": cr.node_count,
+            "commits_received": cr.node_count,
+            "reveals_received": cr.node_count,
+            "randomness": cr.randomness,
+            "elapsed_ms": cr.elapsed_ms,
+            "timestamp": cr.timestamp,
+        }));
+    }
+    drop(history);
+
+    items.truncate(50);
     Json(json!({ "rounds": items })).into_response()
 }
 
@@ -449,88 +482,115 @@ async fn get_round_handler(State(state): State<AppState>, Path(id): Path<String>
     }
 }
 
-/// `POST /simulate` — trigger a simulated randomness round.
+/// `POST /simulate` — trigger a randomness round.
 ///
-/// Selects all currently connected nodes (up to 7), optionally creates
-/// the `RandomnessRequest` on-chain (if `on_chain` is configured), then
-/// dispatches `JobAssignment` messages to each selected node.
+/// If a node has capacity (< 12 active rounds), dispatches immediately.
+/// Otherwise, queues the request and dispatches when a node finishes a round.
 async fn simulate(State(state): State<AppState>) -> Response {
     use rand::RngCore;
-    use solana_sdk::signer::Signer;
 
     let active_nodes = get_active_nodes(&state.registry).await;
     if active_nodes.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "no nodes connected — start mock-firmware-node first" })),
+            Json(json!({ "error": "no nodes connected" })),
         )
             .into_response();
     }
 
-    // Select up to 7 nodes.
-    let count = active_nodes.len().min(7);
-    let selected: Vec<[u8; 33]> = active_nodes[..count].to_vec();
-    let min_required = count.min(4);
-
-    // Sequence: use a monotonic counter based on current unix time.
-    let sequence: u64 = std::time::SystemTime::now()
+    // Generate unique sequence.
+    static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let base_time: u64 = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
-        .as_secs();
+        .as_millis() as u64;
+    let seq_num = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let sequence: u64 = base_time.wrapping_mul(1000).wrapping_add(seq_num);
 
-    let deadline_ts = sequence + 30;
+    let deadline_ts = sequence + 60;
     let db_id = Uuid::new_v4();
-
-    // Determine requester pubkey (coordinator's key if on-chain, else default).
     let requester = state
         .on_chain
         .as_ref()
-        .map(|ctx| ctx.keypair.pubkey())
+        .map(|ctx| solana_sdk::signer::Signer::pubkey(ctx.keypair.as_ref()))
         .unwrap_or_default();
 
-    // If on-chain context is available, submit `request_randomness` to Solana first.
-    let mut tx_signature: Option<String> = None;
-    if let Some(ref ctx) = state.on_chain {
-        let ix = crate::solana_tx::build_request_randomness_ix(
-            &ctx.program_id,
-            &ctx.keypair.pubkey(),
-            sequence,
-            &solana_sdk::pubkey::Pubkey::default(), // no callback in simulation
-        );
-        match ctx.rpc.sign_and_send(&ctx.keypair, vec![ix]).await {
-            Ok(sig) => {
-                tracing::info!(signature = %sig, sequence, "request_randomness TX sent to devnet");
-                tx_signature = Some(sig.to_string());
-            }
-            Err(e) => {
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": format!("on-chain request_randomness failed: {}", e) })),
-                )
-                    .into_response();
-            }
-        }
-    }
-
-    // Use the request PDA pubkey as the request_id for the in-memory round.
-    let request_pda = crate::solana_tx::request_pda(
-        &state.on_chain.as_ref().map(|c| c.program_id).unwrap_or_default(),
-        &requester,
-        sequence,
-    );
+    // Generate unique request_id.
     let mut request_id = [0u8; 32];
-    if requester != solana_sdk::pubkey::Pubkey::default() {
-        request_id.copy_from_slice(request_pda.as_ref());
-    } else {
-        rand::thread_rng().fill_bytes(&mut request_id);
-    }
+    rand::thread_rng().fill_bytes(&mut request_id);
 
-    // Build the Round and insert into the round map.
+    // Check if any node has capacity to dispatch immediately.
+    let mut queue = state.request_queue.lock().await;
+    let queue_depth = queue.queue_len();
+
+    // Find a node with capacity.
+    let dispatch_node = active_nodes.iter().find(|nid| queue.node_has_capacity(nid));
+
+    if let Some(&node_id) = dispatch_node {
+        // Dispatch immediately.
+        queue.mark_dispatched(&node_id);
+        drop(queue);
+
+        let dispatched = dispatch_round(
+            &state, request_id, sequence, deadline_ts, db_id, requester, &[node_id],
+        ).await;
+
+        Json(json!({
+            "request_id": hex::encode(request_id),
+            "round_id": db_id.to_string(),
+            "status": "dispatched",
+            "dispatched": dispatched,
+            "queued": 0,
+            "queue_depth": queue_depth,
+            "sequence": sequence,
+        })).into_response()
+    } else {
+        // All nodes are at capacity — queue the request.
+        queue.enqueue(crate::queue::QueuedRequest {
+            request_id,
+            sequence,
+            deadline_ts,
+            queued_at: std::time::Instant::now(),
+            requester,
+            db_id,
+        });
+        let new_depth = queue.queue_len();
+        drop(queue);
+
+        tracing::info!(
+            request = hex::encode(request_id),
+            queue_depth = new_depth,
+            "request queued — all nodes at capacity"
+        );
+
+        Json(json!({
+            "request_id": hex::encode(request_id),
+            "round_id": db_id.to_string(),
+            "status": "queued",
+            "dispatched": 0,
+            "queue_depth": new_depth,
+            "sequence": sequence,
+        })).into_response()
+    }
+}
+
+/// Helper: create a round, encode JobAssignment, dispatch to nodes.
+async fn dispatch_round(
+    state: &AppState,
+    request_id: [u8; 32],
+    sequence: u64,
+    deadline_ts: u64,
+    db_id: Uuid,
+    requester: solana_sdk::pubkey::Pubkey,
+    selected: &[[u8; 33]],
+) -> usize {
+    let min_required = selected.len().min(4);
+
     let round = Round::new(
         request_id,
-        selected.clone(),
+        selected.to_vec(),
         min_required,
-        Duration::from_secs(30),
+        Duration::from_secs(60),
     );
 
     {
@@ -549,13 +609,11 @@ async fn simulate(State(state): State<AppState>) -> Response {
         );
     }
 
-    // Create DB record if pool is available.
     if let Some(ref pool) = state.db {
         let node_vecs: Vec<Vec<u8>> = selected.iter().map(|n| n.to_vec()).collect();
         let _ = crate::db::queries::create_round(pool, &request_id, &node_vecs).await;
     }
 
-    // Build and encode the JobAssignment.
     let job = DiceMessage::JobAssignment(JobAssignment {
         request_id: request_id.to_vec(),
         round_seq: sequence,
@@ -564,46 +622,44 @@ async fn simulate(State(state): State<AppState>) -> Response {
 
     let encoded = match job.encode() {
         Ok(b) => b,
-        Err(e) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": format!("CBOR encode failed: {}", e) })),
-            )
-                .into_response();
-        }
+        Err(_) => return 0,
     };
 
-    // Dispatch to each selected node.
     let mut dispatched = 0usize;
-    {
-        let reg = state.registry.read().await;
-        for node_id in &selected {
-            if let Some(session) = reg.get(node_id) {
-                if session.tx.try_send(encoded.clone()).is_ok() {
-                    dispatched += 1;
-                }
+    let reg = state.registry.read().await;
+    for node_id in selected {
+        if let Some(session) = reg.get(node_id) {
+            if session.tx.try_send(encoded.clone()).is_ok() {
+                dispatched += 1;
             }
         }
     }
 
-    let mut resp = json!({
-        "request_id": hex::encode(request_id),
-        "round_id": db_id.to_string(),
-        "selected_nodes": selected.iter().map(hex::encode).collect::<Vec<_>>(),
-        "min_required": min_required,
-        "dispatched": dispatched,
-        "sequence": sequence,
-    });
+    dispatched
+}
 
-    if let Some(sig) = tx_signature {
-        resp["tx_signature"] = json!(sig);
-        resp["explorer"] = json!(format!(
-            "https://explorer.solana.com/tx/{}?cluster=devnet",
-            sig
-        ));
-    }
+/// `GET /metrics` — Prometheus text exposition.
+/// `GET /queue` — queue status and per-node active round counts.
+async fn queue_status(State(state): State<AppState>) -> Response {
+    let q = state.request_queue.lock().await;
+    let active_nodes = get_active_nodes(&state.registry).await;
 
-    Json(resp).into_response()
+    let node_loads: Vec<serde_json::Value> = active_nodes.iter().map(|nid| {
+        json!({
+            "node_id": hex::encode(nid),
+            "active_rounds": q.node_active_count(nid),
+            "capacity": crate::queue::MAX_CONCURRENT_PER_NODE,
+            "has_capacity": q.node_has_capacity(nid),
+        })
+    }).collect();
+
+    Json(json!({
+        "pending": q.queue_len(),
+        "total_dispatched": q.total_dispatched,
+        "total_queued": q.total_queued,
+        "total_dropped": q.total_dropped,
+        "nodes": node_loads,
+    })).into_response()
 }
 
 /// `GET /metrics` — Prometheus text exposition.
