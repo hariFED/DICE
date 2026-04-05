@@ -1,0 +1,20 @@
+[package]
+name = "dice-roll"
+version = "0.1.0"
+edition = "2021"
+description = "Dice roll game (1-6) using DICE VRF for provable randomness"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "dice_roll"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = { workspace = true }
