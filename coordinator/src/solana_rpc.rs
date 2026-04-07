@@ -120,7 +120,7 @@ impl SolanaRpc {
         let result = self
             .rpc(
                 "sendTransaction",
-                json!([encoded, {"encoding": "base64", "skipPreflight": false}]),
+                json!([encoded, {"encoding": "base64", "skipPreflight": true, "preflightCommitment": "confirmed"}]),
             )
             .await?;
 

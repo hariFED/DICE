@@ -599,6 +599,15 @@ async fn handle_node_connection<S>(
                             // Submit commit on-chain (v2.0 channel or v1.0 legacy).
                             if let Some(ref ctx) = on_chain {
                                 if entry_requester != solana_sdk::pubkey::Pubkey::default() {
+                                    let derived_pda = solana_tx::request_pda(&ctx.program_id, &entry_requester, entry_sequence);
+                                    info!(
+                                        requester = %entry_requester,
+                                        sequence = entry_sequence,
+                                        derived_pda = %derived_pda,
+                                        request_id = hex::encode(request_id),
+                                        pda_matches = (derived_pda.as_ref() == request_id),
+                                        "submit_commit PDA debug"
+                                    );
                                     let ix = if let (Some(auth), Some(idx)) = (entry.channel_authority, entry.channel_index) {
                                         // v2.0 channel flow
                                         solana_tx::build_submit_commit_v2_ix(
