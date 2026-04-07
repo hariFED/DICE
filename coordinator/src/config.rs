@@ -31,6 +31,16 @@ pub struct Config {
     #[arg(long, env = "DICE_TLS", default_value_t = false)]
     pub tls: bool,
 
+    /// API key for protecting coordinator endpoints (Bearer token).
+    /// If set, all endpoints except /health and /metrics require
+    /// Authorization: Bearer <key>. If unset, all endpoints are public.
+    #[arg(long, env = "DICE_API_KEY")]
+    pub api_key: Option<String>,
+
+    /// Maximum requests per second for the /simulate endpoint.
+    #[arg(long, env = "DICE_RATE_LIMIT_RPS", default_value_t = 10)]
+    pub rate_limit_rps: u32,
+
     /// PostgreSQL connection URL (required unless --simulation)
     #[arg(long, env = "DATABASE_URL", default_value = "postgres://dice:dice@localhost/dice")]
     pub database_url: String,

@@ -389,8 +389,15 @@ void dice_captive_portal_start(void)
     ESP_LOGI(TAG, "HTTP server started on port 80");
     ESP_LOGI(TAG, "Connect to WiFi '%s' and open http://192.168.4.1", s_device_id);
 
-    /* Block forever — device reboots after user saves config */
+    /* Block until user saves config or timeout (10 minutes) — then reboot */
+    #define PORTAL_TIMEOUT_MS (10 * 60 * 1000)
+    TickType_t start = xTaskGetTickCount();
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(10000));
+        uint32_t elapsed = (xTaskGetTickCount() - start) * portTICK_PERIOD_MS;
+        if (elapsed > PORTAL_TIMEOUT_MS) {
+            ESP_LOGW(TAG, "Captive portal timeout (10 min) — rebooting");
+            esp_restart();
+        }
     }
 }

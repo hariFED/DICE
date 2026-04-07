@@ -1,14 +1,18 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use axum::{
     extract::{Path, State},
     http::StatusCode,
+    middleware,
     response::{Html, IntoResponse, Response},
     routing::{get, post},
     Json, Router,
 };
 use serde_json::json;
 use uuid::Uuid;
+
+use super::auth::{AuthState, RateLimiter};
 
 use crate::{
     db::queries::get_round,
@@ -45,6 +49,7 @@ pub struct AppState {
     pub rounds: RoundMap,
     pub round_history: RoundHistory,
     pub request_queue: crate::queue::SharedQueue,
+    pub rate_limiter: Arc<RateLimiter>,
     /// If set, transactions are submitted to Solana devnet/mainnet.
     pub on_chain: Option<OnChainCtx>,
 }
@@ -53,17 +58,30 @@ pub struct AppState {
 // Router builder
 // ---------------------------------------------------------------------------
 
-pub fn build_router(state: AppState) -> Router {
-    Router::new()
-        .route("/", get(dashboard))
+pub fn build_router(state: AppState, api_key: Option<String>) -> Router {
+    let auth_state = AuthState { api_key };
+
+    // Public routes — no auth required (monitoring)
+    let public = Router::new()
         .route("/health", get(health))
+        .route("/metrics", get(metrics_handler))
+        .with_state(state.clone());
+
+    // Protected routes — require API key (if configured)
+    let protected = Router::new()
+        .route("/", get(dashboard))
         .route("/nodes", get(list_nodes))
         .route("/rounds", get(list_rounds))
         .route("/rounds/:id", get(get_round_handler))
         .route("/queue", get(queue_status))
         .route("/simulate", post(simulate))
-        .route("/metrics", get(metrics_handler))
-        .with_state(state)
+        .layer(middleware::from_fn_with_state(
+            auth_state,
+            super::auth::require_api_key,
+        ))
+        .with_state(state);
+
+    public.merge(protected)
 }
 
 // ---------------------------------------------------------------------------
@@ -488,6 +506,15 @@ async fn get_round_handler(State(state): State<AppState>, Path(id): Path<String>
 /// Otherwise, queues the request and dispatches when a node finishes a round.
 async fn simulate(State(state): State<AppState>) -> Response {
     use rand::RngCore;
+
+    // Rate limiting
+    if !state.rate_limiter.try_acquire() {
+        return (
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(json!({ "error": "rate limited", "retry_after_ms": 1000 })),
+        )
+            .into_response();
+    }
 
     let active_nodes = get_active_nodes(&state.registry).await;
     if active_nodes.is_empty() {

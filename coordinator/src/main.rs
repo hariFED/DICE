@@ -72,6 +72,13 @@ async fn main() -> Result<()> {
     let pool: Option<sqlx::PgPool> = if cfg.simulation {
         None
     } else {
+        // Reject default/weak credentials in production
+        if cfg.database_url.is_empty() || cfg.database_url.contains("dice:dice@") {
+            anyhow::bail!(
+                "DATABASE_URL must be set with non-default credentials in production mode. \
+                 Use --simulation for local testing without a database."
+            );
+        }
         let p = sqlx::PgPool::connect(&cfg.database_url)
             .await
             .context("connect to PostgreSQL")?;
@@ -129,11 +136,13 @@ async fn main() -> Result<()> {
         rounds: rounds.clone(),
         round_history: round_history.clone(),
         request_queue: request_queue.clone(),
+        rate_limiter: std::sync::Arc::new(api::auth::RateLimiter::new(cfg.rate_limit_rps)),
         on_chain: on_chain.clone(),
     };
     let api_handle = {
         let port = cfg.api_port;
-        let router = build_router(api_state);
+        let api_key = cfg.api_key.clone();
+        let router = build_router(api_state, api_key);
         tokio::spawn(async move {
             if let Err(e) = serve_axum(router, port).await {
                 error!(?e, "REST API server error");
