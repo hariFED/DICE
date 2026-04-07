@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DICE VRF — How It Works</title>
+<style>
+:root{--bg:#0a0a0a;--s:#111;--s2:#1a1a1a;--b:#1e1e1e;--t:#d4d4d4;--d:#777;--a:#00ff88;--bl:#4da6ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--t);line-height:1.6}
+.hero{background:linear-gradient(135deg,#0d1117 0%,#001a0e 30%,#0d1117 70%,#001a0e 100%);border-bottom:1px solid var(--b);padding:4rem 2rem;text-align:center}
+.hero h1{font-size:3rem;color:var(--a);letter-spacing:-0.03em;margin-bottom:0.5rem}
+.hero .sub{color:var(--d);font-size:1.1rem;max-width:600px;margin:0 auto}
+.hero .badge{display:inline-block;padding:0.25rem 0.75rem;border-radius:4px;font-size:0.75rem;font-weight:700;margin-top:1rem;background:rgba(0,255,136,0.1);color:var(--a);border:1px solid rgba(0,255,136,0.2)}
+.ct{max-width:800px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.nav{display:grid;grid-template-columns:1fr;gap:1rem;margin-top:2rem}
+.nav-card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:1.5rem;transition:border-color 0.2s,transform 0.2s;text-decoration:none;color:inherit;display:block}
+.nav-card:hover{border-color:var(--a);transform:translateY(-2px)}
+.nav-card .num{font-size:0.7rem;color:var(--a);text-transform:uppercase;letter-spacing:0.1em;font-weight:700}
+.nav-card h2{font-size:1.2rem;color:#fff;margin:0.3rem 0}
+.nav-card p{font-size:0.88rem;color:var(--d);margin:0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:2rem 0}
+.stat{background:var(--s);border:1px solid var(--b);border-radius:8px;padding:1rem;text-align:center}
+.stat .num{font-size:1.8rem;font-weight:700;color:var(--a)}
+.stat .lbl{font-size:0.7rem;color:var(--d);text-transform:uppercase;letter-spacing:0.06em;margin-top:0.2rem}
+.ft{text-align:center;padding:2rem;color:var(--d);font-size:0.72rem;border-top:1px solid var(--b);margin-top:3rem}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="hero">
+<h1>DICE VRF</h1>
+<div class="sub">Hardware-Backed Verifiable Random Functions on Solana.<br>ESP32-S3 nodes generate physically random numbers that no one can predict, manipulate, or fake.</div>
+<div class="badge">545+ VRF Rounds Tested on Real Hardware &middot; 0 Crashes &middot; 0 Vulnerabilities</div>
+</div>
+<div class="ct">
+<div class="stats">
+<div class="stat"><div class="num">545+</div><div class="lbl">VRF Rounds</div></div>
+<div class="stat"><div class="num">0.002</div><div class="lbl">SOL / Request</div></div>
+<div class="stat"><div class="num">1.3s</div><div class="lbl">p50 Latency</div></div>
+<div class="stat"><div class="num">$8</div><div class="lbl">Node Cost</div></div>
+</div>
+
+<div class="nav">
+<a class="nav-card" href="01-architecture-overview.html">
+<div class="num">Chapter 1</div>
+<h2>Architecture Overview</h2>
+<p>Full system diagram. 4 layers: Smart Contract, Coordinator, Firmware, Hardware. Project structure, component map, and how everything connects.</p>
+</a>
+
+<a class="nav-card" href="02-vrf-flow-deep-dive.html">
+<div class="num">Chapter 2</div>
+<h2>VRF Flow Deep-Dive</h2>
+<p>Step-by-step through a VRF round: request, node selection, commit phase, reveal phase, finalization, callback. With real hex values from actual ESP32 hardware.</p>
+</a>
+
+<a class="nav-card" href="03-developer-integration.html">
+<div class="num">Chapter 3</div>
+<h2>Developer Integration Guide</h2>
+<p>How to add provable randomness to your Solana program. Complete code examples: Dice Roll, Lucky Wheel, Prediction Market. Honest assessment of trade-offs.</p>
+</a>
+
+<a class="nav-card" href="04-payment-and-economics.html">
+<div class="num">Chapter 4</div>
+<h2>Payment Model &amp; Economics</h2>
+<p>0.002 SOL per request. 70/20/10 split. Node operator ROI. Cost comparison with Chainlink, Switchboard. v2.0 channel design: 18x cheaper.</p>
+</a>
+
+<a class="nav-card" href="05-security-model.html">
+<div class="num">Chapter 5</div>
+<h2>Security Model</h2>
+<p>7 layers of defense. 13 attack vectors tested. mTLS certificate chain. Randomness quality analysis. Honest comparison with Switchboard and Chainlink.</p>
+</a>
+
+<a class="nav-card" href="06-honest-assessment.html">
+<div class="num">Chapter 6</div>
+<h2>Honest Assessment</h2>
+<p>What works, what doesn't, what's missing. Known limitations, centralization risks, untested scenarios. What judges should scrutinize.</p>
+</a>
+</div>
+</div>
+<div class="ft">
+DICE VRF Oracle &middot; Built with Rust, Anchor, ESP-IDF, and real hardware<br>
+Program: <code>78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv</code> (Solana devnet)
+</div>
+</body>
+</html>

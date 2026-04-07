@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE Architecture Overview</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0a0a0a;
+    --bg-card:   #111111;
+    --bg-card2:  #161616;
+    --border:    #1e1e1e;
+    --border-hi: #2a2a2a;
+    --accent:    #00ff88;
+    --accent-dim:#00cc6a;
+    --accent-bg: rgba(0,255,136,0.06);
+    --text:      #e0e0e0;
+    --text-dim:  #888888;
+    --text-code: #b0b0b0;
+    --red:       #ff4444;
+    --orange:    #ff9933;
+    --blue:      #44aaff;
+    --purple:    #aa77ff;
+    --yellow:    #ffcc00;
+    --mono:      'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+    --sans:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Container ────────────────────────────────────────────────── */
+  .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── Hero ──────────────────────────────────────────────────────── */
+  .hero {
+    padding: 80px 0 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -120px; left: 50%; width: 600px; height: 600px;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(0,255,136,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 6px 18px;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: #ffffff;
+    margin-bottom: 12px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p {
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 0 auto 32px;
+  }
+
+  /* ── Stats Bar ────────────────────────────────────────────────── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 56px;
+  }
+  .stat {
+    background: var(--bg-card);
+    padding: 24px 16px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* ── Section ──────────────────────────────────────────────────── */
+  section { margin-bottom: 56px; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--accent-dim);
+    margin-bottom: 8px;
+  }
+  h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+  }
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+
+  /* ── Cards ────────────────────────────────────────────────────── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border-hi); }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .card-sm {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    transition: border-color 0.2s;
+  }
+  .card-sm:hover { border-color: var(--accent); }
+
+  .card-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    margin-bottom: 14px;
+    font-family: var(--mono);
+    font-weight: 700;
+  }
+
+  /* ── Layer Stack (CSS-based architecture diagram) ──────────────── */
+  .layer-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 24px 0;
+  }
+  .layer {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .layer-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .layer-body {
+    font-size: 0.92rem;
+    color: var(--text-dim);
+  }
+  .layer-body strong { color: var(--text); font-weight: 600; }
+  .layer-connector {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 2px 0;
+    letter-spacing: 1px;
+  }
+
+  .l-dapp   { background: rgba(170,119,255,0.06); border-color: rgba(170,119,255,0.25); }
+  .l-dapp .layer-tag { color: var(--purple); }
+
+  .l-chain  { background: rgba(68,170,255,0.06); border-color: rgba(68,170,255,0.25); }
+  .l-chain .layer-tag { color: var(--blue); }
+
+  .l-coord  { background: rgba(0,255,136,0.06); border-color: rgba(0,255,136,0.2); }
+  .l-coord .layer-tag { color: var(--accent); }
+
+  .l-firm   { background: rgba(255,153,51,0.06); border-color: rgba(255,153,51,0.25); }
+  .l-firm .layer-tag { color: var(--orange); }
+
+  .l-hw     { background: rgba(255,68,68,0.06); border-color: rgba(255,68,68,0.2); }
+  .l-hw .layer-tag { color: var(--red); }
+
+  /* ── ASCII Diagram Box ────────────────────────────────────────── */
+  .ascii-box {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 28px;
+    overflow-x: auto;
+    margin: 20px 0;
+  }
+  .ascii-box pre {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-code);
+    white-space: pre;
+    margin: 0;
+  }
+  .ascii-box pre .hl { color: var(--accent); font-weight: 600; }
+  .ascii-box pre .bl { color: var(--blue); }
+  .ascii-box pre .pu { color: var(--purple); }
+  .ascii-box pre .or { color: var(--orange); }
+  .ascii-box pre .rd { color: var(--red); }
+  .ascii-box pre .yl { color: var(--yellow); }
+  .ascii-box pre .dm { color: var(--text-dim); }
+
+  /* ── Code Inline ──────────────────────────────────────────────── */
+  code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    background: rgba(255,255,255,0.05);
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  /* ── Instruction Table ────────────────────────────────────────── */
+  .ix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin-top: 16px;
+  }
+  .ix-table thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ix-table tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .ix-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .ix-table .ix-name {
+    font-family: var(--mono);
+    font-size: 0.84rem;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .ix-table .ix-ver {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .ix-v1 { background: rgba(68,170,255,0.12); color: var(--blue); }
+  .ix-v2 { background: rgba(0,255,136,0.12); color: var(--accent); }
+
+  /* ── Flow Timeline ────────────────────────────────────────────── */
+  .flow-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .flow-step {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+    position: relative;
+  }
+  .flow-step-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .flow-step-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .flow-step-desc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* ── File tree ────────────────────────────────────────────────── */
+  .file-tree {
+    font-family: var(--mono);
+    font-size: 0.84rem;
+    line-height: 1.8;
+  }
+  .file-tree .dir {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .file-tree .meta {
+    color: var(--text-dim);
+    font-size: 0.78rem;
+  }
+  .file-tree .indent { padding-left: 24px; color: var(--text-dim); }
+  .file-tree .indent2 { padding-left: 48px; color: var(--text-dim); }
+
+  /* ── Tag pills ────────────────────────────────────────────────── */
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+  .tag-green  { background: rgba(0,255,136,0.1); color: var(--accent); }
+  .tag-blue   { background: rgba(68,170,255,0.1); color: var(--blue); }
+  .tag-orange { background: rgba(255,153,51,0.1); color: var(--orange); }
+  .tag-purple { background: rgba(170,119,255,0.1); color: var(--purple); }
+  .tag-red    { background: rgba(255,68,68,0.1); color: var(--red); }
+
+  /* ── Separator ────────────────────────────────────────────────── */
+  .sep {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+
+  /* ── Footer ───────────────────────────────────────────────────── */
+  footer {
+    text-align: center;
+    padding: 48px 0 40px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.82rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── Responsive ───────────────────────────────────────────────── */
+  @media (max-width: 720px) {
+    .layer { grid-template-columns: 1fr; gap: 6px; }
+    .hero { padding: 48px 0 32px; }
+    .card { padding: 20px; }
+    .ascii-box { padding: 16px; }
+    .ascii-box pre { font-size: 10.5px; }
+  }
+
+  /* ── Scrollbar ────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+  /* ── Tooltip-style detail blocks ──────────────────────────────── */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 6px 16px;
+    font-size: 0.88rem;
+    margin-top: 12px;
+  }
+  .detail-key {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-align: right;
+  }
+  .detail-val { color: var(--text); }
+
+  /* ── Animated glow on hero ────────────────────────────────────── */
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  .hero-badge { animation: pulse-glow 3s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================ -->
+<!--  HERO                                                             -->
+<!-- ================================================================ -->
+<header class="hero">
+  <div class="container">
+    <div class="hero-badge">Architecture Overview</div>
+    <h1><span>DICE</span> System Architecture</h1>
+    <p>
+      Hardware-backed Verifiable Random Function oracle on Solana.
+      ESP32-S3 nodes generate tamper-proof entropy via a commit-reveal protocol,
+      coordinated by a Rust server with mTLS, persisted in PostgreSQL,
+      and settled on-chain through an Anchor smart contract.
+    </p>
+  </div>
+</header>
+
+<!-- ================================================================ -->
+<!--  STATS BAR                                                        -->
+<!-- ================================================================ -->
+<div class="container">
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-num">545+</div>
+      <div class="stat-label">VRF Rounds Tested</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">21</div>
+      <div class="stat-label">On-Chain Instructions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">0</div>
+      <div class="stat-label">Crashes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">162</div>
+      <div class="stat-label">Unit Tests</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">4</div>
+      <div class="stat-label">Devnet Programs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">13.8K</div>
+      <div class="stat-label">Lines of Code</div>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!--  SECTION 1 — THE FOUR LAYERS                                     -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">01 / System Layers</div>
+    <h2>Four-Layer Architecture</h2>
+    <p style="color:var(--text-dim); margin-bottom:24px;">
+      Each layer has a single responsibility. Hardware generates entropy.
+      Firmware packages and signs it. The coordinator orchestrates timing and
+      on-chain submission. The smart contract verifies everything and
+      delivers randomness to dApps via CPI.
+    </p>
+
+    <div class="layer-stack">
+      <div class="layer l-dapp">
+        <div class="layer-tag">dApps</div>
+        <div class="layer-body">
+          <strong>Consumer Programs</strong> &mdash; Anchor programs that call DICE via CPI.
+          Examples: dice-roll, lucky-wheel, prediction-market, coin-toss.
+          Receive randomness through a <code>deliver_callback</code> instruction
+          or poll the <code>DiceChannel</code> account directly.
+        </div>
+      </div>
+      <div class="layer-connector">--- CPI (Cross-Program Invocation) ---</div>
+
+      <div class="layer l-chain">
+        <div class="layer-tag">Smart Contract</div>
+        <div class="layer-body">
+          <strong>Anchor / Solana</strong> &mdash; 21 instructions (8 v1.0 + 13 v2.0).
+          Manages device registration, escrow, commit-reveal verification,
+          entropy finalization, fee distribution (70/20/10), and on-chain
+          node selection via SlotHashes sysvar.
+          <br><span class="tag tag-blue">Rust</span>
+          <span class="tag tag-blue">2,961 lines</span>
+          <span class="tag tag-blue">programs/dice/</span>
+        </div>
+      </div>
+      <div class="layer-connector">--- JSON-RPC (Solana RPC + WebSocket subscription) ---</div>
+
+      <div class="layer l-coord">
+        <div class="layer-tag">Coordinator</div>
+        <div class="layer-body">
+          <strong>Rust Server</strong> &mdash; Async Tokio runtime. mTLS WebSocket listener
+          for ESP32-S3 nodes. REST API (Axum). PostgreSQL round persistence.
+          Prometheus metrics. State machine drives each round through
+          CollectingCommits, CollectingReveals, Finalized/Failed.
+          <br><span class="tag tag-green">Rust</span>
+          <span class="tag tag-green">7,460 lines</span>
+          <span class="tag tag-green">coordinator/</span>
+        </div>
+      </div>
+      <div class="layer-connector">--- WSS (WebSocket over mTLS, CBOR binary frames) ---</div>
+
+      <div class="layer l-firm">
+        <div class="layer-tag">Firmware</div>
+        <div class="layer-body">
+          <strong>ESP-IDF C</strong> &mdash; Runs on bare metal. Collects entropy from
+          hardware RNG + floating ADC pin noise. Signs with secp256k1 (mbedTLS).
+          Manages commit-reveal ring buffer. Heartbeat loop. Captive portal for WiFi provisioning.
+          LED status indicators.
+          <br><span class="tag tag-orange">C</span>
+          <span class="tag tag-orange">2,322 lines</span>
+          <span class="tag tag-orange">firmware/</span>
+        </div>
+      </div>
+      <div class="layer-connector">--- Physical (on-chip peripherals) ---</div>
+
+      <div class="layer l-hw">
+        <div class="layer-tag">Hardware</div>
+        <div class="layer-body">
+          <strong>ESP32-S3-N16R8</strong> &mdash; Dual-core Xtensa LX7 @ 240 MHz.
+          16 MB flash, 8 MB PSRAM. Hardware RNG (thermal noise),
+          AES-XTS flash encryption, Secure Boot v2,
+          eFuse key storage. NVS-encrypted private key persistence.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 2 — DATA FLOW DIAGRAM                                   -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">02 / Data Flow</div>
+    <h2>End-to-End Randomness Pipeline</h2>
+
+    <div class="ascii-box">
+      <pre>
+<span class="dm">                    DICE  -  Full Round Lifecycle</span>
+
+  <span class="pu">dApp</span>                <span class="bl">Solana</span>              <span class="hl">Coordinator</span>           <span class="or">ESP32-S3</span>
+   |                    |                      |                      |
+   |  <span class="pu">request_randomness</span> |                      |                      |
+   |------------------->|                      |                      |
+   |                    | <span class="bl">RandomnessRequest</span>    |                      |
+   |                    |  (PDA created)       |                      |
+   |                    |--------------------->|                      |
+   |                    |  <span class="dm">watcher detects</span>     |                      |
+   |                    |  <span class="dm">new Pending request</span>  |                      |
+   |                    |                      |                      |
+   |                    |                      |  <span class="hl">JobAssignment</span>        |
+   |                    |                      |--------------------->|
+   |                    |                      |  <span class="dm">(CBOR over mTLS WSS)</span> |
+   |                    |                      |                      |
+   |                    |                      |                <span class="or">generate</span>
+   |                    |                      |                <span class="or">entropy</span>
+   |                    |                      |                      |
+   |                    |                      |  <span class="or">CommitSubmission</span>     |
+   |                    |                      |<---------------------|
+   |                    |                      |  <span class="dm">SHA-256(entropy)</span>     |
+   |                    |                      |  <span class="dm">+ ECDSA signature</span>   |
+   |                    |                      |                      |
+   |                    |  <span class="bl">submit_commit</span>       |                      |
+   |                    |<---------------------|                      |
+   |                    |                      |                      |
+   |                    |                      |  <span class="dm">"send_reveal"</span>        |
+   |                    |                      |--------------------->|
+   |                    |                      |                      |
+   |                    |                      |  <span class="or">RevealSubmission</span>     |
+   |                    |                      |<---------------------|
+   |                    |                      |  <span class="dm">raw entropy</span>          |
+   |                    |                      |  <span class="dm">+ ECDSA signature</span>   |
+   |                    |                      |                      |
+   |                    |  <span class="bl">submit_reveal</span>       |                      |
+   |                    |<---------------------|                      |
+   |                    |                      |                      |
+   |                    |  <span class="bl">finalize_randomness</span> |                      |
+   |                    |<---------------------|                      |
+   |                    |                      |                      |
+   |                    |  <span class="yl">SHA-256(e1||e2||...eN)</span>                      |
+   |                    |  <span class="yl">= final randomness</span>  |                      |
+   |                    |                      |                      |
+   |  <span class="pu">deliver_callback</span>  |                      |                      |
+   |<-------------------|                      |                      |
+   |  <span class="dm">(or poll account)</span>  |                      |                      |
+</pre>
+    </div>
+
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-num">01</div>
+        <div class="flow-step-title">Request</div>
+        <div class="flow-step-desc">dApp calls <code>request_randomness</code>, paying 0.002 SOL into escrow PDA</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">02</div>
+        <div class="flow-step-title">Detect</div>
+        <div class="flow-step-desc">Coordinator's Solana watcher polls for new Pending requests via getProgramAccounts</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">03</div>
+        <div class="flow-step-title">Select</div>
+        <div class="flow-step-desc">SelectionEngine picks 4-50 low-latency nodes from active heartbeating pool</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">04</div>
+        <div class="flow-step-title">Commit</div>
+        <div class="flow-step-desc">Each node generates entropy, sends SHA-256 hash + ECDSA signature via CBOR</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">05</div>
+        <div class="flow-step-title">Reveal</div>
+        <div class="flow-step-desc">After all commits, nodes reveal raw entropy. Coordinator verifies hash match</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">06</div>
+        <div class="flow-step-title">Finalize</div>
+        <div class="flow-step-desc">Combined randomness = SHA-256(e1 || e2 || ... || eN) written on-chain</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">07</div>
+        <div class="flow-step-title">Deliver</div>
+        <div class="flow-step-desc">CPI callback delivers result to dApp, or dApp polls the RandomnessResult PDA</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">08</div>
+        <div class="flow-step-title">Reward</div>
+        <div class="flow-step-desc">Escrow distributes: 70% to nodes, 20% treasury, 10% reserve</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 3 — WIRE PROTOCOLS                                      -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">03 / Wire Protocols</div>
+    <h2>Communication Layer Detail</h2>
+
+    <div class="card-grid">
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(255,153,51,0.1); color:var(--orange);">CB</div>
+        <h3>CBOR Wire Protocol</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          All firmware-coordinator communication uses <strong style="color:var(--text)">CBOR</strong>
+          (Concise Binary Object Representation) over WebSocket binary frames.
+          Messages are two-element arrays: <code>[tag, payload]</code>.
+          Tags: <code>"heartbeat"</code>, <code>"job_assignment"</code>,
+          <code>"commit"</code>, <code>"reveal"</code>, <code>"round_result"</code>,
+          <code>"send_reveal"</code>.
+        </p>
+        <div class="detail-grid" style="margin-top:14px;">
+          <div class="detail-key">Encoding</div>
+          <div class="detail-val">CBOR (RFC 8949)</div>
+          <div class="detail-key">Transport</div>
+          <div class="detail-val">WebSocket binary frames</div>
+          <div class="detail-key">Security</div>
+          <div class="detail-val">mTLS (mutual TLS 1.3)</div>
+          <div class="detail-key">Port</div>
+          <div class="detail-val">8443 (configurable)</div>
+        </div>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(68,170,255,0.1); color:var(--blue);">RPC</div>
+        <h3>Solana JSON-RPC</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          The coordinator uses <strong style="color:var(--text)">JSON-RPC</strong> to interact
+          with Solana: submitting transactions (submit_commit, submit_reveal,
+          finalize_randomness) and watching for new requests via
+          <code>getProgramAccounts</code> with <code>memcmp</code> filters on
+          the RandomnessRequest discriminator and Pending status byte.
+        </p>
+        <div class="detail-grid" style="margin-top:14px;">
+          <div class="detail-key">RPC URL</div>
+          <div class="detail-val">Configurable (devnet default)</div>
+          <div class="detail-key">Polling</div>
+          <div class="detail-val">getProgramAccounts + memcmp</div>
+          <div class="detail-key">Subscriptions</div>
+          <div class="detail-val">WebSocket accountSubscribe</div>
+          <div class="detail-key">Signing</div>
+          <div class="detail-val">Coordinator keypair (ed25519)</div>
+        </div>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(170,119,255,0.1); color:var(--purple);">CPI</div>
+        <h3>CPI Callbacks</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Solana's Cross-Program Invocation delivers finalized randomness
+          directly into the consumer dApp. The <code>deliver_callback</code>
+          instruction is separated from <code>finalize_v2</code> so randomness
+          is safe even if the callback fails. dApps can also poll the
+          <code>DiceChannel</code> account directly.
+        </p>
+        <div class="detail-grid" style="margin-top:14px;">
+          <div class="detail-key">Mechanism</div>
+          <div class="detail-val">Anchor CPI invoke_signed</div>
+          <div class="detail-key">Fallback</div>
+          <div class="detail-val">Account polling</div>
+          <div class="detail-key">Retry</div>
+          <div class="detail-val">Separate ix, can retry safely</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 4 — ON-CHAIN INSTRUCTIONS                               -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">04 / Smart Contract</div>
+    <h2>21 On-Chain Instructions</h2>
+    <p style="color:var(--text-dim); margin-bottom:12px;">
+      Program ID: <code>78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv</code>
+    </p>
+
+    <div class="card" style="overflow-x:auto;">
+      <table class="ix-table">
+        <thead>
+          <tr>
+            <th>Instruction</th>
+            <th>Version</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- v1.0 -->
+          <tr>
+            <td class="ix-name">register_device</td>
+            <td><span class="ix-ver ix-v1">v1.0</span></td>
+            <td>Register ESP32-S3 node by secp256k1 public key</td>
+          </tr>
+          <tr>
+            <td class="ix-name">request_randomness</td>
+            <td><span class="ix-ver ix-v1">v1.0</span></td>
+            <td>Developer requests randomness, 0.002 SOL into escrow</td>
+          </tr>
+          <tr>
+            <td class="ix-name">init_escrow</td>
+            <td><span class="ix-ver ix-v1">v1.0</span></td>
+            <td>Explicitly initialize escrow PDA before funding</td>
+          </tr>
+          <tr>
+            <td class="ix-name">fund_escrow</td>
+            <td><span class="ix-ver ix-v1">v1.0</span></td>
+            <td>Add lamports to an existing escrow account</td>
+          </tr>
+          <tr>
+            <td class="ix-name">submit_commit</td>
+            <td><span class="ix-ver ix-v1">v1.0</span></td>
+            <td>Coordinator submits SHA-256 commit hash from a node</td>
+          </tr>
+          <tr>
+            <td class="ix-name">submit_reveal</td>
+            <td><span class="ix-ver ix-v1">v1.0</span></td>
+            <td>Coordinator submits entropy reveal + ECDSA signature</td>
+          </tr>
+          <tr>
+            <td class="ix-name">finalize_randomness</td>
+            <td><span class="ix-ver ix-v1">v1.0</span></td>
+            <td>Combine entropy via SHA-256, write RandomnessResult</td>
+          </tr>
+          <tr>
+            <td class="ix-name">claim_rewards</td>
+            <td><span class="ix-ver ix-v1">v1.0</span></td>
+            <td>Distribute escrow: 70% node / 20% treasury / 10% reserve</td>
+          </tr>
+
+          <!-- v2.0 -->
+          <tr>
+            <td class="ix-name">init_channel</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Create reusable DiceChannel PDA (4-50 nodes capacity)</td>
+          </tr>
+          <tr>
+            <td class="ix-name">fund_channel</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Add SOL to channel's prepaid balance</td>
+          </tr>
+          <tr>
+            <td class="ix-name">request_randomness_v2</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Request randomness via channel, deduct fee from balance</td>
+          </tr>
+          <tr>
+            <td class="ix-name">request_randomness_auto</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Auto-fund request from developer wallet if balance low</td>
+          </tr>
+          <tr>
+            <td class="ix-name">select_nodes</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>On-chain node selection via SlotHashes (Fisher-Yates)</td>
+          </tr>
+          <tr>
+            <td class="ix-name">submit_commit_v2</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Submit commit hash inline in channel (no separate PDA)</td>
+          </tr>
+          <tr>
+            <td class="ix-name">submit_reveal_v2</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Submit reveal inline in channel (no separate PDA)</td>
+          </tr>
+          <tr>
+            <td class="ix-name">finalize_v2</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Finalize randomness from inline reveals in channel</td>
+          </tr>
+          <tr>
+            <td class="ix-name">deliver_callback</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>CPI callback to consumer program (retry-safe)</td>
+          </tr>
+          <tr>
+            <td class="ix-name">withdraw_balance</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Withdraw prepaid balance from channel (Idle only)</td>
+          </tr>
+          <tr>
+            <td class="ix-name">close_channel</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Close channel and reclaim rent (Idle + zero balance)</td>
+          </tr>
+          <tr>
+            <td class="ix-name">fail_round</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Mark stuck round as failed, reset channel to Idle</td>
+          </tr>
+          <tr>
+            <td class="ix-name">resize_channel</td>
+            <td><span class="ix-ver ix-v2">v2.0</span></td>
+            <td>Resize channel max_nodes capacity (Idle only)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 5 — COORDINATOR DEEP DIVE                               -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">05 / Coordinator</div>
+    <h2>Rust Server Internals</h2>
+
+    <div class="ascii-box">
+      <pre>
+<span class="dm">coordinator/src/</span>
+<span class="hl">main.rs</span>             <span class="dm">Entry point: wires config, DB, WS server, REST, metrics</span>
+<span class="hl">config.rs</span>           <span class="dm">CLI flags via clap: ports, mTLS paths, DB URL, Solana RPC</span>
+<span class="hl">state_machine.rs</span>    <span class="dm">Round lifecycle: CollectingCommits -> CollectingReveals -> Finalized/Failed</span>
+<span class="hl">node_session.rs</span>     <span class="dm">NodeRegistry: concurrent HashMap of live ESP32-S3 sessions</span>
+<span class="hl">selection.rs</span>        <span class="dm">SelectionEngine: latency-sorted pool -> random subset</span>
+<span class="hl">solana_watcher.rs</span>   <span class="dm">Polls getProgramAccounts for Pending RandomnessRequest PDAs</span>
+<span class="hl">solana_tx.rs</span>        <span class="dm">Transaction builder: submit_commit, submit_reveal, finalize</span>
+<span class="hl">solana_rpc.rs</span>       <span class="dm">RPC client wrapper with retry logic</span>
+<span class="hl">solana_ws.rs</span>        <span class="dm">Solana WebSocket subscription for real-time account updates</span>
+<span class="hl">metrics.rs</span>          <span class="dm">Prometheus: nodes_connected, rounds_total, duration_seconds</span>
+<span class="hl">queue.rs</span>            <span class="dm">Round queue for pending job dispatch</span>
+<span class="dm">protocol/</span>
+  <span class="hl">messages.rs</span>       <span class="dm">CBOR message types: Heartbeat, JobAssignment, Commit, Reveal, Result</span>
+  <span class="hl">validation.rs</span>     <span class="dm">combine_entropy, verify_commit, verify_reveal</span>
+<span class="dm">api/</span>
+  <span class="hl">routes.rs</span>         <span class="dm">Axum REST: /health, /metrics, /status, /simulate</span>
+<span class="dm">db/</span>
+  <span class="hl">mod.rs</span>            <span class="dm">PostgreSQL: round persistence, node registry, result history</span>
+</pre>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-sm">
+        <h3>State Machine</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Each round transitions through well-defined states with deadlines.
+          If commits or reveals time out, the round moves to Failed.
+          The state machine enforces that <code>SHA-256(entropy) == commit_hash</code>
+          before accepting any reveal, preventing after-the-fact manipulation.
+        </p>
+        <div style="margin-top:12px; font-family:var(--mono); font-size:0.8rem; color:var(--text-dim);">
+          <span style="color:var(--accent);">CollectingCommits</span>
+          <span style="color:var(--text-dim);"> --> </span>
+          <span style="color:var(--blue);">CollectingReveals</span>
+          <span style="color:var(--text-dim);"> --> </span>
+          <span style="color:var(--yellow);">Finalized</span>
+          <span style="color:var(--text-dim);"> | </span>
+          <span style="color:var(--red);">Failed</span>
+        </div>
+      </div>
+
+      <div class="card-sm">
+        <h3>Node Selection</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          The SelectionEngine enforces fairness and low latency:
+        </p>
+        <ol style="color:var(--text-dim); font-size:0.84rem; padding-left:18px; margin-top:8px; line-height:1.7;">
+          <li>Filter to nodes with heartbeat within 45 seconds</li>
+          <li>Exclude recently selected nodes (rotation fairness)</li>
+          <li>Sort by latency, keep top 10 candidates</li>
+          <li>Randomly shuffle and pick target count</li>
+          <li>On-chain: Fisher-Yates with SlotHashes seed</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 6 — FIRMWARE DEEP DIVE                                  -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">06 / Firmware</div>
+    <h2>ESP32-S3 Firmware Architecture</h2>
+
+    <div class="card-grid">
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(255,153,51,0.1); color:var(--orange);">EN</div>
+        <h3>entropy.c</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Dual-source entropy collection. Primary: ESP32-S3 hardware RNG
+          (thermal noise from the SAR ADC). Secondary: floating ADC pin
+          noise (GPIO1, ADC1_CHANNEL_0) with 8 samples XOR-folded.
+          Both sources are mixed via SHA-256 to produce 32 bytes of
+          high-quality entropy per round.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(255,153,51,0.1); color:var(--orange);">CR</div>
+        <h3>crypto.c</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          secp256k1 ECDSA signing via mbedTLS. Private key stored in NVS
+          (Non-Volatile Storage) with flash encryption. Key is loaded once
+          at boot into a singleton <code>mbedtls_pk_context</code>.
+          Entropy source for the DRBG wraps <code>esp_fill_random()</code>.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(255,153,51,0.1); color:var(--orange);">WS</div>
+        <h3>websocket_client.c</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Persistent WebSocket connection to coordinator over mTLS.
+          Auto-reconnect with exponential backoff. CBOR serialization of
+          all protocol messages. Handles inbound <code>job_assignment</code>
+          and <code>send_reveal</code> commands.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(255,153,51,0.1); color:var(--orange);">HB</div>
+        <h3>commit_reveal.c</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Ring buffer of 16 pending jobs. On job assignment: generate entropy,
+          compute SHA-256 commit hash, sign with ECDSA, send commit.
+          On reveal command: look up stored entropy by request_id, sign, send.
+          All operations are mutex-protected for FreeRTOS safety.
+        </p>
+      </div>
+    </div>
+
+    <div class="ascii-box" style="margin-top:16px;">
+      <pre>
+<span class="dm">firmware/main/</span>
+<span class="or">app_main.c</span>          <span class="dm">WiFi init, NVS, event loop, task creation</span>
+<span class="or">entropy.c</span>           <span class="dm">Hardware RNG + ADC noise -> SHA-256 -> 32-byte entropy</span>
+<span class="or">crypto.c</span>            <span class="dm">secp256k1 key management + ECDSA signing (mbedTLS)</span>
+<span class="or">websocket_client.c</span>  <span class="dm">mTLS WebSocket to coordinator, CBOR frames</span>
+<span class="or">commit_reveal.c</span>     <span class="dm">Commit-reveal state machine, 16-slot ring buffer</span>
+<span class="or">heartbeat.c</span>         <span class="dm">Periodic liveness + stats reporting (every 30s)</span>
+<span class="or">led_status.c</span>        <span class="dm">Visual status: booting / connected / active / error</span>
+<span class="or">captive_portal.c</span>    <span class="dm">WiFi provisioning via captive portal web UI</span>
+</pre>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 7 — ON-CHAIN STATE                                      -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">07 / On-Chain State</div>
+    <h2>Account Architecture (PDAs)</h2>
+
+    <div class="ascii-box">
+      <pre>
+<span class="bl">programs/dice/src/state/</span>
+
+<span class="hl">DeviceRegistry</span>       <span class="dm">Seeds: ["device", device_id]</span>
+<span class="dm">  |-- device_pubkey: [u8; 33]     (compressed secp256k1 key)</span>
+<span class="dm">  |-- authority: Pubkey            (registrar)</span>
+<span class="dm">  |-- registered_at: i64           (unix timestamp)</span>
+
+<span class="hl">RandomnessRequest</span>    <span class="dm">Seeds: ["request", requester, &sequence.to_le_bytes()]</span>
+<span class="dm">  |-- requester, sequence, status, callback_program_id</span>
+<span class="dm">  |-- node_count, created_slot, commit_deadline_slot</span>
+
+<span class="hl">CommitRecord</span>         <span class="dm">Seeds: ["commit", request.key(), device_id]</span>
+<span class="dm">  |-- commit_hash: [u8; 32]        (SHA-256 of entropy)</span>
+
+<span class="hl">RevealRecord</span>         <span class="dm">Seeds: ["reveal", request.key(), device_id]</span>
+<span class="dm">  |-- entropy: [u8; 32], signature: [u8; 64]</span>
+
+<span class="hl">RandomnessResult</span>     <span class="dm">Seeds: ["result", request.key()]</span>
+<span class="dm">  |-- randomness: [u8; 32]         (SHA-256 of all entropies)</span>
+
+<span class="hl">EscrowAccount</span>        <span class="dm">Seeds: ["escrow", requester, &sequence.to_le_bytes()]</span>
+<span class="dm">  |-- lamports for fee distribution</span>
+
+<span class="hl">DiceChannel</span>          <span class="dm">Seeds: ["channel", authority, &channel_index.to_le_bytes()]</span>
+<span class="dm">  |-- status: ChannelStatus        (Idle/Pending/CommitPhase/RevealPhase/Finalized/Failed)</span>
+<span class="dm">  |-- round_id, node_count, max_nodes (4-50)</span>
+<span class="dm">  |-- balance: u64                 (prepaid SOL for fees)</span>
+<span class="dm">  |-- commits[]: inline storage    (no separate PDAs in v2.0)</span>
+<span class="dm">  |-- reveals[]: inline storage</span>
+<span class="dm">  |-- randomness: [u8; 32]         (result stored inline)</span>
+</pre>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h3>v1.0 vs v2.0: The Channel Evolution</h3>
+      <div class="card-grid" style="margin-top:16px;">
+        <div style="padding:16px; background:var(--bg-card2); border-radius:8px; border:1px solid rgba(68,170,255,0.15);">
+          <div style="font-family:var(--mono); font-size:0.8rem; color:var(--blue); margin-bottom:8px; font-weight:600;">v1.0 &mdash; PDA per Operation</div>
+          <ul style="color:var(--text-dim); font-size:0.84rem; padding-left:16px; line-height:1.8;">
+            <li>Separate CommitRecord + RevealRecord PDAs per node per round</li>
+            <li>New escrow PDA per request</li>
+            <li>Higher rent cost per round</li>
+            <li>Simple but expensive at scale</li>
+          </ul>
+        </div>
+        <div style="padding:16px; background:var(--bg-card2); border-radius:8px; border:1px solid rgba(0,255,136,0.15);">
+          <div style="font-family:var(--mono); font-size:0.8rem; color:var(--accent); margin-bottom:8px; font-weight:600;">v2.0 &mdash; Channel Design</div>
+          <ul style="color:var(--text-dim); font-size:0.84rem; padding-left:16px; line-height:1.8;">
+            <li>Single reusable DiceChannel PDA stores everything inline</li>
+            <li>Prepaid balance model &mdash; fund once, request many times</li>
+            <li>No per-round PDA creation (massive rent savings)</li>
+            <li>Retry-safe separate callback delivery</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 8 — SECURITY MODEL                                      -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">08 / Security</div>
+    <h2>Trust Model &amp; Security Layers</h2>
+
+    <div class="card-grid">
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(255,68,68,0.1); color:var(--red);">HW</div>
+        <h3>Hardware Root of Trust</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Private keys are generated on-device and stored in NVS with
+          AES-XTS flash encryption. Secure Boot v2 ensures only signed
+          firmware can run. The hardware RNG sources thermal noise from
+          the SAR ADC &mdash; not a PRNG.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(0,255,136,0.1); color:var(--accent);">TLS</div>
+        <h3>Mutual TLS (mTLS)</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Private PKI with a custom Certificate Authority. Both the
+          coordinator and each ESP32-S3 node present certificates.
+          The coordinator rejects connections from devices not signed by the CA.
+          WebSocket runs over TLS 1.3 on port 8443.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(68,170,255,0.1); color:var(--blue);">CR</div>
+        <h3>Commit-Reveal Protocol</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Two-phase protocol prevents entropy manipulation. Nodes commit
+          <code>SHA-256(entropy)</code> first. Only after all commits are
+          collected do nodes reveal raw entropy. The coordinator and
+          smart contract both verify <code>hash(reveal) == commit</code>.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(255,204,0,0.1); color:var(--yellow);">SIG</div>
+        <h3>ECDSA Signatures</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Every commit and reveal carries a secp256k1 ECDSA signature
+          tied to the device's registered public key. The smart contract
+          verifies signatures on-chain, ensuring no one (including the
+          coordinator) can forge or substitute entropy values.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(170,119,255,0.1); color:var(--purple);">BFT</div>
+        <h3>Multi-Node Entropy</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Final randomness = <code>SHA-256(e1 || e2 || ... || eN)</code>.
+          Minimum 4 nodes per round. Even if N-1 nodes are compromised,
+          a single honest node's entropy makes the final result unpredictable.
+          The coordinator cannot bias the output.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(68,170,255,0.1); color:var(--blue);">SEL</div>
+        <h3>On-Chain Node Selection</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          v2.0 introduces verifiable on-chain node selection using the
+          SlotHashes sysvar. Seed = <code>SHA-256(slot_hash || channel || round_id || block_height)</code>,
+          used for Fisher-Yates shuffle. No one can predict or
+          manipulate which nodes are chosen.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 9 — PROJECT STRUCTURE                                   -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">09 / Codebase</div>
+    <h2>Project Structure</h2>
+
+    <div class="card">
+      <div class="file-tree">
+        <div><span class="dir">coordinator/</span> <span class="meta">&mdash; Rust WebSocket server, mTLS, PostgreSQL, state machine</span></div>
+        <div class="indent">src/ (16 modules) <span class="meta">&mdash; 7,460 lines of Rust</span></div>
+        <div style="height:8px;"></div>
+
+        <div><span class="dir">programs/dice/</span> <span class="meta">&mdash; Core Solana smart contract</span></div>
+        <div class="indent">src/instructions/ (22 files) <span class="meta">&mdash; 21 instructions, 2,961 lines</span></div>
+        <div class="indent">src/state/ (8 account types) <span class="meta">&mdash; PDA definitions</span></div>
+        <div style="height:8px;"></div>
+
+        <div><span class="dir">programs/dice-roll/</span> <span class="meta">&mdash; Example dApp: classic dice roll game</span></div>
+        <div><span class="dir">programs/lucky-wheel/</span> <span class="meta">&mdash; Example dApp: spinning wheel</span></div>
+        <div><span class="dir">programs/prediction-market/</span> <span class="meta">&mdash; Example dApp: binary predictions</span></div>
+        <div><span class="dir">programs/coin-toss/</span> <span class="meta">&mdash; Example dApp: 50/50 coin flip</span></div>
+        <div style="height:8px;"></div>
+
+        <div><span class="dir">sdk/dice-vrf/</span> <span class="meta">&mdash; Rust SDK for developers</span></div>
+        <div class="indent">accounts, cpi, pda, types, client <span class="meta">&mdash; 1,635 lines</span></div>
+        <div><span class="dir">sdk/dice-vrf-macros/</span> <span class="meta">&mdash; Procedural macros for SDK</span></div>
+        <div style="height:8px;"></div>
+
+        <div><span class="dir">firmware/</span> <span class="meta">&mdash; ESP-IDF C project for ESP32-S3</span></div>
+        <div class="indent">main/ (8 source files) <span class="meta">&mdash; 2,322 lines of C</span></div>
+        <div class="indent">tools/ <span class="meta">&mdash; Provisioning scripts, key generation</span></div>
+        <div style="height:8px;"></div>
+
+        <div><span class="dir">pki/</span> <span class="meta">&mdash; Private CA, certificate generation for mTLS</span></div>
+        <div><span class="dir">certs/</span> <span class="meta">&mdash; Generated certificates (coordinator + device)</span></div>
+        <div style="height:8px;"></div>
+
+        <div><span class="dir">tests/</span> <span class="meta">&mdash; End-to-end, security, and production test suites</span></div>
+        <div class="indent">dice.ts, dice_v2.ts <span class="meta">&mdash; Anchor integration tests</span></div>
+        <div class="indent">run_battle_tests.sh <span class="meta">&mdash; Stress & concurrency tests</span></div>
+        <div class="indent">security_attacks.sh <span class="meta">&mdash; Attack simulation suite</span></div>
+        <div class="indent">production_readiness_test.sh <span class="meta">&mdash; 25 tests over mTLS + PostgreSQL</span></div>
+        <div style="height:8px;"></div>
+
+        <div><span class="dir">docker/</span> <span class="meta">&mdash; Docker Compose for coordinator + PostgreSQL</span></div>
+        <div><span class="dir">scripts/</span> <span class="meta">&mdash; Automation scripts for deployment & testing</span></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 10 — INFRASTRUCTURE                                     -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">10 / Infrastructure</div>
+    <h2>Deployment &amp; Observability</h2>
+
+    <div class="card-grid">
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(0,255,136,0.1); color:var(--accent);">PG</div>
+        <h3>PostgreSQL</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          All round data is persisted: request metadata, node selections,
+          commit hashes, reveals, final randomness, timing, and failure
+          reasons. Required in production mode; bypassed in simulation mode.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(255,204,0,0.1); color:var(--yellow);">PM</div>
+        <h3>Prometheus Metrics</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Six core metrics exposed on port 9090:
+          <code>dice_nodes_connected</code>,
+          <code>dice_rounds_total</code>,
+          <code>dice_rounds_failed_total</code>,
+          <code>dice_round_duration_seconds</code>,
+          <code>dice_solana_tx_failed_total</code>,
+          <code>dice_mtls_handshake_failed_total</code>.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(68,170,255,0.1); color:var(--blue);">API</div>
+        <h3>REST API (Axum)</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Endpoints: <code>/health</code>, <code>/metrics</code>,
+          <code>/status</code>, <code>/simulate</code>.
+          Optional API key protection via Bearer token.
+          Rate limiting on /simulate endpoint (configurable RPS).
+          Runs on port 8080.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(170,119,255,0.1); color:var(--purple);">DK</div>
+        <h3>Docker</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Docker Compose orchestrates the coordinator alongside PostgreSQL.
+          Coordinator supports both simulation mode (no DB, no Solana RPC)
+          and production mode (mTLS, PostgreSQL, live Solana devnet).
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 11 — ECONOMICS                                         -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">11 / Economics</div>
+    <h2>Fee Model &amp; Token Flow</h2>
+
+    <div class="card">
+      <div class="ascii-box" style="margin:0; border:none; background:transparent; padding:0;">
+        <pre>
+<span class="dm">    Fee per request: <span class="yl">0.002 SOL</span> (2,000,000 lamports)</span>
+
+                     <span class="yl">0.002 SOL</span>
+                        |
+               <span class="dm">escrow PDA holds until finalize</span>
+                        |
+          +-------------+-------------+
+          |             |             |
+       <span class="hl">70%</span>           <span class="bl">20%</span>          <span class="pu">10%</span>
+    <span class="hl">0.0014 SOL</span>    <span class="bl">0.0004 SOL</span>   <span class="pu">0.0002 SOL</span>
+          |             |             |
+     <span class="hl">Node Operators</span>  <span class="bl">Treasury</span>    <span class="pu">Reserve</span>
+   <span class="dm">(split among N     (protocol    (insurance /
+    participating      revenue)     future use)
+       nodes)</span>
+</pre>
+      </div>
+
+      <div class="detail-grid" style="margin-top:20px;">
+        <div class="detail-key">Fee Constant</div>
+        <div class="detail-val"><code>REQUEST_FEE_LAMPORTS = 2_000_000</code></div>
+        <div class="detail-key">Node Share</div>
+        <div class="detail-val"><code>NODE_REWARD_BPS = 7_000</code> (70%)</div>
+        <div class="detail-key">Treasury</div>
+        <div class="detail-val"><code>TREASURY_REWARD_BPS = 2_000</code> (20%)</div>
+        <div class="detail-key">Reserve</div>
+        <div class="detail-val"><code>RESERVE_REWARD_BPS = 1_000</code> (10%)</div>
+        <div class="detail-key">Min Nodes</div>
+        <div class="detail-val"><code>MIN_NODES_REQUIRED = 4</code> (BFT threshold)</div>
+        <div class="detail-key">Max Nodes</div>
+        <div class="detail-val"><code>MAX_NODES_SELECTED = 50</code> (channel capacity)</div>
+        <div class="detail-key">Commit Timeout</div>
+        <div class="detail-val"><code>150 slots</code> (~60 seconds)</div>
+        <div class="detail-key">Reveal Timeout</div>
+        <div class="detail-val"><code>150 slots</code> (~60 seconds)</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 12 — TESTING                                            -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">12 / Testing</div>
+    <h2>Test Coverage &amp; Validation</h2>
+
+    <div class="card-grid">
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(0,255,136,0.1); color:var(--accent);">162</div>
+        <h3>Unit Tests</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Comprehensive unit tests across smart contract, coordinator,
+          and SDK. Covers: PDA derivation, fee arithmetic, constant
+          validation, seed uniqueness, entropy combination, commit
+          verification, state transitions.
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(255,153,51,0.1); color:var(--orange);">70+</div>
+        <h3>Hardware &amp; Security Tests</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          Battle tests (stress, concurrency, timeout recovery),
+          security attack simulations (replay attacks, entropy
+          manipulation, unauthorized access), and production
+          readiness tests (25 tests over mTLS + PostgreSQL).
+        </p>
+      </div>
+
+      <div class="card-sm">
+        <div class="card-icon" style="background:rgba(68,170,255,0.1); color:var(--blue);">545+</div>
+        <h3>Real Hardware Rounds</h3>
+        <p style="color:var(--text-dim); font-size:0.88rem;">
+          VRF rounds executed on real ESP32-S3 hardware connected
+          to the coordinator over mTLS. Zero crashes across all
+          testing. Results verified against on-chain state on
+          Solana devnet.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ================================================================ -->
+  <!--  SECTION 13 — TECH STACK SUMMARY                                 -->
+  <!-- ================================================================ -->
+  <section>
+    <div class="section-label">13 / Tech Stack</div>
+    <h2>Technology Summary</h2>
+
+    <div class="card">
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <span class="tag tag-blue">Solana</span>
+        <span class="tag tag-blue">Anchor</span>
+        <span class="tag tag-green">Rust</span>
+        <span class="tag tag-green">Tokio</span>
+        <span class="tag tag-green">Axum</span>
+        <span class="tag tag-orange">ESP-IDF</span>
+        <span class="tag tag-orange">C</span>
+        <span class="tag tag-orange">FreeRTOS</span>
+        <span class="tag tag-orange">mbedTLS</span>
+        <span class="tag tag-purple">secp256k1</span>
+        <span class="tag tag-purple">ECDSA</span>
+        <span class="tag tag-purple">SHA-256</span>
+        <span class="tag tag-red">mTLS</span>
+        <span class="tag tag-red">TLS 1.3</span>
+        <span class="tag tag-green">CBOR</span>
+        <span class="tag tag-green">PostgreSQL</span>
+        <span class="tag tag-green">Prometheus</span>
+        <span class="tag tag-purple">Docker</span>
+        <span class="tag tag-blue">TypeScript</span>
+        <span class="tag tag-orange">ESP32-S3-N16R8</span>
+      </div>
+
+      <div style="margin-top:24px; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:16px;">
+        <div>
+          <div style="font-family:var(--mono); font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Smart Contract</div>
+          <div style="font-size:0.88rem;">Rust + Anchor Framework</div>
+          <div style="font-size:0.78rem; color:var(--text-dim);">2,961 lines &middot; 21 instructions</div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono); font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Coordinator</div>
+          <div style="font-size:0.88rem;">Rust + Tokio + Axum</div>
+          <div style="font-size:0.78rem; color:var(--text-dim);">7,460 lines &middot; 16 modules</div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono); font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Firmware</div>
+          <div style="font-size:0.88rem;">C + ESP-IDF v5.x</div>
+          <div style="font-size:0.78rem; color:var(--text-dim);">2,322 lines &middot; 8 source files</div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono); font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">SDK</div>
+          <div style="font-size:0.88rem;">Rust + proc macros</div>
+          <div style="font-size:0.78rem; color:var(--text-dim);">1,635 lines &middot; 6 modules</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ================================================================ -->
+<!--  FOOTER                                                           -->
+<!-- ================================================================ -->
+<footer>
+  <div class="container">
+    <p style="margin-bottom:8px;">
+      <strong style="color:#fff;">DICE</strong> &mdash; Hardware-Backed VRF Oracle for Solana
+    </p>
+    <p>
+      Program ID: <code style="font-size:0.78rem;">78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv</code>
+    </p>
+    <p style="margin-top:12px; font-size:0.75rem;">
+      Built with ESP32-S3 hardware, Rust, and Anchor &middot; Deployed on Solana Devnet
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
