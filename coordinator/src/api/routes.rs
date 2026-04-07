@@ -542,9 +542,70 @@ async fn simulate(State(state): State<AppState>) -> Response {
         .map(|ctx| solana_sdk::signer::Signer::pubkey(ctx.keypair.as_ref()))
         .unwrap_or_default();
 
-    // Generate unique request_id.
+    // Create on-chain request FIRST — this creates the RandomnessRequest + Escrow PDAs.
+    // The request_id is the PDA address so on-chain submit_commit/finalize find the right account.
     let mut request_id = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut request_id);
+    let mut on_chain_sequence: Option<u64> = None;
+
+    if let Some(ref ctx) = state.on_chain {
+        use solana_sdk::signer::Signer;
+        let ix = crate::solana_tx::build_request_randomness_ix(
+            &ctx.program_id,
+            &ctx.keypair.pubkey(),
+            sequence,
+            &solana_sdk::pubkey::Pubkey::default(), // no callback in simulate
+        );
+        match ctx.rpc.sign_and_send(&ctx.keypair, vec![ix]).await {
+            Ok(sig) => {
+                tracing::info!(signature = %sig, sequence, "request_randomness TX sent");
+
+                // Wait for confirmation before proceeding — the PDA must exist on-chain
+                // before submit_commit can reference it
+                let mut confirmed = false;
+                for attempt in 0..15 {
+                    tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+                    match ctx.rpc.confirm_transaction(&sig).await {
+                        Ok(true) => {
+                            tracing::info!(signature = %sig, attempts = attempt + 1, "request_randomness CONFIRMED on-chain");
+                            confirmed = true;
+                            break;
+                        }
+                        Ok(false) => continue,
+                        Err(e) => {
+                            tracing::warn!(error = %e, "confirmation check failed");
+                            continue;
+                        }
+                    }
+                }
+
+                if !confirmed {
+                    tracing::error!("request_randomness TX not confirmed after 15s — aborting");
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(json!({ "error": "request_randomness TX not confirmed on-chain within 15s" })),
+                    ).into_response();
+                }
+
+                // Use the request PDA as request_id so submit_commit/finalize find it
+                let pda = crate::solana_tx::request_pda(&ctx.program_id, &ctx.keypair.pubkey(), sequence);
+                request_id.copy_from_slice(pda.as_ref());
+                on_chain_sequence = Some(sequence);
+            }
+            Err(e) => {
+                tracing::error!(error = %e, "request_randomness TX FAILED — aborting round");
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({
+                        "error": format!("on-chain request_randomness failed: {}", e),
+                        "hint": "coordinator may not have enough SOL or program PDAs may conflict"
+                    })),
+                ).into_response();
+            }
+        }
+    } else {
+        // No on-chain context — use random request_id (local-only mode)
+        rand::thread_rng().fill_bytes(&mut request_id);
+    }
 
     // Check if any node has capacity to dispatch immediately.
     let mut queue = state.request_queue.lock().await;
