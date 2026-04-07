@@ -10,14 +10,17 @@ use axum::{
     Json, Router,
 };
 use serde_json::json;
+use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
 
 use super::auth::{AuthState, RateLimiter};
 
 use crate::{
-    db::queries::get_round,
+    db::queries::{self, get_round},
+    keeper::{self, KeeperState, KeeperTrigger},
     metrics::Metrics,
     node_session::{get_active_node_infos, get_active_nodes, NodeRegistry},
+    notary::{self, NotaryState},
     protocol::messages::{DiceMessage, JobAssignment},
     solana_tx::OnChainCtx,
     state_machine::{Round, RoundEntry, RoundMap},
@@ -52,6 +55,12 @@ pub struct AppState {
     pub rate_limiter: Arc<RateLimiter>,
     /// If set, transactions are submitted to Solana devnet/mainnet.
     pub on_chain: Option<OnChainCtx>,
+    /// Keeper automation state (None = keeper disabled).
+    pub keeper_state: Option<KeeperState>,
+    /// Notary timestamping state (None = notary disabled).
+    pub notary_state: Option<NotaryState>,
+    /// Minimum witnesses required for notary attestation.
+    pub notary_min_witnesses: usize,
 }
 
 // ---------------------------------------------------------------------------
@@ -61,27 +70,47 @@ pub struct AppState {
 pub fn build_router(state: AppState, api_key: Option<String>) -> Router {
     let auth_state = AuthState { api_key };
 
-    // Public routes — no auth required (monitoring)
+    // CORS — allow all origins, methods, and headers (dev mode)
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+    // Public routes — no auth required (monitoring + read-only data for frontend)
     let public = Router::new()
         .route("/health", get(health))
         .route("/metrics", get(metrics_handler))
+        .route("/nodes", get(list_nodes))
+        .route("/rounds", get(list_rounds))
+        .route("/rounds/:id", get(get_round_handler))
+        .route("/queue", get(queue_status))
+        .route("/api/v1/stats", get(network_stats))
+        .with_state(state.clone());
+
+    // Keeper + Notary routes — public read, protected write
+    let service_public = Router::new()
+        .route("/keeper/tasks", get(keeper_list_tasks))
+        .route("/keeper/history", get(keeper_history))
+        .route("/keeper/stats", get(keeper_stats))
+        .route("/notarize/history", get(notary_history))
+        .route("/notarize/:id", get(notary_get_receipt))
         .with_state(state.clone());
 
     // Protected routes — require API key (if configured)
     let protected = Router::new()
         .route("/", get(dashboard))
-        .route("/nodes", get(list_nodes))
-        .route("/rounds", get(list_rounds))
-        .route("/rounds/:id", get(get_round_handler))
-        .route("/queue", get(queue_status))
         .route("/simulate", post(simulate))
+        .route("/keeper/tasks", post(keeper_register_task))
+        .route("/keeper/tasks/:id", axum::routing::delete(keeper_delete_task))
+        .route("/keeper/tasks/:id/toggle", post(keeper_toggle_task))
+        .route("/notarize", post(notarize))
         .layer(middleware::from_fn_with_state(
             auth_state,
             super::auth::require_api_key,
         ))
         .with_state(state);
 
-    public.merge(protected)
+    public.merge(service_public).merge(protected).layer(cors)
 }
 
 // ---------------------------------------------------------------------------
@@ -156,7 +185,7 @@ const DASHBOARD_HTML: &str = r#"<!DOCTYPE html>
 <body>
   <h1>DICE Coordinator</h1>
   <p class="subtitle">Distributed Infrastructure for Cryptographic Entropy</p>
-  <div class="version-badge">v2.0 CHANNEL DESIGN</div>
+  <div class="version-badge">v5 MULTI-SERVICE &bull; VRF &bull; KEEPER &bull; NOTARY</div>
   <div class="ticker" id="ticker">connecting...</div>
 
   <!-- Top stats row -->
@@ -237,9 +266,41 @@ const DASHBOARD_HTML: &str = r#"<!DOCTYPE html>
   </div>
 
   <!-- Recent rounds -->
-  <div class="section-title">Recent Rounds</div>
-  <div class="card">
+  <div class="section-title">Recent VRF Rounds</div>
+  <div class="card" style="margin-bottom:1.5rem">
     <div id="rounds-body"><p class="empty">No rounds yet -- click Simulate Round above</p></div>
+  </div>
+
+  <!-- Keeper Automation -->
+  <div class="section-title">Keeper Automation</div>
+  <div class="grid" style="margin-bottom:1.5rem">
+    <div class="card">
+      <h2>Keeper Status</h2>
+      <div class="grid" style="margin-bottom:0">
+        <div><div class="stat-sm" id="keeper-executions">--</div><div class="stat-label">total executions</div></div>
+        <div><div class="stat-sm" id="keeper-success">--</div><div class="stat-label">success rate</div></div>
+      </div>
+      <div style="margin-top:0.75rem;font-size:0.75rem;color:#555"><span id="keeper-status-pill" class="pill pill-idle">DISABLED</span> <span id="keeper-tasks-count">0 tasks</span></div>
+    </div>
+    <div class="card">
+      <h2>Recent Keeper Executions</h2>
+      <div id="keeper-history-body"><p class="empty">No keeper executions yet</p></div>
+    </div>
+  </div>
+
+  <!-- Notary Timestamping -->
+  <div class="section-title">Notary Timestamping</div>
+  <div class="grid" style="margin-bottom:1.5rem">
+    <div class="card">
+      <h2>Notary Status</h2>
+      <div class="stat-sm" id="notary-total">--</div>
+      <div class="stat-label">attestations issued</div>
+      <div style="margin-top:0.75rem;font-size:0.75rem;color:#555"><span id="notary-status-pill" class="pill pill-idle">DISABLED</span></div>
+    </div>
+    <div class="card">
+      <h2>Recent Attestations</h2>
+      <div id="notary-history-body"><p class="empty">No attestations yet</p></div>
+    </div>
   </div>
 
   <script>
@@ -353,6 +414,52 @@ const DASHBOARD_HTML: &str = r#"<!DOCTYPE html>
               </tr>`;
             }).join('') + '</tbody></table>';
         }
+
+        // --- Keeper stats ---
+        try {
+          const ks = await fetch('/keeper/stats');
+          const kd = await ks.json();
+          if (kd.enabled) {
+            document.getElementById('keeper-status-pill').className = 'pill pill-ok';
+            document.getElementById('keeper-status-pill').textContent = 'ACTIVE';
+            document.getElementById('keeper-executions').textContent = kd.total_executions || 0;
+            document.getElementById('keeper-success').textContent = kd.total_executions > 0 ? Math.round(kd.success_rate * 100) + '%' : '--';
+            document.getElementById('keeper-tasks-count').textContent = kd.active_tasks + '/' + kd.total_tasks + ' tasks active';
+          }
+          const kh = await fetch('/keeper/history');
+          const khd = await kh.json();
+          if (khd.executions && khd.executions.length > 0) {
+            document.getElementById('keeper-history-body').innerHTML =
+              '<table><thead><tr><th>Task</th><th>Status</th><th>TX</th><th>Latency</th></tr></thead><tbody>' +
+              khd.executions.slice(0, 8).map(e =>
+                '<tr><td>' + e.task_name + '</td>' +
+                '<td><span class="pill ' + (e.success ? 'pill-ok' : 'pill-fail') + '">' + (e.success ? 'OK' : 'FAIL') + '</span></td>' +
+                '<td class="mono">' + (e.tx_signature ? e.tx_signature.substring(0,12)+'...' : '--') + '</td>' +
+                '<td>' + e.latency_ms + 'ms</td></tr>'
+              ).join('') + '</tbody></table>';
+          }
+        } catch(_) {}
+
+        // --- Notary stats ---
+        try {
+          const nh = await fetch('/notarize/history');
+          const nhd = await nh.json();
+          if (nhd.notary_enabled) {
+            document.getElementById('notary-status-pill').className = 'pill pill-ok';
+            document.getElementById('notary-status-pill').textContent = 'ACTIVE';
+            document.getElementById('notary-total').textContent = nhd.total || 0;
+          }
+          if (nhd.attestations && nhd.attestations.length > 0) {
+            document.getElementById('notary-history-body').innerHTML =
+              '<table><thead><tr><th>Receipt ID</th><th>Hash</th><th>Witnesses</th><th>Time</th></tr></thead><tbody>' +
+              nhd.attestations.slice(0, 8).map(a =>
+                '<tr><td class="mono">' + a.receipt_id.substring(0,12) + '...</td>' +
+                '<td class="mono">' + (a.attestation?.content_hash || '').substring(0,20) + '...</td>' +
+                '<td>' + a.witness_count + '</td>' +
+                '<td>' + (a.attestation?.timestamp_iso || '').substring(11,19) + '</td></tr>'
+              ).join('') + '</tbody></table>';
+          }
+        } catch(_) {}
 
         document.getElementById('ticker').textContent = 'LIVE  ' + new Date().toLocaleTimeString();
         document.getElementById('ticker').className = 'ticker live';
@@ -665,6 +772,50 @@ async fn dispatch_round(
     dispatched
 }
 
+/// `GET /api/v1/stats` — aggregated network stats for the explorer frontend.
+async fn network_stats(State(state): State<AppState>) -> Response {
+    let nodes = get_active_node_infos(&state.registry).await;
+    let nodes_online = nodes.len();
+
+    // Gather rounds from active + history
+    let map = state.rounds.lock().await;
+    let active_count = map.len();
+    drop(map);
+
+    let history = state.round_history.lock().await;
+    let total_rounds = active_count + history.len();
+    let finalized = history.iter().filter(|cr| cr.status == "finalized").count();
+    let completed = history
+        .iter()
+        .filter(|cr| cr.status == "finalized" || cr.status == "failed")
+        .count();
+    let success_rate = if completed > 0 {
+        finalized as f64 / completed as f64
+    } else {
+        0.0
+    };
+    let avg_latency_ms = if !history.is_empty() {
+        history.iter().map(|cr| cr.elapsed_ms).sum::<u64>() as f64 / history.len() as f64
+    } else {
+        0.0
+    };
+    drop(history);
+
+    let q = state.request_queue.lock().await;
+    let queue_depth = q.queue_len();
+    drop(q);
+
+    Json(json!({
+        "nodes_online": nodes_online,
+        "nodes_registered": 20,
+        "total_rounds": total_rounds,
+        "success_rate": success_rate,
+        "avg_latency_ms": avg_latency_ms,
+        "queue_depth": queue_depth,
+    }))
+    .into_response()
+}
+
 /// `GET /metrics` — Prometheus text exposition.
 /// `GET /queue` — queue status and per-node active round counts.
 async fn queue_status(State(state): State<AppState>) -> Response {
@@ -687,6 +838,280 @@ async fn queue_status(State(state): State<AppState>) -> Response {
         "total_dropped": q.total_dropped,
         "nodes": node_loads,
     })).into_response()
+}
+
+// ---------------------------------------------------------------------------
+// Keeper handlers
+// ---------------------------------------------------------------------------
+
+/// `POST /keeper/tasks` — register a new keeper task.
+async fn keeper_register_task(
+    State(state): State<AppState>,
+    Json(body): Json<serde_json::Value>,
+) -> Response {
+    let ks = match &state.keeper_state {
+        Some(ks) => ks,
+        None => {
+            return (StatusCode::SERVICE_UNAVAILABLE, Json(json!({ "error": "keeper service disabled" }))).into_response();
+        }
+    };
+
+    let name = body["name"].as_str().unwrap_or("unnamed").to_string();
+    let trigger: KeeperTrigger = match serde_json::from_value(body["trigger"].clone()) {
+        Ok(t) => t,
+        Err(e) => {
+            return (StatusCode::BAD_REQUEST, Json(json!({ "error": format!("invalid trigger: {}", e) }))).into_response();
+        }
+    };
+    let target_program_str = match body["target_program"].as_str() {
+        Some(s) => s,
+        None => {
+            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "missing target_program" }))).into_response();
+        }
+    };
+    let target_program: solana_sdk::pubkey::Pubkey = match target_program_str.parse() {
+        Ok(p) => p,
+        Err(_) => {
+            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "invalid target_program pubkey" }))).into_response();
+        }
+    };
+
+    let instruction_data = body["instruction_data"]
+        .as_str()
+        .and_then(|s| base64::Engine::decode(&base64::engine::general_purpose::STANDARD, s).ok())
+        .unwrap_or_default();
+
+    let accounts: Vec<solana_sdk::instruction::AccountMeta> = body["accounts"]
+        .as_array()
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|a| {
+                    let pubkey: solana_sdk::pubkey::Pubkey = a["pubkey"].as_str()?.parse().ok()?;
+                    let is_signer = a["is_signer"].as_bool().unwrap_or(false);
+                    let is_writable = a["is_writable"].as_bool().unwrap_or(false);
+                    if is_writable {
+                        Some(solana_sdk::instruction::AccountMeta::new(pubkey, is_signer))
+                    } else {
+                        Some(solana_sdk::instruction::AccountMeta::new_readonly(pubkey, is_signer))
+                    }
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+
+    let mut mgr = ks.lock().await;
+    let id = keeper::register_task(&mut mgr, name.clone(), trigger, target_program, instruction_data, accounts);
+    state.metrics.keeper_active_tasks.set(mgr.tasks.iter().filter(|t| t.enabled).count() as i64);
+
+    Json(json!({
+        "task_id": id.to_string(),
+        "name": name,
+        "status": "registered",
+    }))
+    .into_response()
+}
+
+/// `GET /keeper/tasks` — list all keeper tasks.
+async fn keeper_list_tasks(State(state): State<AppState>) -> Response {
+    let ks = match &state.keeper_state {
+        Some(ks) => ks,
+        None => {
+            return Json(json!({ "tasks": [], "keeper_enabled": false })).into_response();
+        }
+    };
+    let mgr = ks.lock().await;
+    let tasks = keeper::list_tasks(&mgr);
+    Json(json!({ "tasks": tasks, "keeper_enabled": true })).into_response()
+}
+
+/// `DELETE /keeper/tasks/:id` — remove a keeper task.
+async fn keeper_delete_task(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Response {
+    let ks = match &state.keeper_state {
+        Some(ks) => ks,
+        None => {
+            return (StatusCode::SERVICE_UNAVAILABLE, Json(json!({ "error": "keeper disabled" }))).into_response();
+        }
+    };
+    let task_id = match id.parse::<Uuid>() {
+        Ok(u) => u,
+        Err(_) => {
+            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "invalid UUID" }))).into_response();
+        }
+    };
+    let mut mgr = ks.lock().await;
+    match keeper::remove_task(&mut mgr, task_id) {
+        Ok(()) => {
+            state.metrics.keeper_active_tasks.set(mgr.tasks.iter().filter(|t| t.enabled).count() as i64);
+            Json(json!({ "status": "deleted" })).into_response()
+        }
+        Err(e) => (StatusCode::NOT_FOUND, Json(json!({ "error": e.to_string() }))).into_response(),
+    }
+}
+
+/// `POST /keeper/tasks/:id/toggle` — enable/disable a keeper task.
+async fn keeper_toggle_task(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Response {
+    let ks = match &state.keeper_state {
+        Some(ks) => ks,
+        None => {
+            return (StatusCode::SERVICE_UNAVAILABLE, Json(json!({ "error": "keeper disabled" }))).into_response();
+        }
+    };
+    let task_id = match id.parse::<Uuid>() {
+        Ok(u) => u,
+        Err(_) => {
+            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "invalid UUID" }))).into_response();
+        }
+    };
+    let mut mgr = ks.lock().await;
+    match keeper::toggle_task(&mut mgr, task_id) {
+        Ok(enabled) => {
+            state.metrics.keeper_active_tasks.set(mgr.tasks.iter().filter(|t| t.enabled).count() as i64);
+            Json(json!({ "task_id": id, "enabled": enabled })).into_response()
+        }
+        Err(e) => (StatusCode::NOT_FOUND, Json(json!({ "error": e.to_string() }))).into_response(),
+    }
+}
+
+/// `GET /keeper/history` — recent keeper executions.
+async fn keeper_history(State(state): State<AppState>) -> Response {
+    let ks = match &state.keeper_state {
+        Some(ks) => ks,
+        None => {
+            return Json(json!({ "executions": [], "keeper_enabled": false })).into_response();
+        }
+    };
+    let mgr = ks.lock().await;
+    let history: Vec<_> = keeper::get_history(&mgr, 50).into_iter().cloned().collect();
+    Json(json!({ "executions": history, "keeper_enabled": true })).into_response()
+}
+
+/// `GET /keeper/stats` — aggregate keeper stats.
+async fn keeper_stats(State(state): State<AppState>) -> Response {
+    let ks = match &state.keeper_state {
+        Some(ks) => ks,
+        None => {
+            return Json(json!({ "enabled": false })).into_response();
+        }
+    };
+    let mgr = ks.lock().await;
+    let stats = keeper::compute_stats(&mgr);
+    Json(serde_json::to_value(stats).unwrap_or(json!({}))).into_response()
+}
+
+// ---------------------------------------------------------------------------
+// Notary handlers
+// ---------------------------------------------------------------------------
+
+/// `POST /notarize` — submit a document hash for multi-witness attestation.
+async fn notarize(
+    State(state): State<AppState>,
+    Json(request): Json<notary::NotarizeRequest>,
+) -> Response {
+    if state.notary_state.is_none() {
+        return (StatusCode::SERVICE_UNAVAILABLE, Json(json!({ "error": "notary service disabled" }))).into_response();
+    }
+
+    let coordinator_pubkey = state
+        .on_chain
+        .as_ref()
+        .map(|ctx| solana_sdk::signer::Signer::pubkey(ctx.keypair.as_ref()).to_string())
+        .unwrap_or_else(|| "simulation".into());
+
+    match notary::handle_notarize(
+        request,
+        &state.registry,
+        &state.rounds,
+        &state.metrics,
+        state.notary_min_witnesses,
+        &coordinator_pubkey,
+    )
+    .await
+    {
+        Ok(receipt) => {
+            // Store in memory.
+            if let Some(ns) = &state.notary_state {
+                let mut mgr = ns.lock().await;
+                mgr.total_attestations += 1;
+                if mgr.history.len() >= 100 {
+                    mgr.history.pop_front();
+                }
+                mgr.history.push_back(receipt.clone());
+            }
+            // Store in DB.
+            if let Some(pool) = &state.db {
+                let hash_bytes = hex::decode(
+                    receipt.attestation.content_hash.split(':').last().unwrap_or("")
+                ).unwrap_or_default();
+                let receipt_json = serde_json::to_value(&receipt).unwrap_or(json!({}));
+                let _ = queries::create_notary_attestation(
+                    pool,
+                    &hash_bytes,
+                    &receipt.attestation.hash_algorithm,
+                    None,
+                    receipt.witness_count as i16,
+                    receipt.threshold as i16,
+                    &receipt_json,
+                )
+                .await;
+            }
+            Json(serde_json::to_value(&receipt).unwrap_or(json!({}))).into_response()
+        }
+        Err(e) => {
+            (StatusCode::BAD_REQUEST, Json(json!({ "error": e.to_string() }))).into_response()
+        }
+    }
+}
+
+/// `GET /notarize/:id` — fetch a notary receipt by ID.
+async fn notary_get_receipt(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Response {
+    let receipt_id = match id.parse::<Uuid>() {
+        Ok(u) => u,
+        Err(_) => {
+            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "invalid UUID" }))).into_response();
+        }
+    };
+    // Check in-memory first.
+    if let Some(ns) = &state.notary_state {
+        let mgr = ns.lock().await;
+        if let Some(receipt) = mgr.history.iter().find(|r| r.receipt_id == id) {
+            return Json(serde_json::to_value(receipt).unwrap_or(json!({}))).into_response();
+        }
+    }
+    // Check DB.
+    if let Some(pool) = &state.db {
+        match queries::get_notary_attestation(pool, receipt_id).await {
+            Ok(Some(row)) => return Json(row.receipt_json).into_response(),
+            Ok(None) => {}
+            Err(e) => {
+                return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": e.to_string() }))).into_response();
+            }
+        }
+    }
+    (StatusCode::NOT_FOUND, Json(json!({ "error": "receipt not found" }))).into_response()
+}
+
+/// `GET /notarize/history` — recent notary attestations.
+async fn notary_history(State(state): State<AppState>) -> Response {
+    if let Some(ns) = &state.notary_state {
+        let mgr = ns.lock().await;
+        let history: Vec<_> = mgr.history.iter().rev().take(50).collect();
+        return Json(json!({
+            "attestations": history,
+            "total": mgr.total_attestations,
+            "notary_enabled": true,
+        }))
+        .into_response();
+    }
+    Json(json!({ "attestations": [], "notary_enabled": false })).into_response()
 }
 
 /// `GET /metrics` — Prometheus text exposition.

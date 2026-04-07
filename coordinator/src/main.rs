@@ -4,8 +4,10 @@
 mod api;
 mod config;
 mod db;
+mod keeper;
 mod metrics;
 mod node_session;
+mod notary;
 mod protocol;
 pub mod queue;
 mod selection;
@@ -128,6 +130,25 @@ async fn main() -> Result<()> {
     // 4d. Request queue for burst handling.
     let request_queue = queue::new_queue();
 
+    // 4e. Keeper state (if enabled).
+    let keeper_state = if cfg.keeper_enabled {
+        info!("Keeper automation ENABLED (interval={}s, max_concurrent={})",
+              cfg.keeper_interval_secs, cfg.keeper_max_concurrent);
+        Some(keeper::new_keeper_state(cfg.keeper_max_concurrent))
+    } else {
+        info!("Keeper automation DISABLED (use --keeper-enabled to activate)");
+        None
+    };
+
+    // 4f. Notary state (if enabled).
+    let notary_state = if cfg.notary_enabled {
+        info!("Notary timestamping ENABLED (min_witnesses={})", cfg.notary_min_witnesses);
+        Some(notary::new_notary_state())
+    } else {
+        info!("Notary timestamping DISABLED (use --notary-enabled to activate)");
+        None
+    };
+
     // 5. Spawn Axum REST API server.
     let api_state = AppState {
         registry: registry.clone(),
@@ -138,6 +159,9 @@ async fn main() -> Result<()> {
         request_queue: request_queue.clone(),
         rate_limiter: std::sync::Arc::new(api::auth::RateLimiter::new(cfg.rate_limit_rps)),
         on_chain: on_chain.clone(),
+        keeper_state: keeper_state.clone(),
+        notary_state: notary_state.clone(),
+        notary_min_witnesses: cfg.notary_min_witnesses as usize,
     };
     let api_handle = {
         let port = cfg.api_port;
@@ -238,18 +262,41 @@ async fn main() -> Result<()> {
         None
     };
 
-    // 10. Ready banner.
-    println!("DICE Coordinator ready:");
+    // 10. Spawn Keeper evaluation loop (if enabled + on-chain context available).
+    let keeper_handle = if let Some(ks) = keeper_state {
+        if let Some(ref oc) = on_chain {
+            let ks2 = ks.clone();
+            let oc2 = oc.clone();
+            let m = metrics.clone();
+            let interval = cfg.keeper_interval_secs;
+            Some(tokio::spawn(async move {
+                keeper::keeper_loop(ks2, oc2, m, interval).await;
+            }))
+        } else {
+            warn!("Keeper enabled but no on-chain context — keeper loop NOT started (simulation mode)");
+            None
+        }
+    } else {
+        None
+    };
+
+    // 11. Ready banner.
+    println!("DICE Coordinator ready (v5 — Multi-Service):");
     println!("  Dashboard : http://localhost:{}/", cfg.api_port);
     println!("  WebSocket : {}://localhost:{}/", if use_tls { "wss" } else { "ws" }, cfg.ws_port);
     println!("  Metrics   : http://localhost:{}/metrics", cfg.metrics_port);
-    if cfg.simulation {
-        println!("  Simulate  : curl -X POST http://localhost:{}/simulate", cfg.api_port);
-    } else {
+    println!("  VRF       : POST http://localhost:{}/simulate", cfg.api_port);
+    if cfg.keeper_enabled {
+        println!("  Keeper    : POST http://localhost:{}/keeper/tasks", cfg.api_port);
+    }
+    if cfg.notary_enabled {
+        println!("  Notary    : POST http://localhost:{}/notarize", cfg.api_port);
+    }
+    if !cfg.simulation {
         println!("  Solana    : WebSocket subscriber on {}", cfg.solana_rpc_url);
     }
 
-    // 11. Wait for any task to exit.
+    // 12. Wait for any task to exit.
     tokio::select! {
         _ = api_handle      => warn!("REST API task exited"),
         _ = metrics_handle  => warn!("metrics task exited"),
@@ -258,6 +305,9 @@ async fn main() -> Result<()> {
         _ = async {
             if let Some(h) = watcher_handle { h.await } else { std::future::pending().await }
         } => warn!("Solana watcher exited"),
+        _ = async {
+            if let Some(h) = keeper_handle { h.await } else { std::future::pending().await }
+        } => warn!("keeper loop exited"),
     }
 
     Ok(())

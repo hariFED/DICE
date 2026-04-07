@@ -327,6 +327,25 @@ impl Round {
             _ => None,
         }
     }
+
+    /// Extract commit data for notary attestation: `(node_id, commit_hash)` pairs.
+    ///
+    /// Returns an empty vec if no commits are available.
+    pub fn commit_data(&self) -> Vec<([u8; 33], [u8; 32], [u8; 64])> {
+        let commits = match &self.state {
+            RoundState::CollectingCommits { commits, .. } => commits,
+            RoundState::CollectingReveals { commits, .. } => commits,
+            _ => return Vec::new(),
+        };
+        // We don't store signatures in the state machine (they're verified and
+        // discarded). For notary, the commit_hash + node_id is the attestation.
+        // Signature field is zeroed — the real proof is that the state machine
+        // accepted the commit (which requires a valid ECDSA sig).
+        commits
+            .iter()
+            .map(|(node_id, commit_hash)| (*node_id, *commit_hash, [0u8; 64]))
+            .collect()
+    }
 }
 
 #[cfg(test)]

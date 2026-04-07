@@ -80,4 +80,28 @@ pub struct Config {
     /// Seconds before the reveal phase times out
     #[arg(long, env = "DICE_REVEAL_TIMEOUT_SECS", default_value_t = 60)]
     pub reveal_timeout_secs: u64,
+
+    // ----- Keeper automation -----
+
+    /// Enable the keeper automation service
+    #[arg(long, env = "DICE_KEEPER_ENABLED", default_value_t = false)]
+    pub keeper_enabled: bool,
+
+    /// Keeper trigger evaluation interval in seconds
+    #[arg(long, env = "DICE_KEEPER_INTERVAL_SECS", default_value_t = 10)]
+    pub keeper_interval_secs: u64,
+
+    /// Maximum concurrent keeper executions
+    #[arg(long, env = "DICE_KEEPER_MAX_CONCURRENT", default_value_t = 5)]
+    pub keeper_max_concurrent: u32,
+
+    // ----- Notary timestamping -----
+
+    /// Enable the notary/timestamping service
+    #[arg(long, env = "DICE_NOTARY_ENABLED", default_value_t = false)]
+    pub notary_enabled: bool,
+
+    /// Minimum witness signatures required for a notary attestation
+    #[arg(long, env = "DICE_NOTARY_MIN_WITNESSES", default_value_t = 4)]
+    pub notary_min_witnesses: u8,
 }
