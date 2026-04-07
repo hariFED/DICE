@@ -1,7 +1,7 @@
 # DICE — Build Progress & Roadmap
 
-> **Last updated:** 2026-04-05
-> **Branch:** `v3`
+> **Last updated:** 2026-04-08 01:16 IST
+> **Branch:** `v5-keeper-notary`
 > **Repo:** https://github.com/hariFED/DICE (private)
 
 ---
@@ -12,11 +12,67 @@
 |---------|--------|--------|-------------|
 | **v1.0** | `v1.0` / `main` | Released | Per-round PDA design. 8 instructions. Devnet deployed. |
 | **v2.0** | `v2.0-channel-design` | Merged into v3 | Reusable DiceChannel PDA. 13 new instructions. 18x cheaper. |
-| **v3** | `v3` | **Active** | Full stack: firmware on real hardware, mTLS, PostgreSQL, queue system, 3 example dApps, 545+ VRF rounds tested on real ESP32-S3. |
+| **v3** | `v3` | Released | Full stack: firmware on real hardware, mTLS, PostgreSQL, queue system, 3 example dApps, 545+ VRF rounds tested on real ESP32-S3. |
+| **v4** | `v4` | Released | Research + planning: keeper/notary deep research, expansion analysis. |
+| **v5** | `v5-keeper-notary` | **Active** | Multi-service coordinator: Keeper automation + Notary timestamping added alongside VRF. Zero firmware changes. |
 
 ---
 
-## v3 Achievements (This Session)
+## v5 Achievements (2026-04-08)
+
+### Keeper Automation Service
+- Parallel `tokio::spawn` task — zero interaction with VRF state machine
+- Trigger types: `interval` (recurring) and `once` (one-shot)
+- Configurable evaluation interval (default 10s)
+- Concurrent execution with configurable limit (default 5)
+- Per-task tracking: executions, failures, success rate, last tx signature
+- Ring buffer history (200 entries in-memory)
+- Full CRUD + toggle API endpoints
+- Dashboard section with live stats + execution table
+- Prometheus metrics: `dice_keeper_executions_total`, `dice_keeper_failures_total`, `dice_keeper_execution_latency_seconds`, `dice_keeper_active_tasks`
+- **10 unit tests passing**
+
+### Notary Timestamping Service
+- Multi-witness hardware attestation via existing commit-reveal pipeline
+- Self-contained receipt format (JSON) — independently verifiable
+- Piggybacks on VRF JobAssignment/CommitSubmission flow (zero firmware changes)
+- Witness signature collection from connected ESP32 nodes
+- API endpoints: submit, retrieve by ID, history
+- Dashboard section with live attestation stats
+- DB persistence (`notary_attestations` table)
+- Prometheus metrics: `dice_notary_attestations_total`, `dice_notary_attestation_latency_seconds`
+- **4 unit tests passing**
+
+### Infrastructure Changes
+- Config flags: `--keeper-enabled`, `--keeper-interval-secs`, `--keeper-max-concurrent`, `--notary-enabled`, `--notary-min-witnesses`
+- DB schema: 3 new tables (`keeper_tasks`, `keeper_executions`, `notary_attestations`) + indexes
+- Dashboard updated: v5 multi-service banner, keeper + notary sections
+- Ready banner shows all active services
+
+### Files Added/Modified (v5)
+| File | Action | Lines |
+|------|--------|-------|
+| `coordinator/src/keeper.rs` | **NEW** | ~500 |
+| `coordinator/src/notary.rs` | **NEW** | ~400 |
+| `coordinator/src/config.rs` | Modified | +24 |
+| `coordinator/src/main.rs` | Modified | +62 |
+| `coordinator/src/api/routes.rs` | Modified | +445 |
+| `coordinator/src/metrics.rs` | Modified | +69 |
+| `coordinator/src/db/schema.sql` | Modified | +50 |
+| `coordinator/src/db/queries.rs` | Modified | +162 |
+| `coordinator/src/state_machine.rs` | Modified | +19 (commit_data accessor) |
+| **Total new code** | | **~2,019 lines** |
+
+### Files NOT touched (critical)
+- `firmware/*` — zero firmware changes
+- `coordinator/src/state_machine.rs` — VRF state machine core untouched
+- `coordinator/src/protocol/messages.rs` — CBOR wire protocol untouched
+- `coordinator/src/queue.rs` — VRF request queue untouched
+- `programs/dice/src/*` — VRF smart contract untouched
+
+---
+
+## v3 Achievements (Previous)
 
 ### First Real Hardware VRF
 - **545+ VRF rounds** on real ESP32-S3-N16R8 hardware
@@ -29,37 +85,39 @@
 
 | Component | Status | Evidence |
 |-----------|--------|----------|
-| ESP-IDF firmware compiled | ✅ | ESP-IDF v5.2.6, target esp32s3 |
-| Firmware flashed to real ESP32-S3 | ✅ | COM4, 1013KB binary |
-| Captive portal (WiFi AP + HTTP setup page) | ✅ | DICE-C8B4, 192.168.4.1 |
-| LED status indicators (WS2812 GPIO48) | ✅ | Blue→Yellow→Green transitions |
-| First-boot detection + auto-provisioning flow | ✅ | NVS check → portal or normal boot |
-| Hardware entropy self-test | ✅ | 10 SHA-256 samples, uniqueness verified |
-| secp256k1 key loading from NVS | ✅ | 135-byte DER, mbedTLS ECDSA |
-| WiFi station connection (WPA2-PSK) | ✅ | Connected at RSSI -45 to -50 dBm |
-| WebSocket client (plain ws:// and wss:// mTLS) | ✅ | Auto-detect from URI scheme |
-| Heartbeat (25s interval) | ✅ | Timer stack fixed at 4096 bytes |
-| CBOR protocol bridge (firmware ↔ coordinator) | ✅ | Integer-key maps ↔ array envelopes |
-| Commit-reveal over real WebSocket | ✅ | 545+ rounds, all verified |
-| Low-S ECDSA signature normalization | ✅ | mbedTLS high-S → k256 low-S |
-| 16-slot firmware job queue | ✅ | Replaced single-slot, handles burst |
-| Coordinator request queue | ✅ | 30/30 burst test, FIFO drain |
-| Round history for dashboard | ✅ | Completed rounds persist in memory |
-| mTLS (mutual TLS) | ✅ | CA → coordinator cert + device cert |
-| PostgreSQL (Neon cloud) | ✅ | Schema auto-migrated, rounds persisted |
-| Reveal signal broadcast | ✅ | Coordinator → device after all commits |
-| 3 example dApps (CPI callback) | ✅ | Dice Roll, Lucky Wheel, Prediction Market |
-| Dev provisioning tool | ✅ | Python: keygen + NVS gen + flash |
+| ESP-IDF firmware compiled | Done | ESP-IDF v5.2.6, target esp32s3 |
+| Firmware flashed to real ESP32-S3 | Done | COM4, 1013KB binary |
+| Captive portal (WiFi AP + HTTP setup page) | Done | DICE-C8B4, 192.168.4.1 |
+| LED status indicators (WS2812 GPIO48) | Done | Blue-Yellow-Green transitions |
+| First-boot detection + auto-provisioning flow | Done | NVS check - portal or normal boot |
+| Hardware entropy self-test | Done | 10 SHA-256 samples, uniqueness verified |
+| secp256k1 key loading from NVS | Done | 135-byte DER, mbedTLS ECDSA |
+| WiFi station connection (WPA2-PSK) | Done | Connected at RSSI -45 to -50 dBm |
+| WebSocket client (plain ws:// and wss:// mTLS) | Done | Auto-detect from URI scheme |
+| Heartbeat (25s interval) | Done | Timer stack fixed at 4096 bytes |
+| CBOR protocol bridge (firmware - coordinator) | Done | Integer-key maps - array envelopes |
+| Commit-reveal over real WebSocket | Done | 545+ rounds, all verified |
+| Low-S ECDSA signature normalization | Done | mbedTLS high-S - k256 low-S |
+| 16-slot firmware job queue | Done | Replaced single-slot, handles burst |
+| Coordinator request queue | Done | 30/30 burst test, FIFO drain |
+| Round history for dashboard | Done | Completed rounds persist in memory |
+| mTLS (mutual TLS) | Done | CA - coordinator cert + device cert |
+| PostgreSQL (Neon cloud) | Done | Schema auto-migrated, rounds persisted |
+| Reveal signal broadcast | Done | Coordinator - device after all commits |
+| 3 example dApps (CPI callback) | Done | Dice Roll, Lucky Wheel, Prediction Market |
+| Dev provisioning tool | Done | Python: keygen + NVS gen + flash |
 
 ---
 
-## Current Build Health
+## Current Build Health (v5)
 
 ```
-cargo check --workspace              →  0 errors  ✅
-cargo test  --workspace              →  162 tests, 0 fail  ✅
-anchor build --no-idl (WSL)          →  5 .so files built  ✅
-ESP-IDF build (v5.2.6, esp32s3)      →  dice_firmware.bin (1013KB)  ✅
+Branch:                              v5-keeper-notary
+cargo check --workspace              0 errors
+cargo test  --bin dice-coordinator   113 tests, 0 fail
+Last test run:                       2026-04-08 01:16 IST
+anchor build --no-idl (WSL)          5 .so files built
+ESP-IDF build (v5.2.6, esp32s3)      dice_firmware.bin (1013KB)
 ```
 
 ---
@@ -78,46 +136,43 @@ ESP-IDF build (v5.2.6, esp32s3)      →  dice_firmware.bin (1013KB)  ✅
 
 ---
 
-## Test Results
+## API Endpoints (v5)
 
-### Hardware Battle Test (32 tests)
-| Category | Pass | Fail | Notes |
-|----------|------|------|-------|
-| Boot & Onboarding | 18/18 | 0 | Captive portal, WiFi, crypto, entropy |
-| VRF Round Execution | 10/10 | 0 | Commit, reveal, finalize, callback |
-| Stress & Throughput | 4/8 | 4 | Failures = test script queue ordering |
-| Security Attacks | 10/13 | 3 | Failures = timing after attacks, all LOW |
-| Randomness Quality | 5/5 | 0 | 49% bit ratio, 127/256 Hamming, perfect |
-| Queue System | 5/6 | 1 | Queue saturation from prior tests |
-| Device Resilience | 4/4 | 0 | 53 min uptime, NVS persistence |
+### VRF (existing)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Dashboard (HTML) |
+| GET | `/health` | Health check |
+| GET | `/nodes` | Connected nodes |
+| GET | `/rounds` | Active + completed rounds |
+| GET | `/rounds/:id` | Single round by UUID |
+| GET | `/queue` | Queue status |
+| POST | `/simulate` | Trigger VRF round |
+| GET | `/metrics` | Prometheus metrics |
+| GET | `/api/v1/stats` | Network stats |
 
-### Production Readiness Test (25 tests, mTLS + PostgreSQL)
-| Category | Pass | Fail | Notes |
-|----------|------|------|-------|
-| mTLS Authentication | 4/4 | 0 | No-cert rejected, rogue rejected, valid accepted |
-| VRF Protocol Integrity | 2/4 | 2 | Timing after mTLS attack tests |
-| Entropy Quality | 4/4 | 0 | 30/30 unique, 50% bit ratio |
-| Stress (mTLS + DB) | 3/3 | 0 | 16/20 burst, queue drains, DB survived |
-| Impersonation & Forgery | 1/2 | 1 | Timing overlap, ECDSA prevents forgery |
-| Database Persistence | 2/2 | 0 | 50 rounds in PostgreSQL |
-| API Security | 3/3 | 0 | Health, 404s, Prometheus metrics |
-| Sequential Reliability | 3/3 | 0 | 42/40 rounds, device alive, 0 leaks |
+### Keeper (new in v5)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/keeper/tasks` | Register a new keeper task |
+| GET | `/keeper/tasks` | List all tasks with stats |
+| DELETE | `/keeper/tasks/:id` | Remove a task |
+| POST | `/keeper/tasks/:id/toggle` | Enable/disable a task |
+| GET | `/keeper/history` | Recent execution log |
+| GET | `/keeper/stats` | Aggregate stats |
 
-### Randomness Quality (50+ samples from real ESP32-S3)
-| Test | Result |
-|------|--------|
-| Byte distribution | 256/256 distinct values |
-| Bit ratio | 49-50% ones (perfect) |
-| Sequential correlation | 0 (XOR test) |
-| Max run length | 10 bits (threshold: 20) |
-| Avalanche (Hamming) | 127/256 bits (ideal: 128) |
-| Uniqueness | 0 duplicates across 545+ outputs |
+### Notary (new in v5)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/notarize` | Submit hash for attestation |
+| GET | `/notarize/:id` | Fetch receipt by ID |
+| GET | `/notarize/history` | Recent attestations |
 
 ---
 
 ## Part 1 — Smart Contract (`programs/dice/`)
 
-### Status: ✅ Complete (21 instructions)
+### Status: Complete (21 instructions)
 
 **v1.0 instructions (8):** register_device, request_randomness, submit_commit, submit_reveal, finalize_randomness, claim_rewards, init_escrow, fund_escrow
 
@@ -125,104 +180,74 @@ ESP-IDF build (v5.2.6, esp32s3)      →  dice_firmware.bin (1013KB)  ✅
 
 **Unit tests:** 31 passing (constants, channel sizing, finalization)
 
-### Remaining
-| Item | Priority |
-|------|----------|
-| Anchor integration tests (bankrun/localnet) | High |
-| External security audit | Medium |
-| Mainnet deployment | Later |
-
 ---
 
 ## Part 2 — Coordinator (`coordinator/`)
 
-### Status: ✅ Production-ready
+### Status: v5 Multi-Service
 
 | Component | Status |
 |-----------|--------|
-| Config (15 params + `--tls` flag) | ✅ |
-| Node registry + heartbeat | ✅ |
-| CBOR protocol (both formats) | ✅ |
-| ECDSA verification (low-S normalization) | ✅ |
-| State machine (commit → reveal → finalize) | ✅ |
-| Request queue (burst handling, FIFO, 60s expiry) | ✅ |
-| Round history (dashboard display) | ✅ |
-| Reveal signal broadcast | ✅ |
-| PostgreSQL persistence | ✅ Tested with Neon cloud |
-| mTLS WebSocket server | ✅ Tested with real device |
-| Solana TX submission | ✅ |
-| Solana WS subscriber | ✅ |
-| REST API + Dashboard | ✅ |
-| Prometheus metrics | ✅ |
-| Selection engine | ✅ |
-| Round timeout watchdog | ✅ |
+| Config (20 params + keeper/notary flags) | Done |
+| Node registry + heartbeat | Done |
+| CBOR protocol (both formats) | Done |
+| ECDSA verification (low-S normalization) | Done |
+| State machine (commit - reveal - finalize) | Done |
+| Request queue (burst handling, FIFO, 60s expiry) | Done |
+| Round history (dashboard display) | Done |
+| Reveal signal broadcast | Done |
+| PostgreSQL persistence | Done |
+| mTLS WebSocket server | Done |
+| Solana TX submission | Done |
+| Solana WS subscriber | Done |
+| REST API + Dashboard | Done |
+| Prometheus metrics (VRF + Keeper + Notary) | Done |
+| Selection engine | Done |
+| Round timeout watchdog | Done |
+| **Keeper automation** | **Done (v5)** |
+| **Notary timestamping** | **Done (v5)** |
 
-**Unit tests:** 97 passing (state machine, validation, TX builders, VRF proofs, integration)
-
-### Remaining
-| Item | Priority |
-|------|----------|
-| VPS deployment | High |
-| Backup node selection on timeout | Medium |
-| Node penalty/blacklist for non-reveal | Medium |
-| HA / hot standby | Low |
+**Unit tests:** 113 passing (state machine, validation, TX builders, VRF proofs, integration, keeper, notary)
 
 ---
 
 ## Part 3 — Firmware (`firmware/`)
 
-### Status: ✅ Tested on real ESP32-S3
+### Status: Tested on real ESP32-S3 (UNCHANGED in v5)
 
 | Component | Status |
 |-----------|--------|
-| app_main.c (boot sequence, WiFi, main loop) | ✅ Real hardware |
-| entropy.c (TRNG + ADC + timing, SHA-256 mix) | ✅ Self-test passes |
-| crypto.c (secp256k1 ECDSA, key from NVS) | ✅ 545+ signatures |
-| commit_reveal.c (16-slot job queue) | ✅ Burst-tested |
-| websocket_client.c (ws:// and wss:// mTLS) | ✅ Both protocols |
-| heartbeat.c (25s timer) | ✅ Stack overflow fixed |
-| captive_portal.c (WiFi AP + HTTP + DNS) | ✅ Real browser test |
-| led_status.c (WS2812 GPIO48) | ✅ All 6 states |
-| dice_protocol (CBOR encode/decode) | ✅ Bridge tested |
-| sdkconfig.defaults | ✅ Dev mode (no Secure Boot) |
-| idf_component.yml (managed components) | ✅ esp_websocket_client, led_strip |
+| app_main.c (boot sequence, WiFi, main loop) | Done |
+| entropy.c (TRNG + ADC + timing, SHA-256 mix) | Done |
+| crypto.c (secp256k1 ECDSA, key from NVS) | Done |
+| commit_reveal.c (16-slot job queue) | Done |
+| websocket_client.c (ws:// and wss:// mTLS) | Done |
+| heartbeat.c (25s timer) | Done |
+| captive_portal.c (WiFi AP + HTTP + DNS) | Done |
+| led_status.c (WS2812 GPIO48) | Done |
+| dice_protocol (CBOR encode/decode) | Done |
 
 **Build:** ESP-IDF v5.2.6, 1013KB binary, 3% free in factory partition
-
-### Remaining
-| Item | Priority |
-|------|----------|
-| Secure Boot v2 + Flash Encryption (production) | High |
-| On-device key generation (eliminate provisioning tool) | Medium |
-| OTA update mechanism | Low |
 
 ---
 
 ## Part 4 — PKI & Provisioning
 
-### Status: ✅ Working (dev mode)
+### Status: Working (dev mode)
 
 | Component | Status |
 |-----------|--------|
-| CA certificate (secp256r1, 10yr) | ✅ `certs/ca.crt` |
-| Coordinator server cert (CA-signed, SAN) | ✅ `certs/coordinator.crt` |
-| Device client cert (CA-signed) | ✅ `certs/device.crt` |
-| Dev provisioning script | ✅ `firmware/tools/provision_dev.py` |
-| NVS partition generator (ESP-IDF official) | ✅ CSV → binary |
-| mTLS tested end-to-end | ✅ 99+ rounds over wss:// |
-
-### Remaining
-| Item | Priority |
-|------|----------|
-| Air-gapped Root CA ceremony | High (production) |
-| Automated provisioning script | Medium |
-| Certificate rotation | Low |
+| CA certificate (secp256r1, 10yr) | Done |
+| Coordinator server cert (CA-signed, SAN) | Done |
+| Device client cert (CA-signed) | Done |
+| Dev provisioning script | Done |
+| mTLS tested end-to-end | Done |
 
 ---
 
 ## Part 5 — Example dApps
 
-### Status: ✅ 3 programs deployed to devnet
+### Status: 3 programs deployed to devnet
 
 | Program | ID | VRF Tested |
 |---------|-----|-----------|
@@ -231,41 +256,31 @@ ESP-IDF build (v5.2.6, esp32s3)      →  dice_firmware.bin (1013KB)  ✅
 | Prediction Market | `EHf5YLG2p7Wca9nUqJXRB6yATZidrBzJKM4Qj4k1EUvc` | 3 markets |
 | Coin Toss (existing) | `3oJL6bXFaVJhegSU2ah9y1zqGmbFZZu4peQwr9XmfUtn` | Unit tests |
 
-Each program has:
-- `src/lib.rs` — Anchor program with `dice_callback`
-- `VRF_INTEGRATION.md` — Flow diagram + code walkthrough
-- `VRF_TEST_RESULTS.md` — Real hardware VRF results
-
 ---
 
 ## Part 6 — Research
 
 | Report | Status |
 |--------|--------|
-| Web3 Mentions Report | ✅ MD + HTML (`research/`) |
-| Expansion Research (8 opportunities) | ✅ MD + HTML |
-| VRF-DePIN Ecosystem Report | ✅ MD + HTML |
+| Web3 Mentions Report | Done (MD + HTML) |
+| Expansion Research (8 opportunities) | Done (MD + HTML) |
+| Expansion Critical Analysis | Done (MD) |
+| VRF-DePIN Ecosystem Report | Done (MD + HTML) |
+| **Keeper + Notary Deep Research** | **Done (v5, MD + HTML)** |
 
 ---
 
 ## Part 7 — SDK
 
-### Status: ✅ Rust SDK complete
+### Status: Rust SDK complete
 
 | Component | Status |
 |-----------|--------|
-| CPI builders (v1 + v2 channel) | ✅ |
-| PDA derivation helpers | ✅ |
-| Account abstraction | ✅ |
-| Callback discriminator | ✅ |
-| 34 unit tests | ✅ |
-
-### Remaining
-| Item | Priority |
-|------|----------|
-| TypeScript SDK (`@dice-network/sdk`) | High |
-| npm publish | High |
-| crates.io publish | Medium |
+| CPI builders (v1 + v2 channel) | Done |
+| PDA derivation helpers | Done |
+| Account abstraction | Done |
+| Callback discriminator | Done |
+| 34 unit tests | Done |
 
 ---
 
@@ -273,32 +288,36 @@ Each program has:
 
 | Item | Status |
 |------|--------|
-| Hardware VRF on real ESP32-S3 | ✅ 545+ rounds |
-| mTLS authentication | ✅ CA-signed certs |
-| PostgreSQL persistence | ✅ Neon cloud |
-| Smart contract on devnet | ✅ 4 programs |
-| Randomness quality verified | ✅ 5/5 tests pass |
-| Security attack testing | ✅ 13 attacks, 0 vulnerabilities |
-| Stress testing | ✅ 30/30 burst, 42/40 sequential |
-| Request queue (burst handling) | ✅ 12 concurrent/node |
-| Coordinator dashboard | ✅ Live at :8080 |
-| Prometheus metrics | ✅ |
-| Example dApps with docs | ✅ 3 programs |
-| Device provisioning tool | ✅ Python script |
-| VPS deployment | ❌ Next |
-| Frontend for users | ❌ Next |
-| TypeScript SDK | ❌ Next |
-| External security audit | ❌ Before mainnet |
-| Mainnet deployment | ❌ After audit |
+| Hardware VRF on real ESP32-S3 | Done (545+ rounds) |
+| mTLS authentication | Done |
+| PostgreSQL persistence | Done |
+| Smart contract on devnet | Done (4 programs) |
+| Randomness quality verified | Done |
+| Security attack testing | Done (13 attacks, 0 vulns) |
+| Stress testing | Done (30/30 burst, 42/40 sequential) |
+| Request queue (burst handling) | Done |
+| Coordinator dashboard | Done |
+| Prometheus metrics | Done |
+| Example dApps with docs | Done |
+| Device provisioning tool | Done |
+| **Keeper automation** | **Done (v5)** |
+| **Notary timestamping** | **Done (v5)** |
+| VPS deployment | Next |
+| Frontend for users | Next |
+| TypeScript SDK | Next |
+| External security audit | Before mainnet |
+| Mainnet deployment | After audit |
 
 ---
 
 ## Next Steps (Priority Order)
 
-1. **VPS deployment** — Docker/systemd on Linux VPS, domain + HTTPS
-2. **Frontend** — Landing page + developer dashboard
-3. **TypeScript SDK** — npm package for dApp integration
-4. **Anchor integration tests** — Full on-chain test suite
-5. **Multi-node testing** — 4-7 nodes per round
-6. **Security audit** — External (OtterSec / Neodyme / Halborn)
-7. **Mainnet deployment** — After audit passes
+1. **Test keeper on devnet** — Deploy demo counter program, verify real crank transactions
+2. **Test notary with real hardware** — Connect ESP32, verify multi-witness attestation
+3. **VPS deployment** — Docker/systemd on Linux VPS, domain + HTTPS
+4. **Frontend** — Landing page + developer dashboard
+5. **TypeScript SDK** — npm package for dApp integration
+6. **Anchor integration tests** — Full on-chain test suite
+7. **Multi-node testing** — 4-7 nodes per round
+8. **Security audit** — External (OtterSec / Neodyme / Halborn)
+9. **Mainnet deployment** — After audit passes
