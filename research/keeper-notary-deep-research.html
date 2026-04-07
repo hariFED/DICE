@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DICE Keeper & Notary — Deep Research</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --surface2: #1a1a1a;
+    --surface3: #222;
+    --border: #1e1e1e;
+    --text: #d4d4d4;
+    --dim: #777;
+    --accent: #00ff88;
+    --accent2: #00cc66;
+    --blue: #4da6ff;
+    --purple: #b388ff;
+    --warn: #ff6b35;
+    --red: #ff4444;
+    --yellow: #ffd866;
+    --cyan: #66d9ef;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  /* ---- Header ---- */
+  .header {
+    background: linear-gradient(135deg, #0d1117, #060d08 50%, #0d1117);
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+  }
+  .header h1 { font-size: 2.2rem; color: var(--accent); letter-spacing: -0.02em; }
+  .header .sub { color: var(--dim); font-size: 0.95rem; margin-top: 0.3rem; }
+  .header .meta { color: var(--dim); font-size: 0.78rem; margin-top: 0.6rem; opacity: 0.7; }
+
+  /* ---- Container ---- */
+  .container { max-width: 1020px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+  /* ---- Part Dividers ---- */
+  .part-divider {
+    text-align: center;
+    margin: 3rem 0 2rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .part-divider h2 {
+    font-size: 1.6rem;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+  }
+  .part-divider .part-sub {
+    color: var(--dim);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+
+  /* ---- Sections ---- */
+  .section { margin: 2rem 0; }
+  .section h3 {
+    font-size: 1.2rem;
+    color: #fff;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section h4 {
+    font-size: 1rem;
+    color: var(--blue);
+    margin: 1.2rem 0 0.5rem;
+  }
+  .section p {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+  }
+
+  /* ---- System Cards ---- */
+  .system-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.2rem 0;
+    transition: border-color 0.2s;
+  }
+  .system-card:hover { border-color: #333; }
+  .system-card .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+  .system-card .card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .system-card .card-title { font-size: 1.1rem; color: #fff; font-weight: 600; }
+  .system-card .card-tag {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    margin-left: auto;
+  }
+
+  .tag-dead { background: rgba(255,68,68,0.15); color: var(--red); }
+  .tag-active { background: rgba(0,255,136,0.1); color: var(--accent); }
+  .tag-gold { background: rgba(255,216,102,0.12); color: var(--yellow); }
+  .tag-leader { background: rgba(179,136,255,0.12); color: var(--purple); }
+
+  .icon-clockwork { background: linear-gradient(135deg, #1a0a0a, #2a1010); color: var(--red); }
+  .icon-tuktuk { background: linear-gradient(135deg, #0a1a0d, #0a2a10); color: var(--accent); }
+  .icon-chainlink { background: linear-gradient(135deg, #1a1a0a, #2a2a10); color: var(--yellow); }
+  .icon-gelato { background: linear-gradient(135deg, #0d0a1a, #1a0a2a); color: var(--purple); }
+
+  /* ---- Tables ---- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8rem 0;
+    font-size: 0.85rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--dim);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  td { color: var(--text); }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+
+  /* ---- Code Blocks ---- */
+  pre {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 0.8rem 0;
+    color: var(--text);
+  }
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.82rem;
+    background: var(--surface2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--cyan);
+  }
+  pre code { background: none; padding: 0; color: inherit; }
+  .kw { color: var(--purple); }
+  .str { color: var(--accent); }
+  .cm { color: var(--dim); }
+  .fn { color: var(--blue); }
+  .num { color: var(--warn); }
+
+  /* ---- Flow Diagrams ---- */
+  .flow-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  .flow-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+  }
+  .flow-step {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-size: 0.82rem;
+    text-align: center;
+    min-width: 120px;
+  }
+  .flow-step .step-num {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .flow-arrow {
+    color: var(--dim);
+    font-size: 1.2rem;
+  }
+
+  /* ---- Comparison Grid ---- */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+  }
+  .compare-card h5 {
+    font-size: 0.85rem;
+    color: var(--blue);
+    margin-bottom: 0.5rem;
+  }
+  .compare-card p { font-size: 0.82rem; }
+
+  /* ---- Lesson Boxes ---- */
+  .lesson-box {
+    background: linear-gradient(90deg, rgba(0,255,136,0.04), transparent);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+  }
+  .lesson-box strong { color: var(--accent); }
+
+  .warn-box {
+    background: linear-gradient(90deg, rgba(255,107,53,0.06), transparent);
+    border-left: 3px solid var(--warn);
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+  }
+  .warn-box strong { color: var(--warn); }
+
+  .info-box {
+    background: linear-gradient(90deg, rgba(77,166,255,0.06), transparent);
+    border-left: 3px solid var(--blue);
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+  }
+  .info-box strong { color: var(--blue); }
+
+  /* ---- Badge Pills ---- */
+  .badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+  }
+  .badge-green { background: rgba(0,255,136,0.1); color: var(--accent); }
+  .badge-yellow { background: rgba(255,216,102,0.12); color: var(--yellow); }
+  .badge-red { background: rgba(255,68,68,0.12); color: var(--red); }
+  .badge-blue { background: rgba(77,166,255,0.1); color: var(--blue); }
+  .badge-purple { background: rgba(179,136,255,0.12); color: var(--purple); }
+
+  /* ---- TOC ---- */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+  }
+  .toc h3 { border: none; margin-bottom: 0.8rem; font-size: 1rem; }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3rem 2rem;
+  }
+  @media (max-width: 700px) { .toc-grid { grid-template-columns: 1fr; } }
+  .toc a {
+    color: var(--dim);
+    text-decoration: none;
+    font-size: 0.82rem;
+    padding: 0.2rem 0;
+    display: block;
+    transition: color 0.2s;
+  }
+  .toc a:hover { color: var(--accent); }
+  .toc .toc-part {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 0.6rem;
+    margin-bottom: 0.2rem;
+  }
+
+  /* ---- Architecture Diagram ---- */
+  .arch-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--dim);
+  }
+  .arch-diagram .hl { color: var(--accent); }
+  .arch-diagram .bl { color: var(--blue); }
+  .arch-diagram .wn { color: var(--warn); }
+  .arch-diagram .wh { color: #fff; }
+
+  /* ---- Receipt JSON ---- */
+  .json-key { color: var(--blue); }
+  .json-str { color: var(--accent); }
+  .json-num { color: var(--warn); }
+  .json-cm { color: var(--dim); }
+
+  /* ---- Sources ---- */
+  .sources {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .sources h3 { font-size: 1rem; margin-bottom: 1rem; }
+  .sources a {
+    color: var(--blue);
+    text-decoration: none;
+    font-size: 0.82rem;
+    transition: color 0.2s;
+  }
+  .sources a:hover { color: var(--accent); }
+  .source-group { margin-bottom: 1rem; }
+  .source-group h4 {
+    color: var(--dim);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.3rem;
+  }
+  .source-group ul { list-style: none; padding: 0; }
+  .source-group li {
+    padding: 0.15rem 0;
+    padding-left: 1rem;
+    position: relative;
+  }
+  .source-group li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55rem;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+
+  /* ---- Utility ---- */
+  .mt-1 { margin-top: 0.5rem; }
+  .mt-2 { margin-top: 1rem; }
+  .mb-1 { margin-bottom: 0.5rem; }
+  .dim { color: var(--dim); }
+  .accent { color: var(--accent); }
+  .small { font-size: 0.82rem; }
+  ul.clean { list-style: none; padding: 0; }
+  ul.clean li {
+    padding: 0.3rem 0 0.3rem 1.2rem;
+    position: relative;
+    font-size: 0.88rem;
+  }
+  ul.clean li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.7rem;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== HEADER ==================== -->
+<div class="header">
+  <h1>DICE Keeper & Notary</h1>
+  <div class="sub">Deep Research &mdash; Architecture, Security, UX</div>
+  <div class="meta">Compiled 2026-04-07 &bull; Based on DICE v3 &bull; 545+ VRF rounds on real ESP32-S3 hardware</div>
+</div>
+
+<div class="container">
+
+<!-- ==================== TOC ==================== -->
+<div class="toc">
+  <h3>Contents</h3>
+  <div class="toc-grid">
+    <div>
+      <div class="toc-part">Part 1 &mdash; Keeper Networks</div>
+      <a href="#universal">1.1 Universal Keeper Pattern</a>
+      <a href="#clockwork">1.2 Clockwork (Dead)</a>
+      <a href="#tuktuk">1.3 Tuk Tuk (Current)</a>
+      <a href="#chainlink">1.4 Chainlink Automation</a>
+      <a href="#gelato">1.5 Gelato Network</a>
+      <a href="#txlanding">1.6 Solana Tx Landing</a>
+      <a href="#keeper-lessons">1.7 Lessons for DICE</a>
+    </div>
+    <div>
+      <div class="toc-part">Part 2 &mdash; Notary Systems</div>
+      <a href="#rfc3161">2.1 RFC 3161 (Traditional)</a>
+      <a href="#opentimestamps">2.2 OpenTimestamps</a>
+      <a href="#sas">2.3 Solana Attestation Service</a>
+      <a href="#multiwitness">2.4 Multi-Witness Patterns</a>
+      <a href="#onchain-notary">2.5 On-Chain on Solana</a>
+      <a href="#notary-security">2.6 Security</a>
+      <a href="#receipt">2.7 Receipt Format</a>
+      <div class="toc-part">Part 3&ndash;5 &mdash; DICE Design</div>
+      <a href="#dice-keeper">3. DICE Keeper Design</a>
+      <a href="#dice-notary">4. DICE Notary Design</a>
+      <a href="#architecture">5. Integration Architecture</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 1: KEEPER NETWORKS                                      -->
+<!-- ============================================================ -->
+<div class="part-divider" id="part1">
+  <h2>Part 1: Keeper / Automation Networks</h2>
+  <div class="part-sub">How Clockwork, Tuk Tuk, Chainlink, and Gelato work &mdash; and what DICE can learn</div>
+</div>
+
+<!-- 1.1 Universal Pattern -->
+<div class="section" id="universal">
+  <h3>1.1 Universal Keeper Pattern</h3>
+  <p>Every keeper system follows the same core loop:</p>
+
+  <div class="flow-box">
+    <div class="flow-steps">
+      <div class="flow-step"><span class="step-num">Step 1</span>Register Task</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">Step 2</span>Fund Escrow</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">Step 3</span>Monitor Triggers</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">Step 4</span>Execute TX</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">Step 5</span>Pay Executor</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">Repeat</span>Until Cancelled</div>
+    </div>
+  </div>
+
+  <h4>Trigger Types (consistent across all systems)</h4>
+  <table>
+    <tr><th>Trigger</th><th>Description</th><th>Example</th></tr>
+    <tr><td><span class="badge badge-green">Time / Cron</span></td><td>Execute on a schedule</td><td>Every 10 seconds, Tuesday 3pm</td></tr>
+    <tr><td><span class="badge badge-blue">Account Change</span></td><td>When on-chain data changes</td><td>Byte offset watch, bitmap scan</td></tr>
+    <tr><td><span class="badge badge-purple">Custom Logic</span></td><td>Arbitrary off-chain condition</td><td>Chainlink's <code>checkUpkeep()</code></td></tr>
+    <tr><td><span class="badge badge-yellow">Event / Log</span></td><td>React to emitted events</td><td>Chainlink log triggers</td></tr>
+    <tr><td><span class="badge badge-red">Immediate</span></td><td>Execute once, now</td><td>Clockwork "Now", Tuk Tuk "now"</td></tr>
+  </table>
+
+  <h4>Payment Models</h4>
+  <table>
+    <tr><th>System</th><th>Currency</th><th>Model</th><th>Cost / Execution</th></tr>
+    <tr><td>Clockwork</td><td>SOL</td><td>Balance in Thread PDA</td><td>~5,000 lamports</td></tr>
+    <tr><td>Tuk Tuk</td><td>SOL</td><td>Per-crank reward</td><td>~5,000 lamports</td></tr>
+    <tr><td>Chainlink</td><td>LINK</td><td>Automation Registry deposit</td><td>Gas + premium</td></tr>
+    <tr><td>Gelato</td><td>GEL / stables</td><td>Gelato balance deposit</td><td>Gas + protocol fee</td></tr>
+  </table>
+</div>
+
+<!-- 1.2 Clockwork -->
+<div class="section" id="clockwork">
+  <h3>1.2 Clockwork <span class="badge tag-dead">SHUT DOWN</span></h3>
+
+  <div class="system-card">
+    <div class="card-header">
+      <div class="card-icon icon-clockwork">CW</div>
+      <div>
+        <div class="card-title">Clockwork &mdash; Solana Geyser Plugin</div>
+        <div class="dim small">$4M raised (Multicoin, Solana Ventures) &bull; Died Aug 2023</div>
+      </div>
+      <span class="card-tag tag-dead">DEAD</span>
+    </div>
+
+    <h4>Architecture</h4>
+    <p>Geyser plugin installed on validators/RPCs. Monitored "Threads" &mdash; on-chain PDAs containing trigger + instructions + SOL balance.</p>
+
+    <h4>Thread Structure (on-chain PDA)</h4>
+    <pre><code><span class="cm">// Thread = automation unit</span>
+Thread {
+    trigger:      Trigger,      <span class="cm">// Account-based or Time-based</span>
+    instructions: Vec&lt;Ix&gt;,     <span class="cm">// Static or dynamic via CPI</span>
+    balance:      u64,          <span class="cm">// SOL for execution fees</span>
+    authority:    Pubkey,       <span class="cm">// PDA from developer's program</span>
+}</code></pre>
+
+    <h4>Trigger Types</h4>
+    <ul class="clean">
+      <li><strong>Account-based:</strong> Track byte offset in on-chain account (e.g., offset 8, size 1 for boolean)</li>
+      <li><strong>Time-based:</strong> Cron expressions (<code>*/10 * * * * * *</code>), slot-based, epoch-based</li>
+    </ul>
+
+    <h4>Developer Integration</h4>
+    <pre><code><span class="cm">// Rust CPI from Anchor program</span>
+<span class="fn">clockwork_sdk::cpi::thread_create</span>(
+    ctx,
+    lamports_for_fees,
+    thread_id,
+    instructions_to_execute,
+    Trigger::Account {
+        address: target.key(),
+        offset: <span class="num">8</span>,
+        size: <span class="num">1</span>,
+    },
+)?;</code></pre>
+  </div>
+
+  <div class="warn-box">
+    <strong>Why it died:</strong> "Limited commercial upside." Per-crank fees (~$0.001) couldn't cover infrastructure. No token flywheel. Geyser plugin dependency made adoption hard. <strong>Key lesson:</strong> Standalone keeper product can't sustain a company. Bundling with VRF revenue is what Clockwork couldn't do.
+  </div>
+</div>
+
+<!-- 1.3 Tuk Tuk -->
+<div class="section" id="tuktuk">
+  <h3>1.3 Tuk Tuk <span class="badge tag-active">ACTIVE</span></h3>
+
+  <div class="system-card">
+    <div class="card-header">
+      <div class="card-icon icon-tuktuk">TT</div>
+      <div>
+        <div class="card-title">Tuk Tuk &mdash; Permissionless Crank Service</div>
+        <div class="dim small">By Helium team (Noah Prince) &bull; Launched Accelerate 2025</div>
+      </div>
+      <span class="card-tag tag-active">ACTIVE</span>
+    </div>
+
+    <h4>Architecture: PDAs + Bitmaps</h4>
+    <p>Pure on-chain program. No Geyser plugin. Each bit in a bitmap = one task slot (1=active, 0=inactive). Crankers scan bitmaps to find executable tasks — O(N/8) bytes.</p>
+
+    <pre><code>Task Queue (PDA)
+  ├── capacity:      <span class="num">10</span>           <span class="cm">// max simultaneous tasks</span>
+  ├── funding:       <span class="num">1 SOL</span>        <span class="cm">// min deposit (anti-spam, refundable)</span>
+  ├── crank_reward:  <span class="num">5000</span> lamports <span class="cm">// per execution</span>
+  ├── queue_authority: Pubkey     <span class="cm">// who can queue tasks</span>
+  └── bitmap:        [u8; N]      <span class="cm">// each bit = one task slot</span></code></pre>
+
+    <h4>Task Types</h4>
+    <table>
+      <tr><th>Type</th><th>How It Works</th><th>Use Case</th></tr>
+      <tr><td><span class="badge badge-green">CompileV0</span></td><td>Instructions stored on-chain ahead of time</td><td>Simple cron jobs, token transfers</td></tr>
+      <tr><td><span class="badge badge-blue">RemoteV0</span></td><td>HTTP POST to server &rarr; returns signed transaction</td><td>Oracle interactions, dynamic logic</td></tr>
+    </table>
+
+    <h4>Cron via Recursive Re-queuing</h4>
+    <pre><code>Execute task (Monday 10am)
+  &rarr; Perform action
+  &rarr; Re-queue self for next Monday 10am
+  &rarr; Task stays in bitmap</code></pre>
+
+    <h4>Cranker: Permissionless</h4>
+    <pre><code>$ tuktuk-crank-turner \
+    --solana-url &lt;RPC&gt; \
+    --keypair-path &lt;KEY&gt; \
+    --min-crank-fee <span class="num">1000</span></code></pre>
+    <p class="dim small">No staking, no slashing. Just a Rust binary: scan bitmaps &rarr; find tasks &rarr; execute &rarr; get paid.</p>
+
+    <h4>Security</h4>
+    <ul class="clean">
+      <li>Queue authority controls task queuing &mdash; "should not be given out blindly"</li>
+      <li>Remote servers must sign payloads cryptographically</li>
+      <li>No slashing: permissionless = best-effort, no execution guarantees</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 1.4 Chainlink -->
+<div class="section" id="chainlink">
+  <h3>1.4 Chainlink Automation <span class="badge tag-gold">GOLD STANDARD</span></h3>
+
+  <div class="system-card">
+    <div class="card-header">
+      <div class="card-icon icon-chainlink">CL</div>
+      <div>
+        <div class="card-title">Chainlink &mdash; checkUpkeep / performUpkeep</div>
+        <div class="dim small">Ethereum &bull; Most elegant keeper design in production</div>
+      </div>
+      <span class="card-tag tag-gold">GOLD STANDARD</span>
+    </div>
+
+    <h4>The Pattern</h4>
+    <pre><code><span class="cm">// Off-chain: runs every block, gas-free (simulated as eth_call)</span>
+<span class="kw">function</span> <span class="fn">checkUpkeep</span>(bytes checkData)
+    <span class="kw">external view returns</span> (bool upkeepNeeded, bytes performData);
+
+<span class="cm">// On-chain: runs only when triggered, costs gas</span>
+<span class="kw">function</span> <span class="fn">performUpkeep</span>(bytes performData) <span class="kw">external</span>;</code></pre>
+
+    <div class="lesson-box">
+      <strong>Why this is brilliant:</strong> Heavy computation happens off-chain (free) via <code>checkUpkeep</code>. It pre-computes results into <code>performData</code>. On-chain <code>performUpkeep</code> receives pre-computed data &mdash; minimal execution cost. This is the pattern DICE should adopt: coordinator does "check" off-chain, on-chain program does "perform".
+    </div>
+
+    <h4>Security (from Chainlink docs)</h4>
+    <ul class="clean">
+      <li><code>performUpkeep</code> <strong>MUST validate all inputs</strong> &mdash; anyone can call it</li>
+      <li>Implement access controls restricting to Automation Registry address</li>
+      <li>Keep <code>checkUpkeep</code> deterministic and lightweight</li>
+      <li>Set appropriate gas limits; monitor funding balance</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 1.5 Gelato -->
+<div class="section" id="gelato">
+  <h3>1.5 Gelato Network <span class="badge tag-leader">78% MARKET SHARE</span></h3>
+
+  <div class="system-card">
+    <div class="card-header">
+      <div class="card-icon icon-gelato">GN</div>
+      <div>
+        <div class="card-title">Gelato &mdash; Execution Slot Model</div>
+        <div class="dim small">Ethereum &bull; GEL token for staking/governance</div>
+      </div>
+      <span class="card-tag tag-leader">MARKET LEADER</span>
+    </div>
+
+    <h4>Architecture: Exclusive Time Slots</h4>
+    <pre><code>Time Slot 1: Executor A has exclusive execution rights
+Time Slot 2: Executor B has exclusive execution rights
+  ...
+If Executor A misses tasks &rarr; kicked from network</code></pre>
+
+    <h4>Resolver/Checker Pattern</h4>
+    <pre><code><span class="cm">// Off-chain: called every block</span>
+<span class="kw">function</span> <span class="fn">checker</span>() <span class="kw">returns</span> (bool canExec, bytes execPayload);
+<span class="cm">// On-chain: when canExec = true</span>
+<span class="kw">function</span> <span class="fn">exec</span>(bytes execPayload);</code></pre>
+
+    <h4>Security & Economics</h4>
+    <table>
+      <tr><th>Feature</th><th>Details</th></tr>
+      <tr><td>Staking</td><td>Executors stake GEL to get time slots</td></tr>
+      <tr><td>Slashing</td><td>For censoring, front-running, or going offline</td></tr>
+      <tr><td>Slot exclusivity</td><td>Prevents execution races; clear accountability</td></tr>
+      <tr><td>Kick mechanism</td><td>Miss tasks in your slot &rarr; removed from network</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 1.6 Tx Landing -->
+<div class="section" id="txlanding">
+  <h3>1.6 Solana Transaction Landing</h3>
+  <p>Critical for any keeper system on Solana.</p>
+
+  <div class="compare-grid">
+    <div class="compare-card">
+      <h5>Priority Fees</h5>
+      <p>Help validators prioritize during congestion. Higher fee &ne; guaranteed inclusion, but increases chances. 100% of priority fee goes to validator.</p>
+    </div>
+    <div class="compare-card">
+      <h5>Jito Tips &amp; Bundles</h5>
+      <p>Up to 5 txs executed <strong>atomically</strong> in one slot. Min tip: 1,000 lamports. Bundles sequenced to prevent MEV. Best for time-critical executions.</p>
+    </div>
+    <div class="compare-card">
+      <h5>swQoS (Most Effective)</h5>
+      <p>Stake-weighted quality of service. Trusted connections between RPCs and validators. Materially reduces time to inclusion. Depends on RPC provider.</p>
+    </div>
+    <div class="compare-card">
+      <h5>Best Practices</h5>
+      <p>Simulate first to estimate compute units. Use Jito for MEV-sensitive ops. Standard priority for cron jobs. Reliable RPC matters more than tip size.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 1.7 Lessons -->
+<div class="section" id="keeper-lessons">
+  <h3>1.7 Lessons for DICE Keeper</h3>
+
+  <table>
+    <tr><th>Lesson</th><th>Source</th><th>How DICE Applies</th></tr>
+    <tr><td>Standalone keeper &ne; viable business</td><td>Clockwork</td><td>Bundle with VRF &mdash; same device, multiple streams</td></tr>
+    <tr><td>Bitmap scanning is efficient</td><td>Tuk Tuk</td><td>Consider bitmap-style task indexing on-chain</td></tr>
+    <tr><td>check/perform split is elegant</td><td>Chainlink</td><td>Coordinator does "check" off-chain, program does "perform"</td></tr>
+    <tr><td>Permissionless = no guarantees</td><td>Tuk Tuk</td><td>Hardware fleet = execution SLA (heartbeat-verified)</td></tr>
+    <tr><td>Execution slots = accountability</td><td>Gelato</td><td>Assign tasks to specific nodes, track per-node</td></tr>
+    <tr><td>Validate on-chain inputs</td><td>Chainlink</td><td>On-chain program must validate coordinator-submitted txs</td></tr>
+    <tr><td>Jito bundles for time-critical</td><td>Solana infra</td><td>Integrate Jito for liquidation/MEV-sensitive ops</td></tr>
+  </table>
+
+  <div class="lesson-box">
+    <strong>DICE's unique advantage:</strong> No other keeper network has dedicated hardware nodes with Secure Boot, heartbeat-verified uptime, ECDSA-signed execution receipts from hardware-bound keys, and economic bundling (same $8 device earns from VRF + keeper + notary).
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 2: NOTARY SYSTEMS                                       -->
+<!-- ============================================================ -->
+<div class="part-divider" id="part2">
+  <h2>Part 2: Notary / Timestamping Systems</h2>
+  <div class="part-sub">RFC 3161, OpenTimestamps, Solana Attestation Service &mdash; and what DICE can learn</div>
+</div>
+
+<!-- 2.1 RFC 3161 -->
+<div class="section" id="rfc3161">
+  <h3>2.1 RFC 3161 &mdash; Traditional Timestamping</h3>
+  <p>The legal standard for digital timestamps.</p>
+
+  <div class="flow-box">
+    <div class="flow-steps">
+      <div class="flow-step"><span class="step-num">1</span>Hash Document</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">2</span>Send Hash to TSA</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">3</span>TSA Signs Token</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">4</span>Return Proof</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">5</span>Verify Later</div>
+    </div>
+  </div>
+
+  <h4>TimeStampToken Contents</h4>
+  <pre><code>TSTInfo {
+    messageImprint: hash_algo + hash_value,  <span class="cm">// echoed from request</span>
+    genTime:        GeneralizedTime (UTC),   <span class="cm">// claimed creation time</span>
+    accuracy:       secs + ms + &micro;s,          <span class="cm">// time bounds</span>
+    serialNumber:   unique integer,          <span class="cm">// prevents substitution</span>
+    nonce:          from request,            <span class="cm">// replay protection</span>
+    tsa:            TSA identity + cert,     <span class="cm">// who signed</span>
+}</code></pre>
+
+  <h4>Legal Acceptance</h4>
+  <p class="dim small">eIDAS (EU), ESIGN Act (US), various national electronic signature laws. TSA certificates must contain <code>id-kp-timeStamping</code> as sole extended key usage.</p>
+
+  <div class="warn-box">
+    <strong>Critical limitation:</strong> Single point of trust. If the TSA is compromised or its key is leaked, ALL timestamps become suspect. No built-in multi-authority attestation.
+  </div>
+</div>
+
+<!-- 2.2 OpenTimestamps -->
+<div class="section" id="opentimestamps">
+  <h3>2.2 OpenTimestamps &mdash; Bitcoin-Anchored</h3>
+
+  <div class="flow-box">
+    <div class="flow-steps">
+      <div class="flow-step"><span class="step-num">1</span>SHA-256(file)</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">2</span>Calendar Servers</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">3</span>Merkle Tree</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">4</span>Bitcoin TX</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">5</span>.ots Proof</div>
+    </div>
+  </div>
+
+  <p>10,000 files timestamped with 1 Bitcoin transaction via Merkle aggregation. Trust-minimized: calendar servers can only go offline, not fake timestamps.</p>
+
+  <table>
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>Accuracy</td><td>~2-3 hours (Bitcoin block timestamp rules)</td></tr>
+    <tr><td>Confirmation</td><td>~1 hour minimum (6 confirmations)</td></tr>
+    <tr><td>Identity binding</td><td>None (anonymous by default)</td></tr>
+    <tr><td>Calendar servers</td><td>5 independent operators</td></tr>
+  </table>
+</div>
+
+<!-- 2.3 SAS -->
+<div class="section" id="sas">
+  <h3>2.3 Solana Attestation Service (SAS)</h3>
+  <p>Built by Range Security. Three-party model: <strong>Issuers</strong> (create schemas + issue), <strong>Holders</strong> (receive attestations), <strong>Verifiers</strong> (check validity). Schema-driven with revocation support.</p>
+</div>
+
+<!-- 2.4 Multi-Witness -->
+<div class="section" id="multiwitness">
+  <h3>2.4 Multi-Witness Attestation Patterns</h3>
+
+  <div class="compare-grid">
+    <div class="compare-card">
+      <h5>Single Authority (RFC 3161)</h5>
+      <p>Trust one TSA completely. Single point of failure. If compromised, all timestamps suspect.</p>
+    </div>
+    <div class="compare-card">
+      <h5>Multi-Witness (DICE)</h5>
+      <p>Trust threshold of witnesses. BFT: survives up to t compromised. No single point of failure.</p>
+    </div>
+  </div>
+
+  <h4>ECDSA Aggregation Options</h4>
+  <table>
+    <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+    <tr><td><span class="badge badge-green">Concatenated sigs</span></td><td>Simplest. Each independently verifiable.</td><td>Receipt grows with witness count</td></tr>
+    <tr><td><span class="badge badge-blue">Coordinator-attested</span></td><td>Compact receipt</td><td>Reintroduces trusted party</td></tr>
+    <tr><td><span class="badge badge-purple">Merkle tree</span></td><td>Root on-chain, proofs off-chain</td><td>More complex verification</td></tr>
+    <tr><td><span class="badge badge-yellow">Future: Schnorr</span></td><td>Native multi-sig aggregation</td><td>Requires firmware change</td></tr>
+  </table>
+
+  <div class="info-box">
+    <strong>DICE already has multi-witness attestation.</strong> The VRF DiceChannel stores per-node: <code>device_pubkeys</code>, <code>commit_hashes</code>, <code>entropies</code>, <code>signatures</code>. Each ESP32 independently generates entropy, commits, signs, reveals. This IS a multi-witness scheme.
+  </div>
+</div>
+
+<!-- 2.5 On-Chain -->
+<div class="section" id="onchain-notary">
+  <h3>2.5 On-Chain Notarization on Solana</h3>
+
+  <h4>PDA Structure</h4>
+  <pre><code><span class="cm">// Attestation PDA: ["attestation", schema_id, content_hash]</span>
+<span class="kw">pub struct</span> <span class="fn">Attestation</span> {
+    <span class="kw">pub</span> content_hash:  [u8; <span class="num">32</span>],      <span class="cm">// SHA-256 of attested data</span>
+    <span class="kw">pub</span> witnesses:     Vec&lt;[u8; <span class="num">33</span>]&gt;, <span class="cm">// compressed device pubkeys</span>
+    <span class="kw">pub</span> witness_sigs:  Vec&lt;[u8; <span class="num">64</span>]&gt;, <span class="cm">// ECDSA signatures</span>
+    <span class="kw">pub</span> witness_count: u8,
+    <span class="kw">pub</span> threshold:     u8,            <span class="cm">// minimum witnesses required</span>
+    <span class="kw">pub</span> timestamp:     i64,           <span class="cm">// Clock::unix_timestamp</span>
+    <span class="kw">pub</span> slot:          u64,           <span class="cm">// Solana slot (ordering)</span>
+}</code></pre>
+
+  <h4>Cost Analysis (4 witnesses)</h4>
+  <table>
+    <tr><th>Strategy</th><th>On-Chain Size</th><th>Rent Cost</th></tr>
+    <tr><td>Full attestation (all sigs on-chain)</td><td>~523 bytes</td><td>~0.00453 SOL (~$0.68)</td></tr>
+    <tr><td>Hash + metadata only (sigs off-chain)</td><td>~100-150 bytes</td><td>~0.002 SOL (~$0.30)</td></tr>
+    <tr><td>Merkle root only</td><td>~80 bytes</td><td>~0.0015 SOL (~$0.22)</td></tr>
+  </table>
+
+  <div class="info-box">
+    <strong>Timestamp authority:</strong> Use both <code>Clock::unix_timestamp</code> (human-readable) and <code>Clock::slot</code> (monotonic ordering). Slot is the more reliable ordering primitive &mdash; consensus-determined and strictly monotonic.
+  </div>
+</div>
+
+<!-- 2.6 Security -->
+<div class="section" id="notary-security">
+  <h3>2.6 Security Considerations</h3>
+
+  <table>
+    <tr><th>Threat</th><th>Mitigation</th></tr>
+    <tr><td>Backdating attack</td><td>Blockchain anchoring &mdash; hash in Solana slot is append-only</td></tr>
+    <tr><td>Compromise single witness</td><td>Threshold: min 4 witnesses (BFT: tolerates 1 compromised)</td></tr>
+    <tr><td>Extract hardware key</td><td>Secure Boot + flash encryption + NVS encryption</td></tr>
+    <tr><td>Clock drift between nodes</td><td>Coordinator uses Solana slots (consensus time), not node clocks</td></tr>
+    <tr><td>Tamper with ordering</td><td>Slot-based deadlines are consensus-determined and monotonic</td></tr>
+  </table>
+
+  <h4>Hardware-Backed vs. Software-Only</h4>
+  <table>
+    <tr><th>Property</th><th>Software (server + key file)</th><th>Hardware (ESP32 + NVS)</th></tr>
+    <tr><td>Key extraction</td><td style="color:var(--red)">Trivial with OS access</td><td style="color:var(--accent)">Difficult (flash protection)</td></tr>
+    <tr><td>Remote compromise</td><td style="color:var(--red)">Full key via exploit</td><td style="color:var(--accent)">Cannot extract remotely</td></tr>
+    <tr><td>Attestation binding</td><td style="color:var(--red)">Any machine with key copy</td><td style="color:var(--accent)">Specific physical device</td></tr>
+  </table>
+</div>
+
+<!-- 2.7 Receipt -->
+<div class="section" id="receipt">
+  <h3>2.7 Receipt / Proof Format</h3>
+
+  <pre><code>{
+  <span class="json-key">"version"</span>: <span class="json-str">"1.0"</span>,
+  <span class="json-key">"type"</span>: <span class="json-str">"dice-notary-receipt"</span>,
+
+  <span class="json-key">"attestation"</span>: {
+    <span class="json-key">"content_hash"</span>: <span class="json-str">"sha256:abcdef1234..."</span>,
+    <span class="json-key">"timestamp_unix"</span>: <span class="json-num">1712534400</span>,
+    <span class="json-key">"timestamp_iso"</span>: <span class="json-str">"2026-04-08T00:00:00Z"</span>,
+    <span class="json-key">"solana_slot"</span>: <span class="json-num">298765432</span>,
+    <span class="json-key">"solana_signature"</span>: <span class="json-str">"5K8vT2..."</span>,
+    <span class="json-key">"attestation_pda"</span>: <span class="json-str">"7xKQ3..."</span>
+  },
+
+  <span class="json-key">"witnesses"</span>: [
+    {
+      <span class="json-key">"device_pubkey"</span>: <span class="json-str">"02abcdef..."</span>,
+      <span class="json-key">"signature"</span>: <span class="json-str">"r_hex...s_hex..."</span>,
+      <span class="json-key">"commit_hash"</span>: <span class="json-str">"sha256:..."</span>
+    }
+  ],
+
+  <span class="json-key">"protocol"</span>: {
+    <span class="json-key">"threshold"</span>: <span class="json-num">4</span>,
+    <span class="json-key">"witnesses_total"</span>: <span class="json-num">5</span>,
+    <span class="json-key">"network"</span>: <span class="json-str">"solana-mainnet"</span>,
+    <span class="json-key">"program_id"</span>: <span class="json-str">"DICE..."</span>
+  },
+
+  <span class="json-key">"verification"</span>: {
+    <span class="json-key">"instructions"</span>: <span class="json-str">"To verify: (1) SHA-256 your document..."</span>
+  }
+}</code></pre>
+
+  <div class="lesson-box">
+    <strong>Must be self-contained:</strong> Include all witness pubkeys, Solana tx signature, PDA address, program ID, and human-readable verification instructions. Usable even if DICE service goes offline.
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 3: DICE KEEPER DESIGN                                   -->
+<!-- ============================================================ -->
+<div class="part-divider" id="dice-keeper">
+  <h2>Part 3: DICE Keeper Design</h2>
+  <div class="part-sub">How DICE Keeper should work &mdash; informed by all research</div>
+</div>
+
+<div class="section">
+  <h3>Developer Flow</h3>
+  <div class="flow-box">
+    <div class="flow-steps">
+      <div class="flow-step"><span class="step-num">1</span>Deploy Program<br><span class="dim" style="font-size:0.7rem">with crankable IX</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">2</span>Register Task<br><span class="dim" style="font-size:0.7rem">POST /keeper/tasks</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">3</span>Fund Escrow<br><span class="dim" style="font-size:0.7rem">SOL deposit</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">4</span>DICE Monitors<br><span class="dim" style="font-size:0.7rem">off-chain check</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">5</span>Execute TX<br><span class="dim" style="font-size:0.7rem">sign &amp; submit</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">6</span>Pay &amp; Log<br><span class="dim" style="font-size:0.7rem">receipt + metrics</span></div>
+    </div>
+  </div>
+
+  <h3 class="mt-2">Security Model</h3>
+  <table>
+    <tr><th>Layer</th><th>Guarantee</th></tr>
+    <tr><td><span class="badge badge-green">On-Chain</span></td><td>Program validates authority, funding, trigger. Escrow PDA holds developer funds.</td></tr>
+    <tr><td><span class="badge badge-blue">Coordinator</span></td><td>Hardware heartbeats prove liveness. Signed execution receipts. Jito bundles for MEV.</td></tr>
+    <tr><td><span class="badge badge-purple">Monitoring</span></td><td>Dashboard: task status, execution history, balance. Prometheus metrics.</td></tr>
+  </table>
+
+  <h3 class="mt-2">Competitive Advantage</h3>
+  <table>
+    <tr><th>Feature</th><th>Tuk Tuk</th><th>DICE Keeper</th></tr>
+    <tr><td>Node network</td><td>Anyone with an RPC</td><td>Dedicated hardware fleet</td></tr>
+    <tr><td>Attestation</td><td>None</td><td>Hardware-backed ECDSA identity</td></tr>
+    <tr><td>Uptime guarantee</td><td>Best-effort</td><td>Heartbeat-verified, monitored</td></tr>
+    <tr><td>Execution proof</td><td>TX signature only</td><td>TX sig + hardware attestation</td></tr>
+    <tr><td>MEV protection</td><td>None</td><td>Coordinator batching + Jito</td></tr>
+    <tr><td>Bundled revenue</td><td>Keeper only</td><td>VRF + Keeper + Notary</td></tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 4: DICE NOTARY DESIGN                                   -->
+<!-- ============================================================ -->
+<div class="part-divider" id="dice-notary">
+  <h2>Part 4: DICE Notary Design</h2>
+  <div class="part-sub">How DICE Notary should work &mdash; multi-witness hardware attestation</div>
+</div>
+
+<div class="section">
+  <h3>User Flow</h3>
+  <div class="flow-box">
+    <div class="flow-steps">
+      <div class="flow-step"><span class="step-num">1</span>Submit Hash<br><span class="dim" style="font-size:0.7rem">POST /notarize</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">2</span>Dispatch to Nodes<br><span class="dim" style="font-size:0.7rem">N hardware witnesses</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">3</span>Nodes Sign<br><span class="dim" style="font-size:0.7rem">HW-bound ECDSA</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">4</span>Verify Sigs<br><span class="dim" style="font-size:0.7rem">coordinator checks</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">5</span>On-Chain (opt)<br><span class="dim" style="font-size:0.7rem">attestation PDA</span></div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><span class="step-num">6</span>Return Receipt<br><span class="dim" style="font-size:0.7rem">self-contained proof</span></div>
+    </div>
+  </div>
+
+  <h3 class="mt-2">Security Model</h3>
+  <table>
+    <tr><th>Property</th><th>Guarantee</th></tr>
+    <tr><td>Attestation integrity</td><td>Each signature from Secure Boot-verified ESP32 with hardware-bound key</td></tr>
+    <tr><td>Byzantine tolerance</td><td>Min 4 witnesses &mdash; tolerates 1 compromised (3f+1)</td></tr>
+    <tr><td>Anti-backdating</td><td>Solana slot provides monotonic timestamp (consensus-determined)</td></tr>
+    <tr><td>Independence</td><td>Receipt is self-contained &mdash; verifiable without DICE service</td></tr>
+    <tr><td>Privacy</td><td>Only hash submitted &mdash; original document never leaves user</td></tr>
+    <tr><td>Anti-forgery</td><td>Coordinator cannot forge witness sigs (doesn't have device keys)</td></tr>
+  </table>
+
+  <div class="info-box">
+    <strong>Hackathon insight:</strong> Notary rides on the existing VRF pipeline. Send a <code>JobAssignment</code> with document hash as <code>request_id</code>. The node's ECDSA commit IS the attestation. <strong>Zero firmware changes. Zero new message types.</strong>
+  </div>
+
+  <h3 class="mt-2">vs. Existing Systems</h3>
+  <table>
+    <tr><th>System</th><th>Trust Model</th><th>Latency</th><th>Identity</th><th>Hardware</th></tr>
+    <tr><td>RFC 3161</td><td style="color:var(--red)">Single TSA</td><td>~1s</td><td>TSA cert</td><td>None</td></tr>
+    <tr><td>OpenTimestamps</td><td style="color:var(--yellow)">Bitcoin PoW</td><td>~1 hour</td><td>None</td><td>None</td></tr>
+    <tr><td>SAS (Solana)</td><td style="color:var(--blue)">Single issuer</td><td>~400ms</td><td>Wallet</td><td>None</td></tr>
+    <tr><td style="color:var(--accent)"><strong>DICE Notary</strong></td><td style="color:var(--accent)"><strong>Multi-witness HW</strong></td><td><strong>~2-5s</strong></td><td><strong>Device keys</strong></td><td style="color:var(--accent)"><strong>Secure Boot ESP32</strong></td></tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 5: ARCHITECTURE                                         -->
+<!-- ============================================================ -->
+<div class="part-divider" id="architecture">
+  <h2>Part 5: Integration Architecture</h2>
+  <div class="part-sub">How Keeper &amp; Notary plug into the existing coordinator &mdash; zero disruption to VRF</div>
+</div>
+
+<div class="section">
+  <h3>File Structure</h3>
+  <div class="arch-diagram"><span class="wh">coordinator/src/</span>
+  ├── main.rs              <span class="cm">&larr; spawn keeper task alongside VRF</span>
+  ├── <span class="hl">keeper.rs</span>            <span class="cm">&larr; NEW: trigger evaluation + execution loop</span>
+  ├── <span class="hl">notary.rs</span>            <span class="cm">&larr; NEW: attestation handler (~200 lines)</span>
+  ├── state_machine.rs     <span class="cm">&larr; UNTOUCHED: VRF state machine</span>
+  ├── protocol/messages.rs <span class="cm">&larr; UNTOUCHED: CBOR wire protocol</span>
+  ├── queue.rs             <span class="cm">&larr; UNTOUCHED: VRF request queue</span>
+  ├── solana_watcher.rs    <span class="cm">&larr; UNTOUCHED: VRF account watcher</span>
+  ├── solana_rpc.rs        <span class="wn">&larr; SHARED: sign_and_send</span>
+  ├── solana_tx.rs         <span class="wn">&larr; SHARED: instruction builders</span>
+  ├── node_session.rs      <span class="wn">&larr; SHARED: node registry</span>
+  └── api/routes.rs        <span class="bl">&larr; ADD: /keeper/*, /notarize endpoints</span></div>
+
+  <h3 class="mt-2">Parallel Message Flows</h3>
+  <div class="arch-diagram"><span class="hl">VRF:</span>     Request &rarr; Select Nodes &rarr; JobAssignment &rarr; Commits &rarr; Reveals &rarr; Finalize
+<span class="bl">Keeper:</span>  Timer tick &rarr; Evaluate triggers &rarr; Build tx &rarr; Submit &rarr; Log receipt
+<span class="wn">Notary:</span>  POST /notarize &rarr; Select Nodes &rarr; Dispatch hash &rarr; Collect sigs &rarr; Return receipt</div>
+
+  <p>All three paths are <strong>completely independent</strong>. No shared state machine. The only shared resources:</p>
+  <ul class="clean">
+    <li><code>NodeRegistry</code> &mdash; to know which nodes are online</li>
+    <li><code>OnChainCtx</code> &mdash; to submit Solana transactions</li>
+    <li><code>PgPool</code> &mdash; to persist records</li>
+  </ul>
+
+  <h3 class="mt-2">Spawned Tasks (main.rs)</h3>
+  <table>
+    <tr><th>#</th><th>Task</th><th>Status</th></tr>
+    <tr><td>1</td><td>REST API (Axum on :8080)</td><td><span class="badge badge-green">EXISTS</span></td></tr>
+    <tr><td>2</td><td>Metrics Server (Prometheus on :9090)</td><td><span class="badge badge-green">EXISTS</span></td></tr>
+    <tr><td>3</td><td>WebSocket Server (mTLS on :8443)</td><td><span class="badge badge-green">EXISTS</span></td></tr>
+    <tr><td>4</td><td>Round Timeout Watchdog (5s)</td><td><span class="badge badge-green">EXISTS</span></td></tr>
+    <tr><td>5</td><td>Solana WebSocket Subscriber</td><td><span class="badge badge-green">EXISTS</span></td></tr>
+    <tr><td>6</td><td>Per-node Connection Handler</td><td><span class="badge badge-green">EXISTS</span></td></tr>
+    <tr><td>7</td><td><strong>Keeper Evaluation Loop</strong></td><td><span class="badge badge-blue">NEW</span></td></tr>
+  </table>
+</div>
+
+<!-- ==================== SOURCES ==================== -->
+<div class="sources" id="sources">
+  <h3>Sources</h3>
+
+  <div class="source-group">
+    <h4>Keeper / Automation Networks</h4>
+    <ul>
+      <li><a href="https://www.coindesk.com/business/2023/08/28/solana-based-automation-startup-clockwork-to-shut-down" target="_blank">Clockwork Shutdown &mdash; CoinDesk</a></li>
+      <li><a href="https://cointelegraph.com/news/solana-based-automation-protocol-clockwork-to-shutter" target="_blank">Clockwork Shutdown &mdash; CoinTelegraph</a></li>
+      <li><a href="https://www.quicknode.com/guides/solana-development/3rd-party-integrations/automation-with-clockwork" target="_blank">Clockwork Architecture &mdash; QuickNode Guide</a></li>
+      <li><a href="https://docs.clockwork.xyz/reference/threads" target="_blank">Clockwork Threads &mdash; Official Docs</a></li>
+      <li><a href="https://github.com/helium/tuktuk" target="_blank">Tuk Tuk &mdash; GitHub (Helium)</a></li>
+      <li><a href="https://www.tuktuk.fun/docs" target="_blank">Tuk Tuk &mdash; Official Docs</a></li>
+      <li><a href="https://solanacompass.com/learn/accelerate-25/scale-or-die-at-accelerate-2025-tuk-tuk-on-chain-cron-jobs" target="_blank">Tuk Tuk &mdash; Solana Compass / Accelerate 2025</a></li>
+      <li><a href="https://docs.chain.link/chainlink-automation" target="_blank">Chainlink Automation &mdash; Official Docs</a></li>
+      <li><a href="https://docs.chain.link/chainlink-automation/guides/compatible-contracts" target="_blank">Chainlink Compatible Contracts Guide</a></li>
+      <li><a href="https://www.gelato.network/web3-functions" target="_blank">Gelato Network &mdash; Web3 Functions</a></li>
+      <li><a href="https://medium.com/@BizthonOfficial/gelato-network-automating-web3-workflows-with-decentralized-precision-6643508b856c" target="_blank">Gelato Architecture &mdash; BizThon</a></li>
+      <li><a href="https://medium.com/gelato-network/announcing-the-gel-token-stewarding-gelato-into-a-sustainable-future-815c0ecedb8e" target="_blank">GEL Token Announcement</a></li>
+    </ul>
+  </div>
+
+  <div class="source-group">
+    <h4>Solana Transaction Landing</h4>
+    <ul>
+      <li><a href="https://chorus.one/reports-research/transaction-latency-on-solana-do-swqos-priority-fees-and-jito-tips-make-your-transactions-land-faster" target="_blank">Transaction Latency &mdash; Chorus One</a></li>
+      <li><a href="https://blog.quicknode.com/five-tips-to-help-land-your-solana-transactions/" target="_blank">TX Landing Tips &mdash; QuickNode</a></li>
+      <li><a href="https://medium.com/@ramasheshan8/jito-tips-the-underground-highway-of-solana-transactions-d839bd74ad9d" target="_blank">Jito Tips &mdash; Medium</a></li>
+      <li><a href="https://docs.jito.wtf/lowlatencytxnsend/" target="_blank">Jito Low Latency TX &mdash; Official Docs</a></li>
+    </ul>
+  </div>
+
+  <div class="source-group">
+    <h4>Notary / Timestamping</h4>
+    <ul>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc3161" target="_blank">RFC 3161 &mdash; Internet X.509 PKI Time-Stamp Protocol</a></li>
+      <li><a href="https://opentimestamps.org/" target="_blank">OpenTimestamps &mdash; Official Site</a></li>
+      <li><a href="https://petertodd.org/2016/opentimestamps-announcement" target="_blank">OpenTimestamps &mdash; Peter Todd Announcement</a></li>
+      <li><a href="https://www.range.org/blog/introducing-solana-attestation-service" target="_blank">Solana Attestation Service &mdash; Range Security</a></li>
+      <li><a href="https://attest.solana.com/" target="_blank">Solana Attestation Service</a></li>
+      <li><a href="https://attest.org/" target="_blank">Ethereum Attestation Service (EAS)</a></li>
+      <li><a href="https://datatracker.ietf.org/doc/html/draft-ietf-scitt-architecture" target="_blank">IETF SCITT Architecture</a></li>
+      <li><a href="https://docs.anza.xyz/implemented-proposals/validator-timestamp-oracle" target="_blank">Solana Validator Timestamp Oracle</a></li>
+      <li><a href="https://rareskills.io/post/solana-clock" target="_blank">Solana Clock &mdash; RareSkills</a></li>
+      <li><a href="https://rareskills.io/post/solana-account-rent" target="_blank">Solana Rent Calculation &mdash; RareSkills</a></li>
+    </ul>
+  </div>
+</div>
+
+<p class="dim small" style="text-align:center; margin-top:2rem;">
+  Research compiled 2026-04-07 &bull; DICE v3 &bull; Clockwork, Tuk Tuk, Chainlink, Gelato, RFC 3161, OpenTimestamps, SAS, SCITT
+</p>
+
+</div><!-- /container -->
+</body>
+</html>
