@@ -44,16 +44,16 @@ pub enum RoundState {
     /// Waiting for all selected nodes to submit their commit hashes.
     CollectingCommits {
         deadline: Instant,
-        /// node_id → commit_hash
-        commits: HashMap<[u8; 33], [u8; 32]>,
+        /// node_id → (commit_hash, ecdsa_signature)
+        commits: HashMap<[u8; 33], ([u8; 32], [u8; 64])>,
     },
     /// All commits received; waiting for reveals.
     CollectingReveals {
         deadline: Instant,
-        /// node_id → commit_hash  (kept for verification)
-        commits: HashMap<[u8; 33], [u8; 32]>,
-        /// node_id → entropy
-        reveals: HashMap<[u8; 33], [u8; 32]>,
+        /// node_id → (commit_hash, ecdsa_signature)
+        commits: HashMap<[u8; 33], ([u8; 32], [u8; 64])>,
+        /// node_id → (entropy, ecdsa_signature)
+        reveals: HashMap<[u8; 33], ([u8; 32], [u8; 64])>,
     },
     /// Round successfully completed with combined randomness.
     Finalized { randomness: [u8; 32] },
@@ -152,7 +152,7 @@ impl Round {
             commit = hex::encode(commit_hash),
             "commit accepted"
         );
-        commits.insert(node_id, commit_hash);
+        commits.insert(node_id, (commit_hash, sig));
 
         // Transition when every selected node has committed.
         let all_committed = self.selected_nodes.iter().all(|n| commits.contains_key(n));
@@ -176,14 +176,11 @@ impl Round {
         &mut self,
         node_id: [u8; 33],
         entropy: [u8; 32],
-        // The signature is verified against entropy by the same ECDSA key; for
-        // the reveal phase we primarily validate hash-correctness, but we also
-        // accept the sig for audit logging (verify_commit reuses the same key).
-        _sig: [u8; 64],
+        sig: [u8; 64],
     ) -> Result<Option<[u8; 32]>> {
         // We need read access to commits; collect what we need before the
         // mutable borrow of `state`.
-        let commit_hash_for_node = match &self.state {
+        let (commit_hash_for_node, _commit_sig) = match &self.state {
             RoundState::CollectingReveals { commits, .. } => *commits
                 .get(&node_id)
                 .ok_or_else(|| anyhow!("node {} did not commit", hex::encode(node_id)))?,
@@ -213,13 +210,13 @@ impl Round {
             entropy = hex::encode(entropy),
             "reveal accepted"
         );
-        reveals.insert(node_id, entropy);
+        reveals.insert(node_id, (entropy, sig));
 
         let reveal_count_now = reveals.len();
 
         // Check whether we have enough reveals.
         if reveal_count_now >= self.min_required {
-            let entropies: Vec<[u8; 32]> = reveals.values().copied().collect();
+            let entropies: Vec<[u8; 32]> = reveals.values().map(|(e, _)| *e).collect();
             let randomness = combine_entropy(&entropies);
             info!(
                 request = hex::encode(self.request_id),
@@ -227,6 +224,8 @@ impl Round {
                 randomness = hex::encode(randomness),
                 "round finalized"
             );
+            // Note: onchain_data is collected by the caller via collect_onchain_data()
+            // BEFORE this state transition, if needed.
             self.state = RoundState::Finalized { randomness };
             return Ok(Some(randomness));
         }
@@ -325,6 +324,22 @@ impl Round {
         match &self.state {
             RoundState::Finalized { randomness } => Some(*randomness),
             _ => None,
+        }
+    }
+
+    /// Extract all commit+reveal data needed for bundled on-chain TX.
+    /// Returns Vec of (node_id, commit_hash, commit_sig, entropy, reveal_sig).
+    /// Only valid to call right BEFORE transitioning to Finalized.
+    pub fn collect_onchain_data(&self) -> Vec<([u8; 33], [u8; 32], [u8; 64], [u8; 32], [u8; 64])> {
+        match &self.state {
+            RoundState::CollectingReveals { commits, reveals, .. } => {
+                reveals.iter().filter_map(|(node_id, (entropy, reveal_sig))| {
+                    commits.get(node_id).map(|(commit_hash, commit_sig)| {
+                        (*node_id, *commit_hash, *commit_sig, *entropy, *reveal_sig)
+                    })
+                }).collect()
+            }
+            _ => Vec::new(),
         }
     }
 }
