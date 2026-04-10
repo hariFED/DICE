@@ -17,6 +17,10 @@ firmware/dependencies/
 firmware/.cache/
 sdkconfig
 sdkconfig.old
+firmware/tools/prov_output/
+
+# Next.js
+.next/
 
 # Python
 __pycache__/
