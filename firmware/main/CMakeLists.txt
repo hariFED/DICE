@@ -8,6 +8,8 @@ idf_component_register(
         "commit_reveal.c"
         "captive_portal.c"
         "led_status.c"
+        "base58.c"
+        "factory_reset.c"
     INCLUDE_DIRS "."
     REQUIRES
         esp_wifi
@@ -20,5 +22,6 @@ idf_component_register(
         esp_adc
         esp_event
         esp_netif
+        driver
         dice_protocol
 )
