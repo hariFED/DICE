@@ -1,0 +1,26 @@
+[package]
+name    = "smoke-v7"
+version = "0.1.0"
+edition = "2021"
+description = "DICE v7 devnet smoke test — exercises register_node_vault end-to-end"
+
+[[bin]]
+name = "smoke-v7"
+path = "src/main.rs"
+
+[dependencies]
+tokio              = { workspace = true }
+serde              = { workspace = true }
+serde_json         = { workspace = true }
+anyhow             = { workspace = true }
+k256               = { workspace = true }
+sha2               = { workspace = true }
+hex                = { workspace = true }
+solana-sdk         = { workspace = true }
+
+clap               = { version = "4", features = ["derive"] }
+reqwest            = { version = "0.12", features = ["json"] }
+base64             = "0.22"
+bincode            = "1"
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
