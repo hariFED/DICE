@@ -5,13 +5,15 @@
 
 use solana_sdk::pubkey::Pubkey;
 
-pub const SEED_DEVICE:  &[u8] = b"device";
-pub const SEED_REQUEST: &[u8] = b"request";
-pub const SEED_COMMIT:  &[u8] = b"commit";
-pub const SEED_REVEAL:  &[u8] = b"reveal";
-pub const SEED_RESULT:  &[u8] = b"result";
-pub const SEED_ESCROW:  &[u8] = b"escrow";
-pub const SEED_CHANNEL: &[u8] = b"channel";
+pub const SEED_DEVICE:     &[u8] = b"device";
+pub const SEED_REQUEST:    &[u8] = b"request";
+pub const SEED_COMMIT:     &[u8] = b"commit";
+pub const SEED_REVEAL:     &[u8] = b"reveal";
+pub const SEED_RESULT:     &[u8] = b"result";
+pub const SEED_ESCROW:     &[u8] = b"escrow";
+pub const SEED_CHANNEL:    &[u8] = b"channel";
+pub const SEED_FEED:       &[u8] = b"feed";
+pub const SEED_NODE_VAULT: &[u8] = b"node_vault";
 
 /// Derive the `DeviceRegistry` PDA for a given ESP32-S3 device public key.
 ///
@@ -155,6 +157,50 @@ pub fn channel_pda(
         &[SEED_CHANNEL, authority.as_ref(), &channel_index.to_le_bytes()],
         program_id,
     )
+}
+
+// ── Streaming VRF Feed PDA (v7) ─────────────────────────────────────────────
+
+/// Derive the `RandomnessFeed` PDA for a given authority and feed index.
+///
+/// A RandomnessFeed is a persistent PDA the coordinator writes into on a
+/// cadence. Subscriber dApps read it as a passive account input in their own
+/// instructions — no callback, no per-request transaction.
+///
+/// Seeds: `["feed", authority, &feed_index.to_le_bytes()]`
+pub fn feed_pda(
+    authority: &Pubkey,
+    feed_index: u16,
+    program_id: &Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[SEED_FEED, authority.as_ref(), &feed_index.to_le_bytes()],
+        program_id,
+    )
+}
+
+// ── Universal Payout (NodeVault) PDA (v7) ───────────────────────────────────
+
+/// Derive the `NodeVault` PDA for a device identified by its compressed
+/// secp256k1 public key.
+///
+/// A NodeVault is a per-device earnings account credited by every DICE
+/// service (VRF v1, VRF v2, future PoL/sensor/HSM). The operator binds
+/// their Solana wallet to the vault once via `register_node_vault` and
+/// withdraws from a single place.
+///
+/// Seeds: `["node_vault", SHA256(device_pubkey)]`
+///
+/// Note: the seed is the 32-byte SHA-256 hash of the compressed pubkey,
+/// not the raw 33-byte pubkey — Solana PDA seeds are capped at 32 bytes
+/// each. This matches the on-chain `device_id` helper in constants.rs.
+pub fn node_vault_pda(
+    device_pubkey: &[u8; 33],
+    program_id: &Pubkey,
+) -> (Pubkey, u8) {
+    use sha2::{Digest, Sha256};
+    let device_id: [u8; 32] = Sha256::digest(device_pubkey).into();
+    Pubkey::find_program_address(&[SEED_NODE_VAULT, &device_id], program_id)
 }
 
 #[cfg(test)]
@@ -308,5 +354,41 @@ mod tests {
         assert_ne!(escrow_1, escrow_2, "different sequences must produce different escrow PDAs");
         assert_ne!(escrow_1, escrow_max, "sequence 1 and u64::MAX must differ");
         assert_ne!(escrow_2, escrow_max, "sequence 2 and u64::MAX must differ");
+    }
+
+    // ── Streaming VRF feed PDA tests ────────────────────────────────────────
+
+    #[test]
+    fn test_feed_pda_deterministic() {
+        let authority = Pubkey::new_unique();
+        let program_id = Pubkey::new_unique();
+        let (a, bump_a) = feed_pda(&authority, 0, &program_id);
+        let (b, bump_b) = feed_pda(&authority, 0, &program_id);
+        assert_eq!(a, b);
+        assert_eq!(bump_a, bump_b);
+    }
+
+    #[test]
+    fn test_feed_pda_differs_by_index_and_authority() {
+        let auth_a = Pubkey::new_unique();
+        let auth_b = Pubkey::new_unique();
+        let program_id = Pubkey::new_unique();
+        let (a0, _) = feed_pda(&auth_a, 0, &program_id);
+        let (a1, _) = feed_pda(&auth_a, 1, &program_id);
+        let (b0, _) = feed_pda(&auth_b, 0, &program_id);
+        assert_ne!(a0, a1, "different indices must differ");
+        assert_ne!(a0, b0, "different authorities must differ");
+    }
+
+    #[test]
+    fn test_feed_pda_distinct_from_channel_pda() {
+        // A feed with index N must not collide with a channel with the same index
+        // for the same authority — different seed prefixes ("feed" vs "channel")
+        // guarantee it, but we verify explicitly.
+        let authority = Pubkey::new_unique();
+        let program_id = Pubkey::new_unique();
+        let (channel, _) = channel_pda(&authority, 0, &program_id);
+        let (feed, _) = feed_pda(&authority, 0, &program_id);
+        assert_ne!(channel, feed, "feed and channel PDAs must never collide");
     }
 }
