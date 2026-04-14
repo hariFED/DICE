@@ -13,6 +13,18 @@ pub mod submit_commit_v2;
 pub mod submit_reveal_v2;
 pub mod withdraw_balance;
 
+// Streaming VRF (v7)
+pub mod close_feed;
+pub mod init_feed;
+pub mod publish_feed_value;
+
+// Universal payout / NodeVault (v7)
+pub mod claim_rewards_v2;
+pub mod credit_vault_helper;
+pub mod register_node_vault;
+pub mod rotate_payout_wallet;
+pub mod withdraw_from_vault;
+
 // v1.0 legacy (kept for backwards compatibility)
 pub mod claim_rewards;
 pub mod finalize_randomness;
@@ -37,6 +49,20 @@ pub use select_nodes::*;
 pub use submit_commit_v2::*;
 pub use submit_reveal_v2::*;
 pub use withdraw_balance::*;
+
+// Streaming VRF exports (v7)
+pub use close_feed::*;
+pub use init_feed::*;
+pub use publish_feed_value::*;
+
+// Universal payout / NodeVault exports (v7)
+// credit_vault_helper is intentionally NOT glob-reexported — callers use it
+// via `crate::instructions::credit_vault_helper::...` to avoid namespace
+// clashes with the identically-named `credit_vault_state` helper fn.
+pub use claim_rewards_v2::*;
+pub use register_node_vault::*;
+pub use rotate_payout_wallet::*;
+pub use withdraw_from_vault::*;
 
 // v1.0 exports
 pub use claim_rewards::*;

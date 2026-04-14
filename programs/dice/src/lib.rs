@@ -174,6 +174,110 @@ pub mod dice {
         instructions::select_nodes::handler(ctx, round_id)
     }
 
+    // ── Streaming VRF (v7) ──────────────────────────────────────────────
+    //
+    // A RandomnessFeed is a persistent PDA the coordinator writes into on a cadence.
+    // Subscriber dApps read it as a passive account input in their own instructions —
+    // no callback, no per-request TX. Every published value must originate from a real
+    // finalized DiceChannel round, so the hardware-backed audit trail is preserved.
+    // These instructions are fully additive: they do not modify or affect the existing
+    // v1 or v2 VRF paths.
+
+    /// Create a streaming RandomnessFeed bound to an existing DiceChannel.
+    /// The feed's authority must also own the bound channel.
+    pub fn init_feed(
+        ctx: Context<InitFeed>,
+        feed_index: u16,
+        publish_interval_slots: u32,
+        name: [u8; 32],
+    ) -> Result<()> {
+        instructions::init_feed::handler(ctx, feed_index, publish_interval_slots, name)
+    }
+
+    /// Publish a new randomness value into a feed. Only the feed's bound coordinator
+    /// can call this. Must reference the bound DiceChannel in Finalized status with
+    /// a matching round_id and randomness. Enforces publish_interval_slots rate limit.
+    pub fn publish_feed_value(
+        ctx: Context<PublishFeedValue>,
+        randomness: [u8; 32],
+        round_id: u64,
+    ) -> Result<()> {
+        instructions::publish_feed_value::handler(ctx, randomness, round_id)
+    }
+
+    /// Close a feed and refund rent to the authority.
+    pub fn close_feed(ctx: Context<CloseFeed>) -> Result<()> {
+        instructions::close_feed::handler(ctx)
+    }
+
+    // ── Universal payout / NodeVault (v7) ───────────────────────────────
+    //
+    // Every DICE service (VRF v1, VRF v2, future PoL / sensor / HSM) credits
+    // a per-device NodeVault. The operator binds their Solana wallet once
+    // via hardware-signed attestation, then withdraws from a single place.
+    // These instructions are fully additive; they do not modify the existing
+    // VRF paths. Service instructions call into credit_vault_helper directly.
+
+    /// Register a NodeVault for a device and bind a payout wallet.
+    /// First-time binding only — rotation happens through rotate_payout_wallet.
+    /// The binding message must be ECDSA-signed by the device's hardware key.
+    pub fn register_node_vault(
+        ctx: Context<RegisterNodeVault>,
+        device_pubkey: [u8; 33],
+        payout_wallet: Pubkey,
+        timestamp: i64,
+        nonce: [u8; 32],
+        signature: [u8; 64],
+    ) -> Result<()> {
+        instructions::register_node_vault::handler(
+            ctx,
+            device_pubkey,
+            payout_wallet,
+            timestamp,
+            nonce,
+            signature,
+        )
+    }
+
+    /// Rotate a NodeVault's payout wallet. Requires dual signature
+    /// (device + current wallet) and enforces ROTATION_COOLDOWN_SLOTS.
+    pub fn rotate_payout_wallet(
+        ctx: Context<RotatePayoutWallet>,
+        new_payout_wallet: Pubkey,
+        timestamp: i64,
+        nonce: [u8; 32],
+        device_signature: [u8; 64],
+    ) -> Result<()> {
+        instructions::rotate_payout_wallet::handler(
+            ctx,
+            new_payout_wallet,
+            timestamp,
+            nonce,
+            device_signature,
+        )
+    }
+
+    /// Withdraw lamports from a NodeVault to its bound payout wallet.
+    /// Only the operator's wallet can sign. Vault must be Bound.
+    pub fn withdraw_from_vault(ctx: Context<WithdrawFromVault>, amount: u64) -> Result<()> {
+        instructions::withdraw_from_vault::handler(ctx, amount)
+    }
+
+    /// Distribute rewards for a finalized v2 channel round into NodeVaults.
+    ///
+    /// Called by the channel's bound coordinator exactly once per round.
+    /// Transfers 70% across contributing nodes' vaults, 20% to treasury,
+    /// 10% to reserve. Transitions the channel Finalized -> Idle.
+    ///
+    /// Pass one writable NodeVault account per contributing node as
+    /// `remaining_accounts`, in the same order as
+    /// `channel.device_pubkeys[0..reveals_received]`.
+    pub fn claim_rewards_v2<'info>(
+        ctx: Context<'_, '_, '_, 'info, ClaimRewardsV2<'info>>,
+    ) -> Result<()> {
+        instructions::claim_rewards_v2::handler(ctx)
+    }
+
     // ── v1.0 Legacy instructions (kept for backwards compatibility) ──────
 
     /// Add lamports to an existing escrow account.

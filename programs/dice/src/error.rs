@@ -49,4 +49,60 @@ pub enum DiceError {
 
     #[msg("Node has already revealed for this round")]
     AlreadyRevealed,
+
+    // ── Streaming VRF feed errors ────────────────────────────────────
+    #[msg("Feed publish attempted before the configured interval has elapsed")]
+    FeedPublishTooSoon,
+
+    #[msg("Caller is not the coordinator bound to this feed")]
+    FeedWrongCoordinator,
+
+    #[msg("Publish interval must be between MIN_PUBLISH_INTERVAL_SLOTS and MAX_PUBLISH_INTERVAL_SLOTS")]
+    FeedInvalidInterval,
+
+    #[msg("Feed is not active — it was closed or paused")]
+    FeedNotActive,
+
+    #[msg("Bound channel does not match the feed's configured bound_channel")]
+    FeedChannelMismatch,
+
+    #[msg("Bound channel is not in Finalized status — cannot publish its randomness")]
+    FeedChannelNotFinalized,
+
+    #[msg("Bound channel round_id does not match provided round_id")]
+    FeedRoundIdMismatch,
+
+    #[msg("Bound channel randomness does not match provided randomness")]
+    FeedRandomnessMismatch,
+
+    // ── Universal payout (NodeVault) errors ──────────────────────────
+    #[msg("Vault is already bound to a payout wallet")]
+    VaultAlreadyBound,
+
+    #[msg("Vault has no payout wallet bound yet")]
+    VaultNotBound,
+
+    #[msg("Signer is not the vault's current payout wallet")]
+    VaultWrongPayoutWallet,
+
+    #[msg("Withdraw amount exceeds vault credited balance")]
+    VaultInsufficientBalance,
+
+    #[msg("Withdraw amount must be greater than zero")]
+    VaultZeroAmount,
+
+    #[msg("Payout wallet rotation attempted before cooldown elapsed")]
+    VaultRotationCooldown,
+
+    #[msg("Payout-binding signature failed secp256k1 verification")]
+    VaultBindingSignatureInvalid,
+
+    #[msg("Credit amount would overflow vault totals")]
+    VaultCreditOverflow,
+
+    #[msg("Unknown service ID passed to credit_vault")]
+    VaultUnknownServiceId,
+
+    #[msg("Vault is frozen — credits and withdrawals are paused")]
+    VaultFrozen,
 }
