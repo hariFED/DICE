@@ -9,6 +9,7 @@ members = [
     "sdk/dice-vrf",
     "sdk/dice-vrf-macros",
     "tests/harness/mock_firmware_node",
+    "tests/harness/smoke_v7",
     # load_generator is excluded below — its solana-client + spl-token-2022 transitive
     # deps conflict with solana-sdk 1.18.26 across patch versions.
     # Build it separately: cargo check --manifest-path tests/harness/load_generator/Cargo.toml
