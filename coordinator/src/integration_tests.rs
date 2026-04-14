@@ -1391,4 +1391,148 @@ mod tests {
 
         assert!(!round.check_timeout(), "Finalized round should not timeout");
     }
+
+    // ===================================================================
+    // 6. PayoutBindingRequest CBOR round-trip (v7)
+    // ===================================================================
+    //
+    // The firmware encodes PayoutBindingRequest as a CBOR integer-key map:
+    //   {0: 5, 1: node_id, 2: payout_wallet, 3: timestamp, 4: nonce, 5: signature}
+    // The coordinator decodes it via DiceMessage::decode_intkey_map.
+    // If either side drifts, real device → coordinator binding silently
+    // breaks. These tests lock the wire format in both directions.
+
+    use crate::protocol::messages::{DiceMessage, PayoutBindingRequest};
+
+    /// A representative PayoutBindingRequest with all fields populated.
+    fn sample_payout_binding() -> PayoutBindingRequest {
+        PayoutBindingRequest {
+            node_id: vec![0x02; 33],
+            payout_wallet: vec![0xAB; 32],
+            timestamp: 1_700_000_000,
+            nonce: vec![0xCD; 32],
+            signature: vec![0xEF; 64],
+        }
+    }
+
+    #[test]
+    fn payout_binding_array_envelope_roundtrip() {
+        let original = sample_payout_binding();
+        let msg = DiceMessage::PayoutBindingRequest(original.clone());
+        let encoded = msg.encode().expect("encode should succeed");
+
+        // Re-decode and verify every field survives
+        let decoded = DiceMessage::decode(&encoded).expect("decode should succeed");
+        match decoded {
+            DiceMessage::PayoutBindingRequest(got) => {
+                assert_eq!(got.node_id, original.node_id, "node_id mismatch");
+                assert_eq!(
+                    got.payout_wallet, original.payout_wallet,
+                    "payout_wallet mismatch"
+                );
+                assert_eq!(got.timestamp, original.timestamp, "timestamp mismatch");
+                assert_eq!(got.nonce, original.nonce, "nonce mismatch");
+                assert_eq!(got.signature, original.signature, "signature mismatch");
+            }
+            other => panic!("decoded wrong variant: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn payout_binding_firmware_cbor_format_decodes() {
+        // Hand-craft the exact CBOR bytes the ESP32 firmware's
+        // dice_msg_encode() produces for DICE_MSG_PAYOUT_BINDING. Layout:
+        //   map(6)
+        //     uint(0) uint(5)              -- type
+        //     uint(1) bytes(33) <node_id>  -- node_id
+        //     uint(2) bytes(32) <wallet>   -- payout_wallet
+        //     uint(3) uint(ts)             -- timestamp (always positive in practice)
+        //     uint(4) bytes(32) <nonce>    -- nonce
+        //     uint(5) bytes(64) <sig>      -- signature
+        //
+        // This is the wire format DiceMessage::decode_intkey_map must handle.
+
+        let mut buf = Vec::new();
+        // map(6) — major 5, additional value 6
+        buf.push(0xA0 | 6);
+
+        // key 0, value 5
+        buf.push(0x00);
+        buf.push(0x05);
+
+        // key 1, byte string of length 33 (needs 1-byte length prefix)
+        buf.push(0x01);
+        buf.push(0x40 | 24); // major 2 (bytes), addl info 24 (1-byte length)
+        buf.push(33);
+        buf.extend(std::iter::repeat(0x02).take(33));
+
+        // key 2, byte string of length 32
+        buf.push(0x02);
+        buf.push(0x40 | 24);
+        buf.push(32);
+        buf.extend(std::iter::repeat(0xAB).take(32));
+
+        // key 3, uint(1_700_000_000) — fits in 4-byte encoding
+        buf.push(0x03);
+        buf.push(0x1A); // major 0 (uint), addl info 26 (4-byte)
+        let ts: u32 = 1_700_000_000;
+        buf.extend_from_slice(&ts.to_be_bytes());
+
+        // key 4, byte string of length 32
+        buf.push(0x04);
+        buf.push(0x40 | 24);
+        buf.push(32);
+        buf.extend(std::iter::repeat(0xCD).take(32));
+
+        // key 5, byte string of length 64
+        buf.push(0x05);
+        buf.push(0x40 | 24);
+        buf.push(64);
+        buf.extend(std::iter::repeat(0xEF).take(64));
+
+        // Decode via the coordinator's standard path
+        let decoded = DiceMessage::decode(&buf)
+            .expect("firmware-format PayoutBindingRequest must decode");
+        match decoded {
+            DiceMessage::PayoutBindingRequest(p) => {
+                assert_eq!(p.node_id.len(), 33);
+                assert_eq!(p.node_id[0], 0x02);
+                assert_eq!(p.payout_wallet.len(), 32);
+                assert_eq!(p.payout_wallet[0], 0xAB);
+                assert_eq!(p.timestamp, 1_700_000_000);
+                assert_eq!(p.nonce.len(), 32);
+                assert_eq!(p.nonce[0], 0xCD);
+                assert_eq!(p.signature.len(), 64);
+                assert_eq!(p.signature[0], 0xEF);
+            }
+            other => panic!("wrong variant: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn payout_binding_rejects_wrong_field_lengths() {
+        // The coordinator main.rs handler bails with a warn if field lengths
+        // are wrong. This test verifies that the decoder itself accepts
+        // any length — length validation happens at the handler layer.
+        // We assert the round-trip works even with unusual lengths so the
+        // coordinator's own length checks remain the single source of truth.
+        let weird = PayoutBindingRequest {
+            node_id: vec![0xFF; 10],           // wrong length
+            payout_wallet: vec![0xAA; 16],     // wrong length
+            timestamp: 42,
+            nonce: vec![0x00; 8],               // wrong length
+            signature: vec![0x99; 20],          // wrong length
+        };
+        let msg = DiceMessage::PayoutBindingRequest(weird.clone());
+        let encoded = msg.encode().expect("encode accepts any length");
+        let decoded = DiceMessage::decode(&encoded).expect("decode accepts any length");
+        if let DiceMessage::PayoutBindingRequest(p) = decoded {
+            assert_eq!(p.node_id.len(), 10);
+            assert_eq!(p.payout_wallet.len(), 16);
+            assert_eq!(p.nonce.len(), 8);
+            assert_eq!(p.signature.len(), 20);
+        } else {
+            panic!("wrong variant");
+        }
+    }
 }

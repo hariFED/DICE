@@ -80,4 +80,17 @@ pub struct Config {
     /// Seconds before the reveal phase times out
     #[arg(long, env = "DICE_REVEAL_TIMEOUT_SECS", default_value_t = 60)]
     pub reveal_timeout_secs: u64,
+
+    /// Protocol treasury wallet — receives 20% of every fee.
+    /// Must be a base58 Solana pubkey. If unset, claim_rewards_v2 TXs are
+    /// NOT submitted after finalization (v7 operators earn nothing until
+    /// this is configured). For local simulation you can pass any valid
+    /// pubkey; only mainnet / real-economics deployments need this wired.
+    #[arg(long, env = "DICE_TREASURY")]
+    pub treasury: Option<String>,
+
+    /// Protocol reserve wallet — receives 10% of every fee.
+    /// Same semantics as --treasury.
+    #[arg(long, env = "DICE_RESERVE")]
+    pub reserve: Option<String>,
 }

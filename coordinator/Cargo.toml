@@ -40,6 +40,9 @@ futures-util     = "0.3"
 tokio-rustls     = "0.24"
 rustls-pemfile   = "1"
 subtle           = "2"
+# CORS for browser-based frontend clients (dashboards, explorer UIs).
+# tower-http 0.5 pairs with axum 0.7.
+tower-http       = { version = "0.5", features = ["cors"] }
 
 [dev-dependencies]
 proptest = { workspace = true }

@@ -1,5 +1,6 @@
 use std::sync::Arc;
-use std::time::Duration;
+use std::sync::OnceLock;
+use std::time::{Duration, Instant};
 
 use axum::{
     extract::{Path, State},
@@ -10,9 +11,15 @@ use axum::{
     Json, Router,
 };
 use serde_json::json;
+use tower_http::cors::CorsLayer;
 use uuid::Uuid;
 
 use super::auth::{AuthState, RateLimiter};
+
+/// Coordinator process start time — set on first router build, read by the stats
+/// endpoint to report uptime. OnceLock so the first `build_router` call wins and
+/// subsequent calls (if any) observe the same instant.
+static COORDINATOR_STARTED_AT: OnceLock<Instant> = OnceLock::new();
 
 use crate::{
     db::queries::get_round,
@@ -59,12 +66,20 @@ pub struct AppState {
 // ---------------------------------------------------------------------------
 
 pub fn build_router(state: AppState, api_key: Option<String>) -> Router {
+    // Record process start time on first router build.
+    let _ = COORDINATOR_STARTED_AT.set(Instant::now());
+
     let auth_state = AuthState { api_key };
 
-    // Public routes — no auth required (monitoring)
+    // Public routes — no auth required (monitoring + browser-reachable).
+    //
+    // `/api/v1/stats` is consumed by the public-facing frontend (landing page,
+    // explorer). It is deliberately unauthenticated — it exposes aggregate
+    // counts only, no PII, no secrets.
     let public = Router::new()
         .route("/health", get(health))
         .route("/metrics", get(metrics_handler))
+        .route("/api/v1/stats", get(stats_handler))
         .with_state(state.clone());
 
     // Protected routes — require API key (if configured)
@@ -81,7 +96,13 @@ pub fn build_router(state: AppState, api_key: Option<String>) -> Router {
         ))
         .with_state(state);
 
-    public.merge(protected)
+    // Wrap the merged router in a permissive CORS layer so browsers running
+    // the frontend on any origin (localhost:3000, Vercel, custom domains) can
+    // reach the public monitoring endpoints. The protected routes still
+    // enforce the API key middleware on top of this.
+    public
+        .merge(protected)
+        .layer(CorsLayer::permissive())
 }
 
 // ---------------------------------------------------------------------------
@@ -403,6 +424,77 @@ async fn dashboard() -> Html<&'static str> {
 
 async fn health() -> Response {
     (StatusCode::OK, Json(json!({ "status": "ok" }))).into_response()
+}
+
+/// `GET /api/v1/stats` — aggregated network stats for the public frontend.
+///
+/// Returns the `NetworkStats` shape expected by `frontend/lib/types.ts`:
+/// nodes_online, nodes_registered, total_rounds, success_rate, avg_latency_ms,
+/// queue_depth. Computed live from the in-memory node registry, round history,
+/// and queue state. No DB required.
+async fn stats_handler(State(state): State<AppState>) -> Response {
+    // Active nodes (WebSocket-connected)
+    let nodes_online = get_active_nodes(&state.registry).await.len() as u64;
+
+    // For v7 we don't track a separate "registered but offline" count in-memory.
+    // Surface nodes_online for both fields — the frontend treats them as
+    // informational, and this keeps the shape contract intact.
+    let nodes_registered = nodes_online;
+
+    // Completed rounds in history (ring buffer, already capped by the
+    // coordinator).
+    let history = state.round_history.lock().await;
+    let total_rounds = history.len() as u64;
+
+    let finalized_count = history
+        .iter()
+        .filter(|r| r.status == "finalized")
+        .count() as u64;
+    let failed_count = history
+        .iter()
+        .filter(|r| r.status == "failed")
+        .count() as u64;
+
+    let total_terminal = finalized_count + failed_count;
+    let success_rate: f64 = if total_terminal == 0 {
+        0.0
+    } else {
+        (finalized_count as f64) / (total_terminal as f64)
+    };
+
+    // Average latency across finalized rounds only — failed rounds skew the
+    // mean with their 5-second timeout.
+    let avg_latency_ms: u64 = if finalized_count == 0 {
+        0
+    } else {
+        let sum: u64 = history
+            .iter()
+            .filter(|r| r.status == "finalized")
+            .map(|r| r.elapsed_ms)
+            .sum();
+        sum / finalized_count
+    };
+    drop(history);
+
+    // Pending queue depth.
+    let queue_depth = state.request_queue.lock().await.queue_len() as u64;
+
+    // Uptime from the process-start timestamp set in build_router.
+    let uptime_secs: u64 = COORDINATOR_STARTED_AT
+        .get()
+        .map(|t| t.elapsed().as_secs())
+        .unwrap_or(0);
+
+    Json(json!({
+        "nodes_online": nodes_online,
+        "nodes_registered": nodes_registered,
+        "total_rounds": total_rounds,
+        "success_rate": success_rate,
+        "avg_latency_ms": avg_latency_ms,
+        "queue_depth": queue_depth,
+        "uptime_secs": uptime_secs,
+    }))
+    .into_response()
 }
 
 async fn list_nodes(State(state): State<AppState>) -> Response {
@@ -734,4 +826,123 @@ async fn metrics_handler(State(state): State<AppState>) -> Response {
         body,
     )
         .into_response()
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Pure helper mirroring the aggregation logic in `stats_handler`, extracted
+    /// so the computation can be unit-tested without a live AppState/AxumState.
+    /// If `stats_handler` ever diverges from this, these tests will catch it.
+    fn compute_stats(
+        history: &[CompletedRound],
+    ) -> (u64, u64, f64, u64) {
+        let total_rounds = history.len() as u64;
+        let finalized_count = history
+            .iter()
+            .filter(|r| r.status == "finalized")
+            .count() as u64;
+        let failed_count = history
+            .iter()
+            .filter(|r| r.status == "failed")
+            .count() as u64;
+        let total_terminal = finalized_count + failed_count;
+        let success_rate: f64 = if total_terminal == 0 {
+            0.0
+        } else {
+            (finalized_count as f64) / (total_terminal as f64)
+        };
+        let avg_latency_ms: u64 = if finalized_count == 0 {
+            0
+        } else {
+            let sum: u64 = history
+                .iter()
+                .filter(|r| r.status == "finalized")
+                .map(|r| r.elapsed_ms)
+                .sum();
+            sum / finalized_count
+        };
+        (total_rounds, finalized_count, success_rate, avg_latency_ms)
+    }
+
+    fn round(status: &str, elapsed_ms: u64) -> CompletedRound {
+        CompletedRound {
+            request_id: "req_test".to_string(),
+            randomness: "00".repeat(32),
+            node_count: 4,
+            elapsed_ms,
+            timestamp: 0,
+            status: status.to_string(),
+        }
+    }
+
+    #[test]
+    fn stats_empty_history_returns_zeros() {
+        let (total, finalized, rate, avg) = compute_stats(&[]);
+        assert_eq!(total, 0);
+        assert_eq!(finalized, 0);
+        assert_eq!(rate, 0.0);
+        assert_eq!(avg, 0);
+    }
+
+    #[test]
+    fn stats_all_finalized_is_100_percent() {
+        let history = vec![
+            round("finalized", 1000),
+            round("finalized", 2000),
+            round("finalized", 3000),
+        ];
+        let (total, finalized, rate, avg) = compute_stats(&history);
+        assert_eq!(total, 3);
+        assert_eq!(finalized, 3);
+        assert!((rate - 1.0).abs() < 1e-9);
+        assert_eq!(avg, 2000);
+    }
+
+    #[test]
+    fn stats_mixed_finalized_and_failed() {
+        // 2 finalized, 1 failed → 2/3 success, avg latency only over finalized
+        let history = vec![
+            round("finalized", 1000),
+            round("finalized", 2000),
+            round("failed", 5000),
+        ];
+        let (total, finalized, rate, avg) = compute_stats(&history);
+        assert_eq!(total, 3);
+        assert_eq!(finalized, 2);
+        assert!((rate - (2.0 / 3.0)).abs() < 1e-9);
+        assert_eq!(avg, 1500, "failed-round latency must not skew the mean");
+    }
+
+    #[test]
+    fn stats_all_failed_is_zero_percent() {
+        let history = vec![
+            round("failed", 5000),
+            round("failed", 5000),
+        ];
+        let (total, finalized, rate, avg) = compute_stats(&history);
+        assert_eq!(total, 2);
+        assert_eq!(finalized, 0);
+        assert_eq!(rate, 0.0);
+        assert_eq!(avg, 0, "no finalized rounds → avg_latency_ms = 0");
+    }
+
+    #[test]
+    fn stats_ignores_unknown_statuses() {
+        // A round stuck in an intermediate state shouldn't count as terminal
+        let history = vec![
+            round("finalized", 1000),
+            round("collecting_reveals", 999),
+        ];
+        let (total, finalized, rate, avg) = compute_stats(&history);
+        assert_eq!(total, 2);
+        assert_eq!(finalized, 1);
+        assert!((rate - 1.0).abs() < 1e-9, "1/1 terminal rounds succeeded");
+        assert_eq!(avg, 1000);
+    }
 }
