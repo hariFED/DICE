@@ -1,5 +1,6 @@
 #include "factory_reset.h"
 #include "led_status.h"
+#include "payout_binding.h"
 
 #include "driver/gpio.h"
 #include "esp_log.h"
@@ -50,6 +51,13 @@ static bool erase_user_nvs(void)
         ESP_LOGE(TAG, "nvs_commit failed: %s", esp_err_to_name(commit_err));
         return false;
     }
+
+    /* Clear the payout binding "already sent" flag so the next boot
+     * re-sends the binding for whatever new wallet the operator enters
+     * in the captive portal. This lives in the same NVS namespace and
+     * is best-effort — we've already committed the wifi/wallet wipe. */
+    dice_payout_binding_clear_flag();
+
     return true;
 }
 

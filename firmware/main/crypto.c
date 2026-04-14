@@ -319,3 +319,80 @@ bool dice_crypto_get_pubkey(uint8_t pubkey_out[33])
 
     return true;
 }
+
+/* ------------------------------------------------------------------ */
+/* Payout binding signature                                             */
+/*                                                                      */
+/* Layout (must match on-chain register_node_vault.rs exactly):         */
+/*   DOMAIN (22 bytes)                                                  */
+/*   || device_pubkey (33 bytes)                                        */
+/*   || payout_wallet (32 bytes)                                        */
+/*   || timestamp_le (8 bytes, i64 LE)                                  */
+/*   || nonce (32 bytes)                                                */
+/*   = 127 bytes total                                                  */
+/* ------------------------------------------------------------------ */
+
+#define DICE_PAYOUT_BINDING_DOMAIN "DICE_PAYOUT_BINDING_V1"
+#define DICE_PAYOUT_BINDING_DOMAIN_LEN 22
+#define DICE_PAYOUT_BINDING_MSG_LEN \
+    (DICE_PAYOUT_BINDING_DOMAIN_LEN + 33 + 32 + 8 + 32)
+
+bool dice_crypto_sign_payout_binding(
+    const uint8_t payout_wallet_32[32],
+    int64_t       timestamp,
+    const uint8_t nonce[32],
+    uint8_t       sig_out[64])
+{
+    if (!s_initialized) {
+        ESP_LOGE(TAG, "sign_payout_binding: crypto not initialised");
+        return false;
+    }
+
+    /* Get our own pubkey to embed in the binding message. */
+    uint8_t device_pubkey[33];
+    if (!dice_crypto_get_pubkey(device_pubkey)) {
+        ESP_LOGE(TAG, "sign_payout_binding: could not read device pubkey");
+        return false;
+    }
+
+    /* Assemble the binding message on the stack. The fixed total size
+     * (127 bytes) means we never need heap allocation. */
+    uint8_t msg[DICE_PAYOUT_BINDING_MSG_LEN];
+    size_t  offset = 0;
+
+    memcpy(msg + offset, DICE_PAYOUT_BINDING_DOMAIN, DICE_PAYOUT_BINDING_DOMAIN_LEN);
+    offset += DICE_PAYOUT_BINDING_DOMAIN_LEN;
+
+    memcpy(msg + offset, device_pubkey, 33);
+    offset += 33;
+
+    memcpy(msg + offset, payout_wallet_32, 32);
+    offset += 32;
+
+    /* Little-endian i64 timestamp. */
+    for (int i = 0; i < 8; i++) {
+        msg[offset + i] = (uint8_t)((uint64_t)timestamp >> (8 * i));
+    }
+    offset += 8;
+
+    memcpy(msg + offset, nonce, 32);
+    offset += 32;
+
+    if (offset != DICE_PAYOUT_BINDING_MSG_LEN) {
+        ESP_LOGE(TAG, "sign_payout_binding: offset mismatch (%u != %u)",
+                 (unsigned)offset, (unsigned)DICE_PAYOUT_BINDING_MSG_LEN);
+        return false;
+    }
+
+    /* dice_crypto_sign() internally computes SHA-256(msg) and signs the
+     * digest. This matches the on-chain verify_binding_signature which
+     * also uses SHA-256 (via anchor_lang::solana_program::hash::hashv). */
+    bool ok = dice_crypto_sign(msg, DICE_PAYOUT_BINDING_MSG_LEN, sig_out);
+
+    /* Scrub stack before returning. The binding message itself isn't a
+     * secret, but defense-in-depth is cheap here. */
+    memset(msg, 0, sizeof(msg));
+    memset(device_pubkey, 0, sizeof(device_pubkey));
+
+    return ok;
+}

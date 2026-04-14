@@ -22,11 +22,12 @@
 /* Message type constants                                               */
 /* ------------------------------------------------------------------ */
 
-#define DICE_MSG_HEARTBEAT    0   /**< Node → Coordinator */
-#define DICE_MSG_JOB_ASSIGN   1   /**< Coordinator → Node */
-#define DICE_MSG_COMMIT       2   /**< Node → Coordinator */
-#define DICE_MSG_REVEAL       3   /**< Node → Coordinator */
-#define DICE_MSG_ROUND_RESULT 4   /**< Coordinator → Node */
+#define DICE_MSG_HEARTBEAT       0   /**< Node → Coordinator */
+#define DICE_MSG_JOB_ASSIGN      1   /**< Coordinator → Node */
+#define DICE_MSG_COMMIT          2   /**< Node → Coordinator */
+#define DICE_MSG_REVEAL          3   /**< Node → Coordinator */
+#define DICE_MSG_ROUND_RESULT    4   /**< Coordinator → Node */
+#define DICE_MSG_PAYOUT_BINDING  5   /**< Node → Coordinator (v7) */
 
 /* ------------------------------------------------------------------ */
 /* Unified message structure                                            */
@@ -73,6 +74,23 @@ typedef struct {
             char    status[16];          /**< "success" | "timeout" | "failed" */
             uint8_t randomness[32];      /**< Final aggregated randomness */
         } round_result;
+
+        /** DICE_MSG_PAYOUT_BINDING (type=5): node → coordinator
+         *
+         * Sent once by the firmware after the operator enters a Solana
+         * wallet in the captive portal. The device signs
+         * `PAYOUT_BINDING_DOMAIN || node_id || payout_wallet || timestamp_le || nonce`
+         * with its hardware ECDSA key (SHA-256 internally). The coordinator
+         * submits `register_node_vault` on-chain, where Anchor verifies the
+         * signature via secp256k1_recover.
+         */
+        struct {
+            uint8_t node_id[33];         /**< Compressed secp256k1 pubkey */
+            uint8_t payout_wallet[32];   /**< Raw Solana pubkey bytes */
+            int64_t timestamp;           /**< Unix epoch seconds */
+            uint8_t nonce[32];           /**< Local random nonce */
+            uint8_t signature[64];       /**< ECDSA over SHA-256 of msg */
+        } payout_binding;
     };
 } dice_message_t;
 
