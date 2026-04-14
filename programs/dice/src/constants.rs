@@ -7,13 +7,15 @@ pub fn device_id(device_pubkey: &[u8; 33]) -> [u8; 32] {
 }
 
 // These seed values MUST match sdk/dice-vrf/src/pda.rs exactly
-pub const SEED_DEVICE:  &[u8] = b"device";
-pub const SEED_REQUEST: &[u8] = b"request";
-pub const SEED_COMMIT:  &[u8] = b"commit";
-pub const SEED_REVEAL:  &[u8] = b"reveal";
-pub const SEED_RESULT:  &[u8] = b"result";
-pub const SEED_ESCROW:  &[u8] = b"escrow";
-pub const SEED_CHANNEL: &[u8] = b"channel";
+pub const SEED_DEVICE:     &[u8] = b"device";
+pub const SEED_REQUEST:    &[u8] = b"request";
+pub const SEED_COMMIT:     &[u8] = b"commit";
+pub const SEED_REVEAL:     &[u8] = b"reveal";
+pub const SEED_RESULT:     &[u8] = b"result";
+pub const SEED_ESCROW:     &[u8] = b"escrow";
+pub const SEED_CHANNEL:    &[u8] = b"channel";
+pub const SEED_FEED:       &[u8] = b"feed";
+pub const SEED_NODE_VAULT: &[u8] = b"node_vault";
 
 pub const REQUEST_FEE_LAMPORTS: u64 = 2_000_000; // 0.002 SOL
 pub const NODE_REWARD_BPS:      u64 = 7_000;     // 70%
@@ -23,6 +25,29 @@ pub const MIN_NODES_REQUIRED:   u8  = 4;
 pub const MAX_NODES_SELECTED:   u8  = 50;
 pub const COMMIT_TIMEOUT_SLOTS: u64 = 150; // ~60 seconds
 pub const REVEAL_TIMEOUT_SLOTS: u64 = 150;
+
+// ── Streaming VRF feed constants ─────────────────────────────────────
+/// Minimum slot cadence between feed publishes (1 slot ≈ 400ms).
+pub const MIN_PUBLISH_INTERVAL_SLOTS: u32 = 1;
+/// Maximum slot cadence between feed publishes (~24 hours at 400ms/slot).
+pub const MAX_PUBLISH_INTERVAL_SLOTS: u32 = 216_000;
+/// Number of historical values retained in a feed's ring buffer.
+pub const FEED_HISTORY_SIZE: usize = 16;
+
+// ── Universal payout (NodeVault) constants ───────────────────────────
+/// Domain separator prefix embedded in every payout-binding signature.
+/// Any change here MUST be reflected in the firmware binding code.
+pub const PAYOUT_BINDING_DOMAIN: &[u8] = b"DICE_PAYOUT_BINDING_V1";
+/// Minimum number of slots between payout-wallet rotations (~24 hours at 400ms/slot).
+pub const ROTATION_COOLDOWN_SLOTS: u64 = 216_000;
+/// Number of services tracked per vault (VRF_v1, VRF_v2, PoL, Sensor, HSM, +3 reserved).
+pub const VAULT_SERVICE_COUNT: usize = 8;
+/// Logical service identifiers used by `credit_vault`. Must match firmware expectations.
+pub const SERVICE_ID_VRF_V1:   u8 = 0;
+pub const SERVICE_ID_VRF_V2:   u8 = 1;
+pub const SERVICE_ID_POL:      u8 = 2;
+pub const SERVICE_ID_SENSOR:   u8 = 3;
+pub const SERVICE_ID_HSM:      u8 = 4;
 
 #[cfg(test)]
 mod tests {

@@ -25,3 +25,7 @@ unicode-segmentation = { workspace = true }
 
 [dev-dependencies]
 anchor-lang = { workspace = true }
+# k256 is dev-only — used by NodeVault binding-signature tests to produce
+# real ECDSA signatures. Not included in the BPF binary.
+k256        = { workspace = true }
+sha2        = { workspace = true }
