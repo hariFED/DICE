@@ -1,8 +1,30 @@
 # DICE — Next Steps
 
-> **Last updated:** 2026-03-27
+> **Last updated:** 2026-04-14
+> **Branch:** `v7`
 > **Repo:** https://github.com/hariFED/DICE (private)
-> **Status:** Deployed to Solana devnet, 24 tests passing, simulation working
+> **Status:** v7 NodeVault + streaming VRF deployed on devnet. Real ESP32-S3 hardware binding confirmed end-to-end (TX `5PzuCRN9...`). 229 Rust tests passing, 0 regressions. Frontend ready for public ship. See `docs/v7-universal-payout.md` for the v7 architecture.
+
+---
+
+## v7 — Shipped (2026-04-14)
+
+- [x] NodeVault universal payout primitive — `register_node_vault`, `rotate_payout_wallet`, `withdraw_from_vault`, `claim_rewards_v2`
+- [x] Streaming VRF — `init_feed`, `publish_feed_value`, `close_feed` + SDK subscriber example
+- [x] Firmware binding flow — hardware-signed `PayoutBindingRequest` over mTLS WebSocket
+- [x] Coordinator CORS + `/api/v1/stats` endpoint for public frontend consumption
+- [x] Treasury + reserve config via `DICE_TREASURY` / `DICE_RESERVE` env vars
+- [x] v7 program upgrade deployed to devnet (TX `2JBQbh89...`, 550,912 bytes)
+- [x] Real ESP32-S3 end-to-end binding TX landed on devnet (`5PzuCRN9...`)
+- [x] Frontend committed to git with deploy README + `NEXT_PUBLIC_API_URL` env
+
+## v7 — Known deferred items (tracked as tasks)
+
+- [ ] **Task #9**: Ship minimal TypeScript SDK — biggest integrator adoption blocker. Non-trivial scope (wrap Anchor IDL with `requestRandomness()` / `awaitResult()` helpers).
+- [ ] **Task #13**: Fix latent secp256k1 recovery-ID bug in `submit_reveal.rs` (the `.or_else` chain that can silently accept valid-but-wrong pubkeys — fixed in `register_node_vault::verify_binding_signature`, not yet backported).
+- [ ] **Task #14**: Fix v1 `claim_rewards` double-payment and `is_claimed` bugs. Legacy path. Not v7-critical.
+
+---
 
 ---
 

@@ -1,0 +1,22 @@
+[
+  { "id": "node-01", "device_id": "03a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5", "city": "Mumbai", "country": "IN", "lat": 19.076, "lng": 72.878 },
+  { "id": "node-02", "device_id": "04b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", "city": "Singapore", "country": "SG", "lat": 1.352, "lng": 103.82 },
+  { "id": "node-03", "device_id": "05c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", "city": "San Francisco", "country": "US", "lat": 37.775, "lng": -122.418 },
+  { "id": "node-04", "device_id": "06d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8", "city": "Frankfurt", "country": "DE", "lat": 50.111, "lng": 8.682 },
+  { "id": "node-05", "device_id": "07e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9", "city": "Tokyo", "country": "JP", "lat": 35.682, "lng": 139.692 },
+  { "id": "node-06", "device_id": "08f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0", "city": "Sao Paulo", "country": "BR", "lat": -23.551, "lng": -46.633 },
+  { "id": "node-07", "device_id": "09a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1", "city": "London", "country": "GB", "lat": 51.507, "lng": -0.128 },
+  { "id": "node-08", "device_id": "0ab8c9d0e1f2a3b4c5d6e7f8a9b0c1d2", "city": "Sydney", "country": "AU", "lat": -33.869, "lng": 151.209 },
+  { "id": "node-09", "device_id": "0bc9d0e1f2a3b4c5d6e7f8a9b0c1d2e3", "city": "Dubai", "country": "AE", "lat": 25.205, "lng": 55.271 },
+  { "id": "node-10", "device_id": "0cd0e1f2a3b4c5d6e7f8a9b0c1d2e3f4", "city": "New York", "country": "US", "lat": 40.713, "lng": -74.006 },
+  { "id": "node-11", "device_id": "0de1f2a3b4c5d6e7f8a9b0c1d2e3f4a5", "city": "Seoul", "country": "KR", "lat": 37.566, "lng": 126.978 },
+  { "id": "node-12", "device_id": "0ef2a3b4c5d6e7f8a9b0c1d2e3f4a5b6", "city": "Amsterdam", "country": "NL", "lat": 52.37, "lng": 4.895 },
+  { "id": "node-13", "device_id": "0fa3b4c5d6e7f8a9b0c1d2e3f4a5b6c7", "city": "Bangalore", "country": "IN", "lat": 12.972, "lng": 77.595 },
+  { "id": "node-14", "device_id": "10b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8", "city": "Toronto", "country": "CA", "lat": 43.653, "lng": -79.383 },
+  { "id": "node-15", "device_id": "11c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9", "city": "Nairobi", "country": "KE", "lat": -1.286, "lng": 36.817 },
+  { "id": "node-16", "device_id": "12d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0", "city": "Warsaw", "country": "PL", "lat": 52.23, "lng": 21.012 },
+  { "id": "node-17", "device_id": "13e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1", "city": "Dallas", "country": "US", "lat": 32.777, "lng": -96.797 },
+  { "id": "node-18", "device_id": "14f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2", "city": "Hong Kong", "country": "HK", "lat": 22.319, "lng": 114.169 },
+  { "id": "node-19", "device_id": "15a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3", "city": "Cape Town", "country": "ZA", "lat": -33.925, "lng": 18.424 },
+  { "id": "node-20", "device_id": "16b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4", "city": "Helsinki", "country": "FI", "lat": 60.17, "lng": 24.941 }
+]
