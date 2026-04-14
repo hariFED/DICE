@@ -99,16 +99,46 @@ async fn main() -> Result<()> {
                     "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
                         .parse()
                         .expect("parse program ID");
+
+                // Parse treasury/reserve config. Default to Pubkey::default()
+                // (all-zero) if unset — claim_rewards_v2 logic checks for this
+                // sentinel and skips submission rather than paying into a burn
+                // address.
+                let treasury = cfg
+                    .treasury
+                    .as_deref()
+                    .and_then(|s| s.parse::<solana_sdk::pubkey::Pubkey>().ok())
+                    .unwrap_or_default();
+                let reserve = cfg
+                    .reserve
+                    .as_deref()
+                    .and_then(|s| s.parse::<solana_sdk::pubkey::Pubkey>().ok())
+                    .unwrap_or_default();
+
+                if treasury == solana_sdk::pubkey::Pubkey::default()
+                    || reserve == solana_sdk::pubkey::Pubkey::default()
+                {
+                    warn!(
+                        "treasury/reserve not configured — claim_rewards_v2 will NOT be \
+                         submitted post-finalization. Set --treasury and --reserve (or \
+                         DICE_TREASURY / DICE_RESERVE) to enable node payouts."
+                    );
+                }
+
                 info!(
                     coordinator = %solana_sdk::signer::Signer::pubkey(&keypair),
                     program = %program_id,
                     rpc = %cfg.solana_rpc_url,
+                    treasury = %treasury,
+                    reserve = %reserve,
                     "on-chain transactions ENABLED"
                 );
                 Some(OnChainCtx {
                     rpc: Arc::new(solana_rpc::SolanaRpc::new(&cfg.solana_rpc_url)),
                     keypair: Arc::new(keypair),
                     program_id,
+                    treasury,
+                    reserve,
                 })
             }
             Err(e) => {
@@ -701,16 +731,48 @@ async fn handle_node_connection<S>(
                     if let Some(ref ctx) = on_chain {
                         if req_pubkey != solana_sdk::pubkey::Pubkey::default() {
                             if let (Some(auth), Some(idx)) = (channel_auth, channel_idx) {
-                                // v2.0 channel flow — bundle finalize_v2 + deliver_callback
-                                let ix_finalize = solana_tx::build_finalize_v2_ix(
+                                // v2.0 channel flow: bundle finalize_v2 + claim_rewards_v2
+                                // in one TX so they either both succeed or both fail
+                                // (prevents stranded finalized-but-unclaimed rounds).
+                                //
+                                // claim_rewards_v2 is ONLY added when treasury + reserve
+                                // are configured AND we have the full contributing-node
+                                // list. Otherwise we fall back to finalize-only, which
+                                // leaves the channel in Finalized status (node operators
+                                // don't get paid, but rounds still complete).
+                                let mut instructions = Vec::new();
+                                instructions.push(solana_tx::build_finalize_v2_ix(
                                     &ctx.program_id,
                                     &ctx.keypair.pubkey(),
                                     &auth,
                                     idx,
                                     req_seq,
-                                );
-                                match ctx.rpc.sign_and_send(&ctx.keypair, vec![ix_finalize]).await {
-                                    Ok(s) => info!(sig = %s, "finalize_v2 TX sent"),
+                                ));
+
+                                let default_pk = solana_sdk::pubkey::Pubkey::default();
+                                let payouts_enabled = ctx.treasury != default_pk
+                                    && ctx.reserve != default_pk
+                                    && !selected_nodes.is_empty();
+
+                                if payouts_enabled {
+                                    instructions.push(solana_tx::build_claim_rewards_v2_ix(
+                                        &ctx.program_id,
+                                        &ctx.keypair.pubkey(),
+                                        &auth,
+                                        idx,
+                                        &ctx.treasury,
+                                        &ctx.reserve,
+                                        &selected_nodes,
+                                    ));
+                                }
+
+                                match ctx.rpc.sign_and_send(&ctx.keypair, instructions).await {
+                                    Ok(s) => info!(
+                                        sig = %s,
+                                        payouts_enabled,
+                                        num_nodes = selected_nodes.len(),
+                                        "finalize_v2 TX sent"
+                                    ),
                                     Err(e) => warn!(error = %e, "finalize_v2 TX failed"),
                                 }
                             } else {
@@ -851,6 +913,84 @@ async fn handle_node_connection<S>(
                             }
                         }
                     }
+                }
+            }
+
+            // Device requests to bind a payout wallet. Handled by submitting
+            // register_node_vault on-chain. The signature is verified by the
+            // Anchor instruction itself — we just forward the bytes.
+            DiceMessage::PayoutBindingRequest(p) => {
+                if let Some(ref ctx) = on_chain {
+                    // Validate lengths before building the TX so we bail
+                    // early with a clear log line instead of failing in the
+                    // builder.
+                    if p.node_id.len() != 33 {
+                        warn!(
+                            len = p.node_id.len(),
+                            "PayoutBindingRequest: node_id must be 33 bytes — dropping"
+                        );
+                        continue;
+                    }
+                    if p.payout_wallet.len() != 32 {
+                        warn!(
+                            len = p.payout_wallet.len(),
+                            "PayoutBindingRequest: payout_wallet must be 32 bytes — dropping"
+                        );
+                        continue;
+                    }
+                    if p.nonce.len() != 32 {
+                        warn!(
+                            len = p.nonce.len(),
+                            "PayoutBindingRequest: nonce must be 32 bytes — dropping"
+                        );
+                        continue;
+                    }
+                    if p.signature.len() != 64 {
+                        warn!(
+                            len = p.signature.len(),
+                            "PayoutBindingRequest: signature must be 64 bytes — dropping"
+                        );
+                        continue;
+                    }
+
+                    let mut device_pubkey = [0u8; 33];
+                    device_pubkey.copy_from_slice(&p.node_id);
+
+                    let payout_wallet = solana_sdk::pubkey::Pubkey::new_from_array(
+                        p.payout_wallet.as_slice().try_into().unwrap(),
+                    );
+
+                    let mut nonce = [0u8; 32];
+                    nonce.copy_from_slice(&p.nonce);
+
+                    let mut signature = [0u8; 64];
+                    signature.copy_from_slice(&p.signature);
+
+                    let ix = solana_tx::build_register_node_vault_ix(
+                        &ctx.program_id,
+                        &solana_sdk::signer::Signer::pubkey(ctx.keypair.as_ref()),
+                        &device_pubkey,
+                        &payout_wallet,
+                        p.timestamp,
+                        &nonce,
+                        &signature,
+                    );
+
+                    match ctx.rpc.sign_and_send(&ctx.keypair, vec![ix]).await {
+                        Ok(sig) => info!(
+                            sig = %sig,
+                            device = hex::encode(&device_pubkey[..4]),
+                            wallet = %payout_wallet,
+                            "register_node_vault TX sent"
+                        ),
+                        Err(e) => warn!(
+                            error = %e,
+                            device = hex::encode(&device_pubkey[..4]),
+                            "register_node_vault TX failed"
+                        ),
+                    }
+                } else {
+                    warn!("PayoutBindingRequest received but on-chain submission is disabled");
                 }
             }
 

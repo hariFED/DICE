@@ -69,6 +69,33 @@ pub struct RoundResult {
     pub randomness: Vec<u8>,
 }
 
+/// Device-originated request to bind a payout wallet to its NodeVault.
+///
+/// Sent by the firmware after the operator enters a Solana wallet in the
+/// captive portal. The coordinator verifies the hardware-signed binding
+/// and submits `register_node_vault` on-chain.
+///
+/// The binding message layout (what the signature covers) is:
+///   `PAYOUT_BINDING_DOMAIN || node_id || payout_wallet || timestamp_le || nonce`
+///
+/// Hash: SHA-256 (matches the on-chain `verify_binding_signature` helper
+/// and the firmware's existing `dice_crypto_sign` which hashes with SHA-256).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct PayoutBindingRequest {
+    /// Compressed secp256k1 pubkey of the device (33 bytes).
+    pub node_id: Vec<u8>,
+    /// Operator-entered Solana wallet (32 bytes, raw bytes — not base58).
+    pub payout_wallet: Vec<u8>,
+    /// Unix timestamp (seconds) embedded in the binding message.
+    pub timestamp: i64,
+    /// Coordinator-supplied nonce (32 bytes). For firmware-initiated
+    /// bindings, the device generates a local random nonce.
+    pub nonce: Vec<u8>,
+    /// ECDSA signature over SHA-256 of the binding message (64 bytes, r||s).
+    pub signature: Vec<u8>,
+}
+
 // ---------------------------------------------------------------------------
 // Dispatch enum
 // ---------------------------------------------------------------------------
@@ -85,6 +112,7 @@ pub enum DiceMessage {
     CommitSubmission(CommitSubmission),
     RevealSubmission(RevealSubmission),
     RoundResult(RoundResult),
+    PayoutBindingRequest(PayoutBindingRequest),
 }
 
 impl DiceMessage {
@@ -167,6 +195,17 @@ impl DiceMessage {
                 entropy: get_bytes(3)?,
                 signature: get_bytes(4)?,
             })),
+            // PayoutBindingRequest: {0:5, 1:node_id, 2:payout_wallet, 3:timestamp_int, 4:nonce, 5:signature}
+            5 => {
+                let ts_u64 = get_uint(3)?;
+                Ok(DiceMessage::PayoutBindingRequest(PayoutBindingRequest {
+                    node_id: get_bytes(1)?,
+                    payout_wallet: get_bytes(2)?,
+                    timestamp: ts_u64 as i64,
+                    nonce: get_bytes(4)?,
+                    signature: get_bytes(5)?,
+                }))
+            }
             other => Err(anyhow!("unknown firmware message type: {}", other)),
         }
     }
@@ -207,6 +246,11 @@ impl DiceMessage {
                 let r: RoundResult = ciborium::de::from_reader(payload_bytes.as_slice())
                     .context("deserialise RoundResult")?;
                 DiceMessage::RoundResult(r)
+            }
+            "payout_binding_request" => {
+                let p: PayoutBindingRequest = ciborium::de::from_reader(payload_bytes.as_slice())
+                    .context("deserialise PayoutBindingRequest")?;
+                DiceMessage::PayoutBindingRequest(p)
             }
             other => return Err(anyhow!("unknown message tag: {}", other)),
         };
@@ -257,6 +301,10 @@ impl DiceMessage {
                     DiceMessage::RevealSubmission(r) => (
                         "reveal_submission",
                         Value::serialized(r).context("serialise RevealSubmission")?,
+                    ),
+                    DiceMessage::PayoutBindingRequest(p) => (
+                        "payout_binding_request",
+                        Value::serialized(p).context("serialise PayoutBindingRequest")?,
                     ),
                     _ => unreachable!(),
                 };
