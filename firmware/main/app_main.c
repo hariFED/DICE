@@ -22,6 +22,7 @@
 #include "captive_portal.h"
 #include "factory_reset.h"
 #include "led_status.h"
+#include "payout_binding.h"
 
 static const char *TAG = "dice_main";
 
@@ -317,6 +318,35 @@ void app_main(void)
      * -------------------------------------------------------------- */
     dice_heartbeat_start();
     ESP_LOGI(TAG, "Heartbeat started");
+
+    /* ----------------------------------------------------------------
+     * 7a. Send payout wallet binding if one is pending.
+     *
+     * The captive portal wrote `sol_wallet` to NVS when the operator
+     * typed in a Solana address. On first boot after provisioning, we
+     * sign the binding with the hardware ECDSA key and ship it to the
+     * coordinator, which submits `register_node_vault` on-chain. This
+     * is a one-shot per wallet — the helper tracks its own "already
+     * sent" flag in NVS.
+     *
+     * The WebSocket needs to actually be connected for the send to
+     * work. `dice_ws_connect` starts a task asynchronously, so we
+     * briefly wait for the `dice_ws_is_connected()` signal before
+     * calling the helper. If it doesn't come up within 10 seconds we
+     * skip this attempt and retry on the next boot.
+     * -------------------------------------------------------------- */
+    {
+        int wait_ms = 0;
+        while (!dice_ws_is_connected() && wait_ms < 10000) {
+            vTaskDelay(pdMS_TO_TICKS(250));
+            wait_ms += 250;
+        }
+        if (dice_ws_is_connected()) {
+            (void)dice_payout_binding_maybe_send();
+        } else {
+            ESP_LOGW(TAG, "WS still not connected — deferring payout binding");
+        }
+    }
 
     /* ----------------------------------------------------------------
      * 7b. Start factory reset monitor (BOOT button watchdog)

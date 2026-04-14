@@ -10,6 +10,7 @@ idf_component_register(
         "led_status.c"
         "base58.c"
         "factory_reset.c"
+        "payout_binding.c"
     INCLUDE_DIRS "."
     REQUIRES
         esp_wifi
