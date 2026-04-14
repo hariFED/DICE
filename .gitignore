@@ -21,6 +21,9 @@ firmware/tools/prov_output/
 
 # Next.js
 .next/
+# TypeScript incremental build cache (regenerates on every tsc run)
+tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 # Python
 __pycache__/

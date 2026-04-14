@@ -1,7 +1,7 @@
 # DICE — Build Progress & Roadmap
 
-> **Last updated:** 2026-04-05
-> **Branch:** `v3`
+> **Last updated:** 2026-04-14
+> **Branch:** `v7`
 > **Repo:** https://github.com/hariFED/DICE (private)
 
 ---
@@ -12,7 +12,32 @@
 |---------|--------|--------|-------------|
 | **v1.0** | `v1.0` / `main` | Released | Per-round PDA design. 8 instructions. Devnet deployed. |
 | **v2.0** | `v2.0-channel-design` | Merged into v3 | Reusable DiceChannel PDA. 13 new instructions. 18x cheaper. |
-| **v3** | `v3` | **Active** | Full stack: firmware on real hardware, mTLS, PostgreSQL, queue system, 3 example dApps, 545+ VRF rounds tested on real ESP32-S3. |
+| **v3** | `v3` | Shipped | Full stack: firmware on real hardware, mTLS, PostgreSQL, queue system, 3 example dApps, 545+ VRF rounds tested on real ESP32-S3. |
+| **v7** | `v7` | **Active** | NodeVault universal payout system + streaming VRF + hardware-signed payout binding. v7 program upgraded on devnet + binding TX landed from real ESP32-S3 hardware. |
+
+---
+
+## v7 Highlights (2026-04-14)
+
+**Universal payout system** — `NodeVault` PDA (one per device, keyed by SHA-256 of compressed secp256k1 pubkey) credited by every DICE service. Operators bind a Solana wallet via hardware-signed attestation, then withdraw from a single place. See `docs/v7-universal-payout.md` for full architecture.
+
+**Streaming VRF** — `RandomnessFeed` PDA with coordinator crank that pushes commit-reveal-verified values on a cadence. Subscribers read the feed as a passive account input — no callback, no per-request TX. First streaming VRF on Solana.
+
+**v7 Anchor program upgrade** — devnet `78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv`, program data grew 498,560 → 550,912 bytes. Upgrade TX: `2JBQbh89vAv5MNd7Zyxdfn5M2RL54ZhAAcKPmBXmZfr3CNecqyaudHmv6u849aNGtgT5sB5HwVYGFfPPAGfGC4JW`.
+
+**Real-hardware end-to-end binding** — ESP32-S3 on COM7 was provisioned with split-key NVS (secp256k1 for DICE identity + secp256r1 for mTLS client auth), rebooted, connected over mTLS WebSocket to a real-mode coordinator (Neon PostgreSQL backend, full cert chain), signed a `PayoutBindingRequest` with its hardware key, coordinator submitted `register_node_vault` to devnet, NodeVault transitioned to `Bound`. TX: `5PzuCRN9f2PVBC21amnHD3yws39iuWtuttSqT1kbv6Axa9fWmghNcqrnsvKZnDMVmXNH1m9Q5M1FuetP3c1PPUfL`. NodeVault PDA: `8giSVw9zJzUV8ViJQyYr1ELtuz6q1KpaQ2bddwQAQvdM`.
+
+**What shipped:**
+- 8 new `NodeVault` errors + 4 new instructions (`register_node_vault`, `rotate_payout_wallet`, `withdraw_from_vault`, `claim_rewards_v2`)
+- 3 new streaming VRF instructions (`init_feed`, `publish_feed_value`, `close_feed`)
+- New firmware binding flow: `dice_crypto_sign_payout_binding()` + `payout_binding.c/h` + CBOR message type 5
+- Coordinator: CORS layer, `/api/v1/stats` endpoint, treasury/reserve config, auto-submit `claim_rewards_v2` bundled with `finalize_v2`
+- SDK: PDA helpers, CPI builders, off-chain decoders, streaming subscriber example
+- 3 new task-tracked regression items: v1 `claim_rewards` double-pay (#14), `submit_reveal` secp256k1 recovery chain bug (#13), coordinator's Solana WebSocket subscriber retry loop (rustls version conflict, non-v7-blocking)
+
+**Test totals after v7:** 61 dice + 56 dice-vrf + 112 coordinator = **229 tests passing, 0 regressions.**
+
+See `docs/v7-universal-payout.md` for the full bring-up narrative including the PKI split-key fix (rustls 0.21 rejects secp256k1 client certs), the NVS schema mismatch with the pre-existing `flash_nvs.py`, and the full sequence of tooling workarounds (WSL platform-tools v1.52→v1.54 symlink, cargo-build-sbf quirks).
 
 ---
 
