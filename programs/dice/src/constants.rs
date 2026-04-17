@@ -1,4 +1,4 @@
-use anchor_lang::solana_program::hash::hashv;
+use solana_program::hash::hashv;
 
 /// Compute a 32-byte PDA-safe device identifier from a 33-byte compressed secp256k1 pubkey.
 /// `device_id = SHA-256(device_pubkey)`

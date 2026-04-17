@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::hash::hashv;
-use anchor_lang::solana_program::secp256k1_recover::secp256k1_recover;
+use solana_program::hash::hashv;
+use solana_program::secp256k1_recover::secp256k1_recover;
 
 use crate::constants::{PAYOUT_BINDING_DOMAIN, SEED_NODE_VAULT, VAULT_SERVICE_COUNT};
 use crate::error::DiceError;

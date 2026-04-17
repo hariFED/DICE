@@ -54,7 +54,7 @@ pub mod dice {
     /// Pass all RevealRecord PDAs as remaining_accounts, followed by callback program
     /// and any callback accounts if `callback_program_id` was set in the request.
     pub fn finalize_randomness<'info>(
-        ctx: Context<'_, '_, 'info, 'info, FinalizeRandomness<'info>>,
+        ctx: Context<'info, FinalizeRandomness<'info>>,
     ) -> Result<()> {
         instructions::finalize_randomness::handler(ctx)
     }
@@ -106,7 +106,7 @@ pub mod dice {
     /// Legacy callers that pass no remaining accounts fall back to the
     /// coordinator's off-chain SelectionEngine.
     pub fn request_randomness_auto<'info>(
-        ctx: Context<'_, '_, 'info, 'info, RequestRandomnessAuto<'info>>,
+        ctx: Context<'info, RequestRandomnessAuto<'info>>,
         node_count: u8,
     ) -> Result<()> {
         instructions::request_randomness_auto::handler(ctx, node_count)
@@ -155,7 +155,7 @@ pub mod dice {
     /// Deliver CPI callback to the developer's program (separate from finalize).
     /// If callback fails, randomness is still finalized — developer can retry or poll.
     pub fn deliver_callback<'info>(
-        ctx: Context<'_, '_, 'info, 'info, DeliverCallback<'info>>,
+        ctx: Context<'info, DeliverCallback<'info>>,
         round_id: u64,
     ) -> Result<()> {
         instructions::deliver_callback::handler(ctx, round_id)
@@ -187,7 +187,7 @@ pub mod dice {
     /// accounts passed as remaining_accounts. Uses SHA-256(slot_hash || channel || round_id || block_height)
     /// as seed for Fisher-Yates shuffle — no one can predict or manipulate the selection.
     pub fn select_nodes<'info>(
-        ctx: Context<'_, '_, 'info, 'info, SelectNodes<'info>>,
+        ctx: Context<'info, SelectNodes<'info>>,
         round_id: u64,
     ) -> Result<()> {
         instructions::select_nodes::handler(ctx, round_id)
@@ -292,7 +292,7 @@ pub mod dice {
     /// `remaining_accounts`, in the same order as
     /// `channel.device_pubkeys[0..reveals_received]`.
     pub fn claim_rewards_v2<'info>(
-        ctx: Context<'_, '_, '_, 'info, ClaimRewardsV2<'info>>,
+        ctx: Context<'info, ClaimRewardsV2<'info>>,
     ) -> Result<()> {
         instructions::claim_rewards_v2::handler(ctx)
     }

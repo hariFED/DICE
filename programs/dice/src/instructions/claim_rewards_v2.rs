@@ -60,7 +60,7 @@ pub struct ClaimRewardsV2<'info> {
 }
 
 pub fn handler<'info>(
-    ctx: Context<'_, '_, '_, 'info, ClaimRewardsV2<'info>>,
+    ctx: Context<'info, ClaimRewardsV2<'info>>,
 ) -> Result<()> {
     let clock = Clock::get()?;
     let program_id = ctx.program_id;

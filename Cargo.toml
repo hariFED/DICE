@@ -52,14 +52,20 @@ unicode-segmentation = ">=1, <1.13"
 ciborium       = "0.2"   # CBOR (shared message format with firmware)
 
 # Solana / Anchor
-# v7.6: bumped 0.30 → 0.31.1. Fixes anchor-syn 0.30's
-# proc_macro2::Span::source_file() breakage on Rust 1.89+ AND brings us in
-# line with what new integrators expect. Anchor 0.32 / 1.0 require
-# solana-program 2.x which cascades into our rustls 0.21 coord pin — 0.31
-# is the safe modern target. See VERSIONS.md for compat matrix.
-anchor-lang    = "0.31.1"
-anchor-client  = "0.31.1"
+# v7.7: bumped 0.31.1 → 1.0.0 (latest). Two API breakages from 0.31:
+#   1. anchor_lang::solana_program::* re-exports dropped — programs must
+#      depend on `solana-program` directly and import from there.
+#   2. Context lifetime form collapsed: `Context<'_, '_, '_, 'info, A>`
+#      → `Context<'info, A>`. Mechanical refactor across all handlers.
+# Coord side (rustls 0.21 pin) remains compatible because it uses
+# solana-sdk 1.18.26 directly, not anchor-lang.
+anchor-lang    = "1.0.0"
+anchor-client  = "1.0.0"
 solana-sdk     = "=1.18.26"
+# v7.7: Anchor 1.0 dropped its `solana_program::*` re-exports — programs now
+# depend on `solana-program` directly. Version unpinned because programs (BPF)
+# and coord (host x86) link separately, so multi-version resolution is fine.
+solana-program = "2"
 # solana-client is NOT a workspace dep — spl-token-2022 1.0.0 → solana-zk-token-sdk 1.17.6
 # → solana-program =1.17.6 conflicts with solana-sdk =1.18.26.
 # The coordinator uses a minimal reqwest-based JSON-RPC client instead.

@@ -34,8 +34,8 @@
 // coordinator is the de-facto selection authority in v7.
 
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::hash::hashv;
-use anchor_lang::solana_program::sysvar::slot_hashes;
+use solana_program::hash::hashv;
+use solana_program::sysvar::slot_hashes;
 
 use crate::constants::SEED_CHANNEL;
 use crate::error::DiceError;
@@ -170,7 +170,7 @@ pub struct SelectNodes<'info> {
 }
 
 pub fn handler<'info>(
-    ctx: Context<'_, '_, 'info, 'info, SelectNodes<'info>>,
+    ctx: Context<'info, SelectNodes<'info>>,
     round_id: u64,
 ) -> Result<()> {
     // Validate coordinator is authorized for this channel.

@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::hash::hashv;
+use solana_program::hash::hashv;
 
 use crate::constants::{MIN_NODES_REQUIRED, SEED_CHANNEL};
 use crate::error::DiceError;

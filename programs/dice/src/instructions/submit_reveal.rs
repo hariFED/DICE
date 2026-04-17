@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::keccak;
-use anchor_lang::solana_program::secp256k1_recover::secp256k1_recover;
+use solana_program::keccak;
+use solana_program::secp256k1_recover::secp256k1_recover;
 
 use crate::constants::{REVEAL_TIMEOUT_SLOTS, SEED_COMMIT, SEED_REQUEST, SEED_REVEAL};
 use crate::error::DiceError;
@@ -96,7 +96,7 @@ pub fn handler(
     require!(is_selected, DiceError::UnauthorizedNode);
 
     // Verify hash(entropy) matches the stored commit
-    let entropy_hash = anchor_lang::solana_program::hash::hashv(&[&entropy]);
+    let entropy_hash = solana_program::hash::hashv(&[&entropy]);
     require!(
         entropy_hash.to_bytes() == ctx.accounts.commit_record.commit_hash,
         DiceError::RevealMismatch

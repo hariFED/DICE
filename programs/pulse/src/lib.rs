@@ -224,7 +224,7 @@ pub enum PulseError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anchor_lang::solana_program::hash::hashv;
+    use solana_program::hash::hashv;
 
     #[test]
     fn feed_discriminator_matches_expected() {
