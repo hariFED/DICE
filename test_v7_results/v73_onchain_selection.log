@@ -1,0 +1,42 @@
+v7.3 on-chain selection driver
+  payer: 3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9
+  dice program: 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv
+
+Known devices: 5
+
+[1/4] Registering DeviceRegistry PDAs...
+  [0] 029ac5ec1f7bf25e... registering
+        TX: 5QrKe5aCN8M3wr75DKDMkgaaqBH3QQcfVzAneZWVihjr8BXRg6XBjqsAyjhkQBYCc7vSNCnfCnkj7YuWswCfXVtV
+  [1] 03856d1a3f860a45... registering
+        TX: 5uenNiqWVSRpVcHbkbADqxw5vBJSndov73NGa377vTRKxwvfd7dpQaSY3E9EvQDZP81gqoWz4Te4fPNXm7J5f9WC
+  [2] 0271270853b3ad23... registering
+        TX: 3SqRi4c1Qm7Uctz8YKMwNP4N9BCwQZiDAVcJmrNMKqf79615Q7FSm3u2jQaCA7peYYbQVTsZ4QxHjGwbY9LBnSRL
+  [3] 03869239a204df3a... registering
+        TX: 2LGF8UKF4ifdbEDpvhWDkFqYSkGXWDg55mcaRMRbB2EVEx71L5y8Te3btFEtixqWN7Kg4NDVJyQLaHGanpCodTDG
+  [4] 0208949b2ff57140... registering
+        TX: 2c5Qu72i5iLCUFiYA21LSNTNVq9TVFqJLdeBffR9Wy5uHwbhrQ3zs9YQNXsBU4hmhrXPH3PKSoQABxWM8x54i5zv
+
+[2/4] Setting up test channel FHf69DBavk1H9mLvX6F2dQGroBuST4Y1gTz7gvt3icNg (index 700)
+      init_channel TX: 5sao86nUAc2So93aFuVbUCsAZz3Na2SahhdjrT2iAyR7WfnfHHqmQoAiJiu92zP2eQaNj6xpwCm8oK6S1agefasn
+      fund_channel TX: 3jEbPxusBbNVKwaQqiqqitV5k9QyVhX2d1pMpmaSxSSNJz4LpacgRsUdfimxChYXudJFKTG6XEM3C2Bxc53gcZyj
+
+[3/4] request_randomness_auto with SlotHashes + 5 DeviceRegistry accounts
+      request_randomness_auto TX: 3aQFCRuJewuY1mVWPvZGeo9HHVNBfZh9TCT8DeMbHK87C4EhMo8uV76hhnbUPwmeugz5APxEv3BxaH2jUBhkTaMX
+
+[4/4] Verifying channel.device_pubkeys was populated on-chain
+  channel status: 1 (1=Pending expected)
+  round_id: 1
+  node_count: 4
+
+  on-chain selected devices:
+    [0] 029ac5ec1f7bf25e... ✓ non-zero ✓ matches a registered device
+    [1] 03869239a204df3a... ✓ non-zero ✓ matches a registered device
+    [2] 0271270853b3ad23... ✓ non-zero ✓ matches a registered device
+    [3] 0208949b2ff57140... ✓ non-zero ✓ matches a registered device
+
+════════════════════════════════════════════════════════════════
+✅ v7.3 ON-CHAIN SELECT_NODES TEST PASSED
+    channel.status = Pending after request_randomness_auto
+    4 devices selected on-chain via Fisher-Yates(SlotHashes)
+    all picks are registered devices, no duplicates
+════════════════════════════════════════════════════════════════

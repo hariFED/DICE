@@ -38,6 +38,13 @@ venv/
 build/reports/*.xml
 build/reports/*.html
 build/state.json
+# Device provisioning output — contains secp256k1 private keys + mTLS certs.
+# NEVER commit.
+build/v7_nvs*
+
+# Runtime logs
+coordinator.log
+coordinator-*.log
 
 # Secrets — NEVER commit these
 coordinator-keypair.json

@@ -98,8 +98,15 @@ pub mod dice {
 
     /// Auto-fund randomness request. Channel must exist (call init_channel first).
     /// Automatically tops up channel balance from developer wallet if insufficient.
-    pub fn request_randomness_auto(
-        ctx: Context<RequestRandomnessAuto>,
+    ///
+    /// v7.3+: if `remaining_accounts` is non-empty, the first entry must be
+    /// the SlotHashes sysvar and the rest must be DeviceRegistry PDAs — the
+    /// Fisher-Yates shuffle in `select_nodes::run_node_selection` then picks
+    /// N devices on-chain and writes them into `channel.device_pubkeys`.
+    /// Legacy callers that pass no remaining accounts fall back to the
+    /// coordinator's off-chain SelectionEngine.
+    pub fn request_randomness_auto<'info>(
+        ctx: Context<'_, '_, 'info, 'info, RequestRandomnessAuto<'info>>,
         node_count: u8,
     ) -> Result<()> {
         instructions::request_randomness_auto::handler(ctx, node_count)
@@ -131,6 +138,18 @@ pub mod dice {
     /// Finalize randomness from inline reveals in the channel.
     pub fn finalize_v2(ctx: Context<FinalizeV2>, round_id: u64) -> Result<()> {
         instructions::finalize_v2::handler(ctx, round_id)
+    }
+
+    /// v7.5 single-shot round submission. Replaces submit_commit_v2 +
+    /// submit_reveal_v2 + finalize_v2 with one atomic ix that takes all
+    /// device contributions (commit_hash + entropy + signature per device).
+    /// claim_rewards_v2 still runs separately in the same TX.
+    pub fn submit_round_v2(
+        ctx: Context<SubmitRoundV2>,
+        round_id: u64,
+        contributions: Vec<crate::instructions::submit_round_v2::RoundContribution>,
+    ) -> Result<()> {
+        instructions::submit_round_v2::handler(ctx, round_id, contributions)
     }
 
     /// Deliver CPI callback to the developer's program (separate from finalize).

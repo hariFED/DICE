@@ -105,4 +105,7 @@ pub enum DiceError {
 
     #[msg("Vault is frozen — credits and withdrawals are paused")]
     VaultFrozen,
+
+    #[msg("v1 claim_rewards is deprecated: use claim_rewards_v2 (v2 channel path). v1 has unfixable per-node payout semantics — only one node could ever be paid per escrow before the escrow was marked claimed.")]
+    V1ClaimRewardsDeprecated,
 }

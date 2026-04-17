@@ -6,10 +6,16 @@ members = [
     "programs/dice-roll",
     "programs/lucky-wheel",
     "programs/prediction-market",
+    "programs/pulse",
     "sdk/dice-vrf",
     "sdk/dice-vrf-macros",
     "tests/harness/mock_firmware_node",
     "tests/harness/smoke_v7",
+    "tests/harness/coin_toss_driver",
+    "tests/harness/pulse_driver",
+    "tests/harness/stress_driver",
+    "tests/harness/adversarial_driver",
+    "tests/harness/v73_driver",
     # load_generator is excluded below — its solana-client + spl-token-2022 transitive
     # deps conflict with solana-sdk 1.18.26 across patch versions.
     # Build it separately: cargo check --manifest-path tests/harness/load_generator/Cargo.toml

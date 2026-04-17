@@ -75,11 +75,16 @@ pub fn handler<'info>(
         DiceError::UnauthorizedCoordinator
     );
 
-    // Must be in Finalized state — that's the only state from which rewards
-    // can be distributed. This also prevents double-claim (after payout we
-    // transition to Idle).
+    // L4 (v7.4): accept Finalized OR Idle. `finalize_v2` now auto-Idle's
+    // for no-callback channels, so when the coordinator bundles
+    // finalize_v2 + claim_rewards_v2 in one TX, claim sees Idle (the
+    // state finalize_v2 transitioned to in the same TX). Idempotency
+    // is preserved via the rent-exempt check below — a second call
+    // would see `available = channel_lamports - min_rent = 0 < fee`
+    // and bail with EscrowInsufficient.
     require!(
-        channel.status == ChannelStatus::Finalized,
+        channel.status == ChannelStatus::Finalized
+            || channel.status == ChannelStatus::Idle,
         DiceError::RoundNotComplete
     );
 
@@ -180,12 +185,24 @@ pub fn handler<'info>(
     transfer_lamports_program_owned(&channel_ai, &treasury_ai, treasury_share)?;
     transfer_lamports_program_owned(&channel_ai, &reserve_ai, reserve_share)?;
 
-    // Transition Finalized -> Idle. This prevents double-claim AND unblocks
-    // the next request_randomness_v2 call on this channel.
-    channel.status = ChannelStatus::Idle;
+    // Intentionally DO NOT transition status here. `deliver_callback` owns
+    // the Finalized -> Idle transition because it's the instruction that
+    // fires the dApp's callback CPI (and needs the dApp's accounts). If we
+    // transitioned here, deliver_callback would see status != Finalized and
+    // reject. Since both instructions want Finalized as their prerequisite,
+    // exactly one of them must not write the transition. claim_rewards_v2
+    // is idempotent via the rent-exempt check above — a second call would
+    // see `available = channel_lamports - min_rent = 0 < fee` and fail with
+    // EscrowInsufficient. The caller (coordinator) is expected to bundle
+    // finalize_v2 + claim_rewards_v2 atomically, then the dApp driver
+    // submits deliver_callback separately with its own accounts.
+    //
+    // Channels with NO callback configured still need something to
+    // transition the state — deliver_callback handles that case too (it
+    // checks for Pubkey::default() and transitions to Idle without CPI).
 
     msg!(
-        "v2 rewards distributed: fee={}, nodes={}, per_node={}, treasury={}, reserve={}",
+        "v2 rewards distributed: fee={}, nodes={}, per_node={}, treasury={}, reserve={} (channel remains Finalized until deliver_callback)",
         fee,
         num_contributors,
         per_node_share,

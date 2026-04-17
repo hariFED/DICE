@@ -73,9 +73,24 @@ pub fn handler(
         DiceError::FeedChannelMismatch
     );
 
-    // Guard 5: channel must be finalized, round_id must match, randomness must match
+    // Guard 5: channel must have a published round result and that result
+    // must match the randomness being submitted.
+    //
+    // Both Finalized AND Idle are accepted. Idle is reachable ONLY from
+    // Finalized via `deliver_callback`, and `deliver_callback` does not
+    // modify `channel.randomness` or `channel.round_id` — so an Idle
+    // channel's (round_id, randomness) pair is still the same as when it
+    // was Finalized. Accepting Idle here closes a TOCTOU race (F-5) where
+    // the coordinator's feed-crank poller could observe Finalized, submit
+    // `publish_feed_value`, and have the TX land AFTER a dApp driver had
+    // already drained the channel back to Idle via an empty deliver_callback.
+    //
+    // Pending / CommitPhase / RevealPhase are still rejected because in
+    // those states `channel.randomness` either holds stale data from the
+    // PREVIOUS round or is not yet the final combined output.
     require!(
-        channel.status == ChannelStatus::Finalized,
+        channel.status == ChannelStatus::Finalized
+            || channel.status == ChannelStatus::Idle,
         DiceError::FeedChannelNotFinalized
     );
     require!(channel.round_id == round_id, DiceError::FeedRoundIdMismatch);

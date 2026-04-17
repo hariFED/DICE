@@ -12,7 +12,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::hash::hashv;
 
-declare_id!("3oJL6bXFaVJhegSU2ah9y1zqGmbFZZu4peQwr9XmfUtn");
+declare_id!("7r6UstdP6qTFK4HSqU4mFGPGyCVWd3JVjBeafQPyvspH");
 
 /// DICE program ID — the VRF oracle we call for randomness.
 const DICE_PROGRAM_ID: &str = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv";
@@ -30,7 +30,8 @@ const SEED_VAULT: &[u8] = b"vault";
 pub mod coin_toss {
     use super::*;
 
-    /// Initialize the game house. Creates a vault PDA to hold wagers.
+    /// Initialize the game house. Creates a vault PDA and funds it to
+    /// rent-exempt minimum so subsequent wager transfers don't fail.
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         let house = &mut ctx.accounts.house;
         house.authority = ctx.accounts.authority.key();
@@ -38,7 +39,26 @@ pub mod coin_toss {
         house.total_heads = 0;
         house.total_tails = 0;
         house.bump = ctx.bumps.house;
-        msg!("Coin-toss house initialized");
+
+        // Vault is a bare system-owned PDA. The first lamports landing in it
+        // must put it above rent-exempt minimum or the TX fails. Fund it now
+        // from the authority so place_bet works for any wager amount.
+        let rent = Rent::get()?;
+        let min_rent = rent.minimum_balance(0);
+        let vault_ai = ctx.accounts.vault.to_account_info();
+        if vault_ai.lamports() < min_rent {
+            let needed = min_rent - vault_ai.lamports();
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.authority.to_account_info(),
+                    to: vault_ai,
+                },
+            );
+            anchor_lang::system_program::transfer(cpi_ctx, needed)?;
+        }
+
+        msg!("Coin-toss house initialized; vault funded to rent-exempt");
         Ok(())
     }
 

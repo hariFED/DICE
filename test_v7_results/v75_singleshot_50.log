@@ -1,0 +1,169 @@
+stress-driver v1
+  payer: 3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9
+  start balance: 8.533253 SOL
+  channel_index: 907, rounds: 50, node_count: 4
+  channel PDA: BULVJypyU5SUAbxNX3pftBP4KjcXzcuutEqB8oz5iiMz
+  required channel balance for 50 rounds: 100000000 lamports
+
+── running 50 rounds ─────────────────────────────
+[   1/50] FAIL in 46806ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=115), waiting up to 70 s for deadline then fail_round
+  fail_round TX: KHLPHDzh6QFbi8hNBTqbuCKVUq8WM9JnE5LYFPoweBMQxtqvhg3piAD9t7WeyyAze15YfLLvrvKqoaWEMe7fNmk
+[   2/50] FAIL in 47162ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=116), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 3byUZjENMyfyDVM7nHCCnjmZHThagyrB4vJKRq3WAmoWGHbf9xwjvGi24dXMjPE3yDEpVDgoVqwf4kEJ4VX8BQ3R
+[   3/50] FAIL in 46927ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=117), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4dSmScvVmfDuW8xUs9n8fh2aCEZRDAp8BcFAMQZiycWRN7ZJEGGKDBJgLafyM5NFbysEXosHYHW9HwEnszBT1wnX
+[   4/50] FAIL in 46907ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=118), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 3qTChP3Gu9dJET89nyqffyo1WMDqExQGeYdKsfvyxf9sMn4fmb2oH8ND3mmDD7BANuGPX1v9r5kczj3ZZJvgK6Ct
+[   5/50] FAIL in 49677ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=119), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5RTqdyt5DgN7HqB4f2iceV58fbwRr6HfbPzhQZ5LkrZB9N8ShnBNNWNwEm7R74DSs2MVP2yRDezScnH8JdPJng6N
+[   6/50] FAIL in 47249ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=120), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5eYo4wJuwmomDuNPVEPbWGpTZy3zCXR7erRmFMTCbopa5964vFcJysqNNtrQHaaWsosUCJKuNVEKuHAcJ4LR9inz
+[   7/50] FAIL in 47115ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=121), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 39hAGpDzjwVdjTSgNC8tqdCpfasx7rWdg1tfpfXrLboM81oFG2AozGtBP96LiARHZgowEXRQREvnwghwvV9S6EL7
+[   8/50] FAIL in 46462ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=122), waiting up to 70 s for deadline then fail_round
+  fail_round TX: SJ4HPqj3kmgPGkP95bmjpbopMAbRZugP5o6F2nBnY6AzqCD8KDj4bvBK66S4rh9rqviVNURxQtuHfK7JZRsY55V
+[   9/50] FAIL in 46873ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=123), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5ugqSHYY2JqtRhnyHrG5TGrDbSaiW37DUckF2jHVZd9V6p5VVEeUzX1ViUFRL347rb7qDxprMUaDFgMY4f5mPEa5
+[  10/50] FAIL in 46473ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=124), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 2eNRyZTrrqoamwMfQncAo9U9cyrxDy9t9NDWddieg9ZycweZ2PiAqe5YF7cf57qT9t4JiP7UKEsXS9wpht6gvroV
+[  11/50] FAIL in 47706ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=125), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 3REEjCVf5PvzHcBfkizYqGgUbxmTkuWgxFdm7u9cCKK19jz3KnvjYM87nKqWZNDEEdb2F8Uh5ntvATZJRKEZfu1c
+[  12/50] FAIL in 47328ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=126), waiting up to 70 s for deadline then fail_round
+  fail_round TX: F9oiMF7yMmPDoVpVrxEJtPryNjPNYvfoAKkvwTyHrrZHEARHsNLAS5fPmpewsmfUEPqTQLUaL82cXSB6K9Hap27
+[  13/50] FAIL in 46636ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=127), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 2sNVuHgo4pxu4x1GUL1jB8r6bwh5D2YgquWbBuPPfNPPV1V9t1RDEXodYbLWcgEt18Sf1EvwbaYqNquNKctXvbVc
+[  14/50] FAIL in 47434ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=128), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 3BMRPtECLGg9HwaLov4BAPfL2HQ1FVasRJ7ztFusC4LscukeRte1adnHnmwppFWxsKfpb2F92tWJ2sxvArhNyD7r
+[  15/50] FAIL in 47158ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=129), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5xTmBXvAj2rLVRk4KFiSi2cUik3YtbxEGxmtzxWgQDyExsCjMfWQetSu3yV822Ye9E7FUxezXEwx7Eq2KYmFj2Yt
+[  16/50] FAIL in 46190ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=130), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4gdq1pawNrea4YuTFVnkgQheXiU665P29q9dUtdernqY7y6SHYMnKegKcDHb1DxtQHP5Rv9JpmxiQ3tEKbsyi3ch
+[  17/50] FAIL in 46690ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=131), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 25xgMm8wEMccR29UQECyUQHBGwEzPbdzYvyEFRDazZHQbeRkL6YJRBzQVRx6uiGnTYi4dpRGHcqkfiua6V5wkpiB
+[  18/50] FAIL in 47052ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=132), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4P3P97RSgnRySoUvwtMwo1K1Q4pcdMhxEkHM2SuTeVci9vafZbgb7NQ4A45eAo3SEd4EtfPKAQuKWsX2KnmCwzAT
+[  19/50] FAIL in 46495ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=133), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5BXSZ3wsrNLCmVCCyXWgt7NipAMTWZi9HbbXpzs1WM5yXPNVhModBjfdTpHPY1obwym6i7qpw5YqypBpsFizkSzq
+[  20/50] FAIL in 46434ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=134), waiting up to 70 s for deadline then fail_round
+  fail_round TX: mCvgt2b7iPAeaAXbNHY5furxddAJKVWDBh6CuxtakuK2V5SHMdrYe8X5J19HCSgT8BALoUsWrW2qvWhFbdVXYYo
+[  21/50] FAIL in 46585ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=135), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5ZAgGVKjr3YQ5LfmhfQfu3dx6JtiVjQXvEu4PcsUy22dWi5tk1M31UYUM2AfiFypRDotapts45VVYQLNSAwNwBVC
+[  22/50] FAIL in 46722ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=136), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4Fm93H8gzknkfnzEoVUBBjHXAA7TLLdwXvkB1zyk6QohN4tcCHyjQpacySkb8zHiWFkt3mU7tTCiErd1eg7C4R7X
+[  23/50] FAIL in 47235ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=137), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 67ng7u9maojES67pXkr4wG68KTteB7kuB2tGfWfEsGENTth8PJQKuAonm6K32N1o8evAQedb7UH38kG7E6ayyvby
+[  24/50] FAIL in 46766ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=138), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4dyzqF5WCF8vDYAqgupCsB5xdZJ9oscoZMKGS4Bo9oHd9RqdezGLJu8FcYmvNeSQuYCxoZu2oBk394xSkMJdgb8j
+[  25/50] FAIL in 47364ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=139), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 671S9HiyJxaPLcdnHXBozDmfzNmDYDgVDsiQy2xqgTCXVHGYuqGemiYGKbbsDEPLSmmx4MYijZPQJ9Tg79383Q94
+[  26/50] FAIL in 47047ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=140), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 3w8qXEnLt1Y3mvC7MUJXUH3xdNMtWfVpeu4zqLMoirJybKWddTUyJgRi2npEKLWYRjNxMMHF4qnFziMiu7doAYLR
+[  27/50] FAIL in 46597ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=141), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4zpPgssBN3U3aRwka2V7mQnqSFz2CWtMMx2TFBa3XqYW4WzbosNYpGusxo2MANPUj8yFbN7RGJhHT1akwfUsuJPF
+[  28/50] FAIL in 47198ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=142), waiting up to 70 s for deadline then fail_round
+  fail_round TX: uBQWXCPRkhwT4mKkZdnXhueNtHeEotBe6FEkAt9fG3AgxLZME4rtsCjvQChfDPotttbvWu8s9L2BraRpPcZkthv
+[  29/50] FAIL in 46433ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=143), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 3vsDWZcvx2GTJRThkGykTkRjWGMrLiGivU7ZzxddzndE5RVJKo4zFyQ8uLMQ9KVH3uFQCqZ6Qzn1WMBpWGoGZf4F
+[  30/50] FAIL in 47391ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=144), waiting up to 70 s for deadline then fail_round
+  fail_round TX: dYDhJ4Ku3yb5yeVd31udFjB14mkertxizu6y9xMKPmxHypLAuqiJEJayFLhVEDNSy4GNKbn2mLGGSRb9Y2VCmcP
+[  31/50] FAIL in 46738ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=145), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4SHCSFkEXp96vxR51v5xSzFQvE6bE2RmpfPDKaE8RS9vtctkPYwVhvTRh1h7cYY6TQv62XdW6cGivPiSSkyxGzqW
+[  32/50] FAIL in 46439ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=146), waiting up to 70 s for deadline then fail_round
+  fail_round TX: qrcR3hmYyc1b7UkVxa24rYUHzjwwVopsrd68JLH3HVXRG21HMfotTqaXH33vwKZ93DHUhdvUuDA5RuLTTjFmBmZ
+[  33/50] FAIL in 46458ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=147), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5z5Ju7ahf3ER6oCKT8m8xqZRsqUBJYTg1eUBMTKBUkNTEz1EVU8GgjXB9gcEt9P52N8e3nXuWQmA894K8cGRxCHZ
+[  34/50] FAIL in 47417ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=148), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 3Pj9eo8Pc6ZHNzjGhHsdyZXEWhFmzGYhAzEAn5PAjNJmKBVW7QPmGDLMhc5XZoz45CwRu7uFK3CAJ6urbGuCGMz9
+[  35/50] FAIL in 47025ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=149), waiting up to 70 s for deadline then fail_round
+  fail_round TX: nX1TA9pGgfoFg9bjLdH6kLLhmwEnSsUNUGghuhVU4Awf5cPwU7bhLmDsDEnF6vkGQ1DkJQaktyZVm5TcosybDnH
+[  36/50] FAIL in 46862ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=150), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5bWR5SyiUTqaK6h57pPcTybrqyiJ5CTdY2MCVg18qdtH2KN9yx3J3ZxDjBCVYmxpVakQdL9B877dVgRz9nQxBsFt
+[  37/50] FAIL in 46479ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=151), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 28zcNbEGUfniKGiQAwsHZU33eb4MsooC4BeLN5apfLT1Hmdcy9FP8JjEWMRXnecMHMtMUV3NNQpErC6k6xdQWgDU
+[  38/50] FAIL in 46495ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=152), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 52KedH5aXjjqaLz4v7Lprcr9omQbdpq5NwepntxCWBcZ1hs6qhaPX892TiSD9qy5LYPUjKqjSxYA9eTP3aS1NnxR
+[  39/50] FAIL in 47063ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=153), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4RAD2TJ2YmgCXP9QNNpmT3fwk3oXZK1bmMFQaMg1EbiUYp1oFSWR2FhC5DSzMMREYuLiV3faFW7m7pCdLek9tjY7
+[  40/50] FAIL in 47086ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=154), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5cGqqS1LZNLjxsL5tq2Y5CcDoSGSQ31i65NrCeMQHiTEP6b6UeV5xMhBLdxag4J5hD4vuQA9ctqKbQQHjRhjVmNS
+[  41/50] FAIL in 46918ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=155), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4r3PKtSPknbqUXPi5TGDc1wPUXcFcZoR3pDXdM9wSRLESoyLK3SmfmBAcoRQ85rMy6wBWLiTGnbTh2N57srMtCU3
+[  42/50] FAIL in 46985ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=156), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 63cRHswYo6bufUKdWqWqfM7zqxizgPVFWgEhMJi2uierDW9rfAPbjuYhcSHC81FuCUry6eicqYxisUnGjqNA8oD9
+[  43/50] FAIL in 46540ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=157), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 515nSDbivtC4oFr99jhPanDUjjB3GRpNspurkHZiDKJk9dZjWnn5vfnPRhxiq4YCXtWoxzrPxUUjcv6ZnzVKZvvq
+[  44/50] FAIL in 46580ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=158), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5yt4WjUwH3mgXf614XPCwrJGLmf9HjfKAuoLNTcNYXKXe4KXrvRjtbX7kaGkVKQVACfR4unXv95CFDNbzXzWRGe
+[  45/50] FAIL in 46473ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=159), waiting up to 70 s for deadline then fail_round
+  fail_round TX: XgGbS3XD2rCwQV1dKRJvcrsGxRC3Kcivir7vK9K314gV5PLSzN43iRVRcEC9h95ctAPBztdJ2B4ySmhNTVoJ15V
+[  46/50] FAIL in 46383ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=160), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4QR8EzWDnaZhwo7YGuLSpAnhFyZGM5bkwErKGh1pKaP29PKsqRicBzu6LH5u4fsQRy2iXCdr3XafwrCoXFnj5zr3
+[  47/50] FAIL in 46644ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=161), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 2N93iheEuttxUxMcDfCFRPe1hYvpXn5DVudMvGLZpRXQgJcagvvCyXpRx8VPvuKoNCxxrgCcyVvWevA9SzL8Ruyr
+[  48/50] FAIL in 47197ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=162), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4DQ4migYvcpHGxzUiKA535wrMHRLrPpCtTdKtntF3R18PxRfFma8gcpHv4qJwhoJ4ati6MNk7x3BPt51o7aX4ksu
+[  49/50] FAIL in 46524ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=163), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 5V6uaz42vm498s6tQa6QxaoVjT638wLnggipBJ5Mr7oSZUA3KmzgLrb5fbDmd4myzPhofM75LCRjy9KqwTH4wE5i
+[  50/50] FAIL in 47309ms — round timed out waiting for Finalized/Idle
+  channel status=1 (round_id=164), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 4JuB1Nzi6HnhEKUQaCHUjow2nWzL8CSW3mCVfENNyVb6hXP4mYK89tqyrNnmHDjQFgSzppt5XmxETcdYWLvAYkdE
+
+── summary ───────────────────────────────────────
+  total time:   3017959 ms (3018.0 s)
+  succeeded:    0/50
+  failed:       50
+  avg round:    0 ms
+  p50 / p95 / p99 / min / max: 0 / 0 / 0 / 0 / 0
+  start bal:    8.533253 SOL
+  end bal:      8.432310 SOL
+  spent:        0.100942 SOL
+  wrote summary: test_v7_results/v75_singleshot_50.json

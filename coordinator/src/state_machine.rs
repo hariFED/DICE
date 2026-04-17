@@ -75,6 +75,9 @@ pub struct Round {
     pub state: RoundState,
     /// Minimum reveals required to produce valid randomness.
     pub min_required: usize,
+    /// Snapshot of per-node commit + reveal data captured at finalize time.
+    /// Populated by `handle_reveal` right before transitioning to Finalized.
+    pub last_onchain_data: Option<Vec<([u8; 33], [u8; 32], [u8; 64], [u8; 32], [u8; 64])>>,
 }
 
 impl Round {
@@ -99,6 +102,7 @@ impl Round {
                 deadline: Instant::now() + commit_timeout,
                 commits: HashMap::new(),
             },
+            last_onchain_data: None,
         }
     }
 
@@ -218,19 +222,45 @@ impl Round {
         if reveal_count_now >= self.min_required {
             let entropies: Vec<[u8; 32]> = reveals.values().map(|(e, _)| *e).collect();
             let randomness = combine_entropy(&entropies);
+            // Snapshot the per-node commit + reveal data BEFORE the state
+            // transition wipes CollectingReveals — the coordinator needs
+            // it to build on-chain submit_commit_v2 + submit_reveal_v2 IXs.
+            let onchain_data: Vec<([u8; 33], [u8; 32], [u8; 64], [u8; 32], [u8; 64])> = {
+                let cur_commits = match &self.state {
+                    RoundState::CollectingReveals { commits, .. } => commits,
+                    _ => unreachable!(),
+                };
+                let cur_reveals = match &self.state {
+                    RoundState::CollectingReveals { reveals, .. } => reveals,
+                    _ => unreachable!(),
+                };
+                cur_reveals
+                    .iter()
+                    .filter_map(|(node_id, (entropy, reveal_sig))| {
+                        cur_commits.get(node_id).map(|(commit_hash, commit_sig)| {
+                            (*node_id, *commit_hash, *commit_sig, *entropy, *reveal_sig)
+                        })
+                    })
+                    .collect()
+            };
             info!(
                 request = hex::encode(self.request_id),
                 reveals = reveal_count_now,
                 randomness = hex::encode(randomness),
                 "round finalized"
             );
-            // Note: onchain_data is collected by the caller via collect_onchain_data()
-            // BEFORE this state transition, if needed.
             self.state = RoundState::Finalized { randomness };
+            self.last_onchain_data = Some(onchain_data);
             return Ok(Some(randomness));
         }
 
         Ok(None)
+    }
+
+    /// Snapshot of per-node commit/reveal data captured at finalize time.
+    /// Returns Vec of (node_id, commit_hash, commit_sig, entropy, reveal_sig).
+    pub fn finalized_onchain_data(&self) -> Option<&Vec<([u8; 33], [u8; 32], [u8; 64], [u8; 32], [u8; 64])>> {
+        self.last_onchain_data.as_ref()
     }
 
     /// Return `true` if the current phase has exceeded its deadline and the

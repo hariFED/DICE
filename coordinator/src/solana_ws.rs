@@ -47,6 +47,14 @@ const REQUEST_LOG_PREFIX: &str = "Program log: Randomness requested on channel";
 /// Reconnect delay after WebSocket disconnection.
 const RECONNECT_DELAY: Duration = Duration::from_secs(3);
 
+/// Polling interval for the DiceChannel poller.
+/// 3 s was the stable baseline that survived the 985/1000 A4 run. 800 ms
+/// and 1.5 s both hung under public-devnet RPC backpressure (L2-A). Helius
+/// RPC is well-provisioned enough that we can pull this back to 1 s without
+/// the hang — each round now sees up to 1 s of "waiting for coord to notice"
+/// latency, down from 3 s.
+const DICE_CHANNEL_POLL_INTERVAL: Duration = Duration::from_secs(1);
+
 /// Convert an HTTP(S) RPC URL to a WebSocket URL.
 ///
 /// `https://api.devnet.solana.com` → `wss://api.devnet.solana.com`
@@ -59,6 +67,90 @@ fn http_to_ws_url(http_url: &str) -> String {
     } else {
         // Already a ws:// or wss:// URL
         http_url.to_string()
+    }
+}
+
+/// HTTP-polling fallback for the WebSocket subscriber.
+///
+/// `tokio-tungstenite` 0.21 is built in this workspace WITHOUT a TLS
+/// feature (see workspace `Cargo.toml` — adding one would force rustls 0.22
+/// which conflicts with our pinned 0.21). That makes outgoing wss:// connects
+/// fail, so the WebSocket subscriber loop just spams reconnect errors against
+/// `wss://api.devnet.solana.com`. This poller uses the existing reqwest-based
+/// JSON-RPC client (already wired for HTTPS) to scan for Pending DiceChannels
+/// every few seconds and dispatch rounds — same behavior as the WS path,
+/// just slightly higher latency.
+pub async fn run_dice_channel_poller(
+    rpc: Arc<SolanaRpc>,
+    program_id: Pubkey,
+    _coordinator_keypair: Arc<Keypair>,
+    registry: NodeRegistry,
+    rounds: RoundMap,
+    metrics: Metrics,
+    min_nodes: usize,
+    _max_nodes: usize,
+    commit_timeout: Duration,
+) {
+    info!(
+        program = %program_id,
+        "DiceChannel poller starting — scanning every 3 s for Pending channels"
+    );
+
+    let mut dispatched: HashSet<(Pubkey, u64)> = HashSet::new();
+    let mut interval = tokio::time::interval(DICE_CHANNEL_POLL_INTERVAL);
+
+    loop {
+        interval.tick().await;
+
+        match find_pending_channels(&rpc, &program_id).await {
+            Ok(channels) => {
+                for (channel_pubkey, authority, channel_index, round_id, node_count, preselected) in channels {
+                    let key = (channel_pubkey, round_id);
+                    if dispatched.contains(&key) {
+                        continue;
+                    }
+
+                    info!(
+                        channel = %channel_pubkey,
+                        round_id,
+                        node_count,
+                        on_chain_selected = preselected.is_some(),
+                        "dispatching round for pending channel"
+                    );
+
+                    match dispatch_channel_round(
+                        &channel_pubkey,
+                        &authority,
+                        channel_index,
+                        round_id,
+                        node_count as usize,
+                        &registry,
+                        &rounds,
+                        &metrics,
+                        min_nodes.max(node_count as usize),
+                        commit_timeout,
+                        preselected.as_deref(),
+                    )
+                    .await
+                    {
+                        Ok(()) => {
+                            dispatched.insert(key);
+                            info!(channel = %channel_pubkey, round_id, "round dispatched");
+                        }
+                        Err(e) => {
+                            warn!(channel = %channel_pubkey, error = %e, "failed to dispatch round");
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                debug!(error = %e, "poll for pending channels failed (will retry)");
+            }
+        }
+
+        if dispatched.len() > 1000 {
+            dispatched.clear();
+        }
     }
 }
 
@@ -228,7 +320,7 @@ async fn run_subscription(
         // Scan for Pending DiceChannel accounts. Retry once on empty result.
         match find_pending_channels(rpc, program_id).await {
             Ok(channels) => {
-                for (channel_pubkey, authority, channel_index, round_id, node_count) in channels {
+                for (channel_pubkey, authority, channel_index, round_id, node_count, preselected) in channels {
                     let key = (channel_pubkey, round_id);
                     if dispatched.contains(&key) {
                         continue;
@@ -238,6 +330,7 @@ async fn run_subscription(
                         channel = %channel_pubkey,
                         round_id,
                         node_count,
+                        on_chain_selected = preselected.is_some(),
                         "dispatching round for pending channel"
                     );
 
@@ -252,6 +345,7 @@ async fn run_subscription(
                         metrics,
                         min_nodes.max(node_count as usize),
                         commit_timeout,
+                        preselected.as_deref(),
                     )
                     .await
                     {
@@ -279,7 +373,7 @@ async fn run_subscription(
 async fn find_pending_channels(
     rpc: &SolanaRpc,
     program_id: &Pubkey,
-) -> Result<Vec<(Pubkey, Pubkey, u16, u64, u8)>> {
+) -> Result<Vec<(Pubkey, Pubkey, u16, u64, u8, Option<Vec<[u8; 33]>>)>> {
     let accounts = rpc
         .get_program_accounts(
             program_id,
@@ -305,14 +399,51 @@ async fn find_pending_channels(
         let round_id =
             u64::from_le_bytes(data[ROUND_ID_OFFSET..ROUND_ID_OFFSET + 8].try_into().unwrap_or([0; 8]));
         let node_count = data[NODE_COUNT_OFFSET];
+        let max_nodes = data[74]; // offset 74 = max_nodes (see state layout)
 
-        results.push((pubkey, authority, channel_index, round_id, node_count));
+        // Extract channel.device_pubkeys[0..node_count] if the program ran
+        // v7.3 on-chain selection and pre-populated them during
+        // `request_randomness_auto`. Layout after the fixed 183-byte header:
+        //   device_ids      : 4 (Vec len) + max_nodes * 32
+        //   device_pubkeys  : 4 (Vec len) + max_nodes * 33   ← we want this
+        // If the Vec is all-zero-keys we treat it as "no on-chain selection"
+        // and fall back to the coord's off-chain SelectionEngine below.
+        let preselected = if max_nodes > 0 && node_count > 0 {
+            let pubkeys_start =
+                183 + 4 + (max_nodes as usize) * 32 + 4; // skip device_ids, into device_pubkeys
+            let want = node_count as usize;
+            if data.len() >= pubkeys_start + want * 33 {
+                let mut picks = Vec::with_capacity(want);
+                let mut any_nonzero = false;
+                for i in 0..want {
+                    let off = pubkeys_start + i * 33;
+                    let mut key = [0u8; 33];
+                    key.copy_from_slice(&data[off..off + 33]);
+                    if key != [0u8; 33] {
+                        any_nonzero = true;
+                    }
+                    picks.push(key);
+                }
+                if any_nonzero { Some(picks) } else { None }
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        results.push((pubkey, authority, channel_index, round_id, node_count, preselected));
     }
 
     Ok(results)
 }
 
 /// Select nodes and dispatch a round for a pending DiceChannel.
+///
+/// If `preselected` is `Some`, those exact device pubkeys are used (this is
+/// the v7.3 on-chain-selection path — the program already wrote picks into
+/// `channel.device_pubkeys` and we just honor them). Otherwise the
+/// coordinator's off-chain `SelectionEngine` picks based on measured latency.
 async fn dispatch_channel_round(
     channel_pubkey: &Pubkey,
     authority: &Pubkey,
@@ -324,19 +455,41 @@ async fn dispatch_channel_round(
     metrics: &Metrics,
     min_nodes: usize,
     commit_timeout: Duration,
+    preselected: Option<&[[u8; 33]]>,
 ) -> Result<()> {
-    let recently_selected = HashSet::new();
-    let selected = SelectionEngine::select_nodes(
-        registry,
-        &recently_selected,
-        node_count,
-        min_nodes,
-    )
-    .await
-    .ok_or_else(|| anyhow::anyhow!(
-        "not enough active nodes (need {}, have fewer)",
-        min_nodes
-    ))?;
+    let selected: Vec<[u8; 33]> = if let Some(picks) = preselected {
+        // Honor the on-chain selection. We still need the nodes to be live
+        // (connected via mTLS) to dispatch to them — filter against the
+        // registry. If any selected node is offline, we bail: with on-chain
+        // selection the coord isn't allowed to swap in a different device.
+        let reg = registry.read().await;
+        let mut verified = Vec::with_capacity(picks.len());
+        for pk in picks.iter().take(node_count) {
+            if reg.contains_key(pk) {
+                verified.push(*pk);
+            } else {
+                return Err(anyhow::anyhow!(
+                    "on-chain-selected node {} not connected",
+                    hex::encode(&pk[..6])
+                ));
+            }
+        }
+        drop(reg);
+        verified
+    } else {
+        let recently_selected = HashSet::new();
+        SelectionEngine::select_nodes(
+            registry,
+            &recently_selected,
+            node_count,
+            min_nodes,
+        )
+        .await
+        .ok_or_else(|| anyhow::anyhow!(
+            "not enough active nodes (need {}, have fewer)",
+            min_nodes
+        ))?
+    };
 
     // Use channel pubkey as the in-memory request_id.
     let mut request_id = [0u8; 32];

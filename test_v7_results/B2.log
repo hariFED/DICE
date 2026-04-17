@@ -1,0 +1,26 @@
+stress-driver v1
+  payer: 3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9
+  start balance: 3.703234 SOL
+  channel_index: 112, rounds: 1, node_count: 5
+  channel PDA: 6CVAnK9BQHGuWzqbSqhCmGYkMtKvv7qTJLa6EV1gs7Lp
+  init_channel (max_nodes=7)
+    TX: 3oW7SK4CXNF2qtbzWxiitE7kZg2PxTQFyxDCcDjZo9Ea5nuqwCVrfBZkPNUcNjRcoFTDpRdRT2HZftMtU1ePnQWu
+  pre-funding channel with 0.0100 SOL (10000000 lamports)
+    TX: m1KSXNcxCrGs21ocSkf65A18Cq5bsXZ8sQM37V56gD1LupfFxy6JRMUMBsErHF6CQ6U7uAHA9GtrDp637v5ubQH
+  required channel balance for 1 rounds: 2000000 lamports
+
+── running 1 rounds ─────────────────────────────
+[   1/1] FAIL in 61353ms — round timed out waiting for Finalized
+  channel status=1 (round_id=1), waiting up to 70 s for deadline then fail_round
+  fail_round TX: 3dbsXKEifoq4xzBQh4wBBG4Ag6gDuL5ALKZD2t4RUQHCnUDLh4jNFsvi85AymqgP7eTFuMzpff4F6udVeq9gS9Tn
+
+── summary ───────────────────────────────────────
+  total time:   62837 ms (62.8 s)
+  succeeded:    0/1
+  failed:       1
+  avg round:    0 ms
+  p50 / p95 / p99 / min / max: 0 / 0 / 0 / 0 / 0
+  start bal:    3.703234 SOL
+  end bal:      3.681683 SOL
+  spent:        0.021552 SOL
+  wrote summary: test_v7_results/B2.json

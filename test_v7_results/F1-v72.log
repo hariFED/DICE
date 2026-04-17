@@ -1,0 +1,25 @@
+stress-driver v1
+  payer: 3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9
+  start balance: 4.415642 SOL
+  channel_index: 90, rounds: 5, node_count: 4
+  channel PDA: CdiWowNjRW4b4bAvDmNK2zgk5cXDKMkZV4gc2J6S97wD
+  required channel balance for 5 rounds: 10000000 lamports
+  channel Finalized (round_id=15), deliver_callback → Idle
+
+── running 5 rounds ─────────────────────────────
+[   1/5] round_id=16  16840ms ✓ rand=cb09b175ab74db3c...
+[   2/5] round_id=17   9685ms ✓ rand=4b567944ac65c1ed...
+[   3/5] round_id=18   9277ms ✓ rand=231b12ed01fc7378...
+[   4/5] round_id=19   9137ms ✓ rand=103f3fbbd16da295...
+[   5/5] round_id=20  11626ms ✓ rand=10e652661819d1e6...
+
+── summary ───────────────────────────────────────
+  total time:   56567 ms (56.6 s)
+  succeeded:    5/5
+  failed:       0
+  avg round:    11313 ms
+  p50 / p95 / p99 / min / max: 9685 / 11626 / 11626 / 9137 / 16840
+  start bal:    4.415642 SOL
+  end bal:      4.416507 SOL
+  spent:        0.000000 SOL
+  wrote summary: test_v7_results/F1-v72.json
