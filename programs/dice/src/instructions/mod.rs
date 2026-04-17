@@ -11,6 +11,7 @@ pub mod resize_channel;
 pub mod select_nodes;
 pub mod submit_commit_v2;
 pub mod submit_reveal_v2;
+pub mod submit_round_v2;
 pub mod withdraw_balance;
 
 // Streaming VRF (v7)
@@ -48,6 +49,7 @@ pub use resize_channel::*;
 pub use select_nodes::*;
 pub use submit_commit_v2::*;
 pub use submit_reveal_v2::*;
+pub use submit_round_v2::*;
 pub use withdraw_balance::*;
 
 // Streaming VRF exports (v7)

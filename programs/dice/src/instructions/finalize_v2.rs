@@ -60,13 +60,34 @@ pub fn handler(ctx: Context<FinalizeV2>, round_id: u64) -> Result<()> {
     let refs: Vec<&[u8]> = entropy_values.iter().map(|e| e.as_ref()).collect();
     let final_hash = hashv(&refs);
     channel.randomness = final_hash.to_bytes();
-    channel.status = ChannelStatus::Finalized;
 
-    msg!(
-        "Randomness finalized: round_id={}, reveals={}, randomness={:?}",
-        round_id,
-        entropy_values.len(),
-        &channel.randomness[..8]
-    );
+    // L4 latency optimization (v7.4+):
+    //
+    // For channels with NO callback configured (`callback_program_id ==
+    // Pubkey::default()`), skip the Finalized → Idle hand-off via a
+    // separate `deliver_callback` TX and transition straight to Idle here.
+    // This eliminates an entire round-trip TX for the streaming-VRF
+    // pattern and the stress driver, saving ~1.5 s per round.
+    //
+    // Channels WITH a real callback program still go to Finalized — they
+    // need `deliver_callback` to fire the dApp CPI before transitioning.
+    let auto_idle = channel.callback_program_id == Pubkey::default();
+    if auto_idle {
+        channel.status = ChannelStatus::Idle;
+        msg!(
+            "Randomness finalized + auto-Idle (no callback): round_id={}, reveals={}, randomness={:?}",
+            round_id,
+            entropy_values.len(),
+            &channel.randomness[..8]
+        );
+    } else {
+        channel.status = ChannelStatus::Finalized;
+        msg!(
+            "Randomness finalized: round_id={}, reveals={}, randomness={:?}",
+            round_id,
+            entropy_values.len(),
+            &channel.randomness[..8]
+        );
+    }
     Ok(())
 }

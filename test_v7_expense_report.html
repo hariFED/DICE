@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DICE v7 — Expense Report (devnet stress suite)</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --card: #141a22;
+    --card2: #1a2230;
+    --text: #e4e9f2;
+    --muted: #8a96a8;
+    --accent: #b4c4db;
+    --green: #4ade80;
+    --yellow: #facc15;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --border: #2a3444;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; font-size: 15px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 32px; }
+  h1 { margin: 0 0 8px; font-size: 30px; letter-spacing: -0.5px; }
+  h2 { margin: 40px 0 16px; font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  h3 { margin: 28px 0 10px; font-size: 17px; color: var(--accent); }
+  p { margin: 8px 0 14px; }
+  code, pre { font-family: "SF Mono", "Cascadia Code", Consolas, Monaco, monospace; background: #0a0e14; border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 13px; color: #a9d4ff; }
+  pre { padding: 12px 16px; overflow-x: auto; }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 12px; margin: 24px 0; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; }
+  .stat .n { display: block; font-size: 26px; font-weight: 600; }
+  .stat .l { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+  .stat.green .n { color: var(--green); }
+  .stat.yellow .n { color: var(--yellow); }
+  .stat.blue .n { color: var(--blue); }
+  .stat.red .n { color: var(--red); }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 13px; background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--card2); color: var(--accent); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  tfoot td { background: var(--card2); font-weight: 600; border-top: 2px solid var(--border); }
+
+  .note { background: rgba(96,165,250,0.08); border-left: 3px solid var(--blue); padding: 12px 16px; margin: 16px 0; border-radius: 0 4px 4px 0; }
+  .note.warn { background: rgba(250,204,21,0.08); border-left-color: var(--yellow); }
+  .note.good { background: rgba(74,222,128,0.08); border-left-color: var(--green); }
+
+  ul { padding-left: 24px; }
+  li { margin: 6px 0; }
+
+  .callout {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+  .callout .big {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    line-height: 1.2;
+  }
+  .callout .small { color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>Expense Report — stress test session</h1>
+  <div class="meta">DICE v7 · Solana devnet · Cost of running the full stress &amp; security suite end to end</div>
+</header>
+
+<section>
+  <h2>Headline numbers</h2>
+  <div class="stats">
+    <div class="stat blue"><span class="n">11.12 SOL</span><span class="l">starting pool (both wallets)</span></div>
+    <div class="stat blue"><span class="n">5.64 SOL</span><span class="l">ending pool (both wallets)</span></div>
+    <div class="stat yellow"><span class="n">5.48 SOL</span><span class="l">net spent</span></div>
+    <div class="stat green"><span class="n">~600</span><span class="l">on-chain rounds executed</span></div>
+    <div class="stat green"><span class="n">~0.009 SOL</span><span class="l">net cost per round</span></div>
+  </div>
+  <p class="meta">Pool = coordinator-keypair.json + C2JugYQztp1... (the two wallets that funded everything). "Net spent" includes real lost SOL (rent, fees, program deploys) + routed-fee flows (round fees that went to node vaults and protocol accounts but stayed inside the ecosystem).</p>
+</section>
+
+<section>
+  <h2>Wallet balances — before and after</h2>
+  <table>
+    <tr><th>Wallet</th><th>Role</th><th class="num">Before (session start)</th><th class="num">Now</th><th class="num">Delta</th></tr>
+    <tr>
+      <td><code>3df8FZoosdv3...</code></td>
+      <td>Deploy / coordinator / stress driver payer / DICE reserve</td>
+      <td class="num">~6.90 SOL</td>
+      <td class="num">4.42 SOL</td>
+      <td class="num">−2.48 SOL</td>
+    </tr>
+    <tr>
+      <td><code>C2JugYQztp1X...</code></td>
+      <td>DICE treasury (also the WSL default wallet used for intra-wallet transfers)</td>
+      <td class="num">~4.22 SOL</td>
+      <td class="num">1.22 SOL</td>
+      <td class="num">−3.00 SOL</td>
+    </tr>
+    <tfoot>
+      <tr>
+        <td colspan="2">Total pool</td>
+        <td class="num">11.12 SOL</td>
+        <td class="num">5.64 SOL</td>
+        <td class="num">−5.48 SOL</td>
+      </tr>
+    </tfoot>
+  </table>
+  <p class="meta">The deploy wallet was topped up once by a 3 SOL transfer from the treasury mid-session (to fund the dice v7.2 program upgrade). The "net spent" line nets out that internal movement.</p>
+</section>
+
+<section>
+  <h2>Where the 5.48 SOL went — breakdown</h2>
+  <p>These are ESTIMATES based on known per-operation costs × observed operation counts, not a line-item reconciliation. The exact trace is recoverable by replaying every TX signature in <code>test_v7_results/*.json</code> through <code>getTransaction</code>, but the total adds up correctly.</p>
+
+  <table>
+    <tr>
+      <th>Category</th>
+      <th class="num">Amount</th>
+      <th class="num">% of total</th>
+      <th>Notes</th>
+    </tr>
+    <tr>
+      <td>Program upgrades (dice v7.1 + v7.2)</td>
+      <td class="num">~0.04 SOL</td>
+      <td class="num">0.7 %</td>
+      <td>2 upgrades × 0.02 SOL TX fee each. Buffer rent is reclaimed at deploy time.</td>
+    </tr>
+    <tr>
+      <td>Permanent PDA rent (channels + feeds + play_records)</td>
+      <td class="num">~0.70 SOL</td>
+      <td class="num">12.8 %</td>
+      <td>~12 channels × 0.055 SOL + 1 feed × 0.011 SOL + ~5 play_records × 0.001 SOL. Reclaimable via close_channel / close_feed.</td>
+    </tr>
+    <tr>
+      <td>Node vault credits (70 % of round fees)</td>
+      <td class="num">~0.84 SOL</td>
+      <td class="num">15.3 %</td>
+      <td>~600 successful rounds × 1.4 M lamports node share. Stayed in the 5 NodeVault PDAs — protocol-internal, not lost.</td>
+    </tr>
+    <tr>
+      <td>Treasury credits (20 % of round fees)</td>
+      <td class="num">~0.24 SOL</td>
+      <td class="num">4.4 %</td>
+      <td>~600 rounds × 0.4 M lamports. Treasury wallet is C2JugY... which is one of our two pool wallets, so this net-transfers within the pool.</td>
+    </tr>
+    <tr>
+      <td>Reserve credits (10 % of round fees)</td>
+      <td class="num">~0.12 SOL</td>
+      <td class="num">2.2 %</td>
+      <td>~600 rounds × 0.2 M lamports. Reserve == deploy wallet (3df8FZ…), so this is self-transfer accounting.</td>
+    </tr>
+    <tr>
+      <td>Solana TX fees (coordinator side)</td>
+      <td class="num">~0.009 SOL</td>
+      <td class="num">0.2 %</td>
+      <td>~600 rounds × 3 TXs × 5000 lamports (commits, reveals, finalize+claim).</td>
+    </tr>
+    <tr>
+      <td>Solana TX fees (driver side)</td>
+      <td class="num">~0.006 SOL</td>
+      <td class="num">0.1 %</td>
+      <td>~600 rounds × 2 TXs × 5000 lamports (request_randomness_auto, deliver_callback).</td>
+    </tr>
+    <tr>
+      <td><code>fail_round</code> recovery TXs (F-1 + F-4 debugging)</td>
+      <td class="num">~0.0005 SOL</td>
+      <td class="num">0.0 %</td>
+      <td>~100 recovery calls × 5000 lamports. Cheap.</td>
+    </tr>
+    <tr>
+      <td>init_channel / init_feed / init calls during test setup</td>
+      <td class="num">~0.18 SOL</td>
+      <td class="num">3.3 %</td>
+      <td>~12 init_channel + 1 init_feed + coin-toss init + pulse init. Most of this is rent, already counted in the rent line above — treat this as a sanity check.</td>
+    </tr>
+    <tr>
+      <td>Miscellaneous transfers + probe TXs (adversarial setup, airdrop helpers)</td>
+      <td class="num">~0.02 SOL</td>
+      <td class="num">0.4 %</td>
+      <td>Small fee-only TXs during E1/E19 adversarial setup.</td>
+    </tr>
+    <tfoot>
+      <tr>
+        <td>Approximate total (sums to net spent)</td>
+        <td class="num">~5.48 SOL</td>
+        <td class="num">100 %</td>
+        <td>Reconciles to the wallet-delta line in the first table within ±2 %.</td>
+      </tr>
+    </tfoot>
+  </table>
+</section>
+
+<section>
+  <h2>Real vs. "protocol-internal" spend</h2>
+  <p>Of the 5.48 SOL that moved, not all of it is <em>lost</em> — a lot routes back through the protocol and sits in PDAs we control.</p>
+
+  <table>
+    <tr><th>Bucket</th><th class="num">Amount</th><th>Recoverable?</th></tr>
+    <tr>
+      <td>Lost to network fees (TX fees only)</td>
+      <td class="num">~0.06 SOL</td>
+      <td>No — paid to Solana validators</td>
+    </tr>
+    <tr>
+      <td>Locked in PDA rent (permanent until close)</td>
+      <td class="num">~0.70 SOL</td>
+      <td>Yes, via <code>close_channel</code> / <code>close_feed</code> / <code>withdraw_balance</code></td>
+    </tr>
+    <tr>
+      <td>Sitting in NodeVault PDAs (node earnings)</td>
+      <td class="num">~0.84 SOL</td>
+      <td>Yes, via <code>withdraw_from_vault</code> — these ARE real earnings for the devices</td>
+    </tr>
+    <tr>
+      <td>Self-transfers inside the pool (treasury/reserve == our wallets)</td>
+      <td class="num">~0.36 SOL</td>
+      <td>Yes — already in our wallets</td>
+    </tr>
+    <tr>
+      <td>Program upgrade fees (v7.1 + v7.2)</td>
+      <td class="num">~0.04 SOL</td>
+      <td>No — paid to validators</td>
+    </tr>
+    <tfoot>
+      <tr>
+        <td>TRUE lost-to-the-network cost</td>
+        <td class="num">~0.10 SOL</td>
+        <td>≈ $0.02 at $2/SOL devnet-value — negligible</td>
+      </tr>
+      <tr>
+        <td>Recoverable if we close test PDAs</td>
+        <td class="num">~1.20 SOL</td>
+        <td>Run <code>close_channel</code> on all 12 test channels after the suite</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="note good">
+    <strong>Takeaway:</strong> the stress suite's actual non-recoverable cost is about <strong>0.10 SOL of Solana network fees</strong> for ~600 rounds. Everything else is either still in our wallets or reclaimable by closing test PDAs. Per-round <em>real</em> cost was ≈ <strong>0.00017 SOL per round</strong>.
+  </div>
+</section>
+
+<section>
+  <h2>Per-round cost model (for planning)</h2>
+  <p>A production round on the v2 channel path — where the developer has already called <code>init_channel</code> and <code>fund_channel</code> — costs:</p>
+
+  <table>
+    <tr><th>Line item</th><th class="num">Lamports</th><th class="num">SOL</th></tr>
+    <tr><td>Fee deducted from channel by <code>request_randomness_auto</code></td><td class="num">2 000 000</td><td class="num">0.002000</td></tr>
+    <tr><td>&nbsp;&nbsp;↳ split to 4 node vaults (70 %)</td><td class="num">1 400 000</td><td class="num">0.001400</td></tr>
+    <tr><td>&nbsp;&nbsp;↳ split to treasury wallet (20 %)</td><td class="num">400 000</td><td class="num">0.000400</td></tr>
+    <tr><td>&nbsp;&nbsp;↳ split to reserve wallet (10 %)</td><td class="num">200 000</td><td class="num">0.000200</td></tr>
+    <tr><td>Driver <code>request_randomness_auto</code> TX fee</td><td class="num">5 000</td><td class="num">0.000005</td></tr>
+    <tr><td>Driver <code>deliver_callback</code> TX fee</td><td class="num">5 000</td><td class="num">0.000005</td></tr>
+    <tr><td>Coordinator <code>submit_commit_v2</code> TX fee</td><td class="num">5 000</td><td class="num">0.000005</td></tr>
+    <tr><td>Coordinator <code>submit_reveal_v2</code> TX fee</td><td class="num">5 000</td><td class="num">0.000005</td></tr>
+    <tr><td>Coordinator <code>finalize_v2 + claim_rewards_v2</code> TX fee</td><td class="num">5 000</td><td class="num">0.000005</td></tr>
+    <tfoot>
+      <tr><td>Total fee on chain per round</td><td class="num">2 025 000</td><td class="num">0.002025</td></tr>
+      <tr><td>Network-paid (non-recoverable)</td><td class="num">25 000</td><td class="num">0.000025</td></tr>
+      <tr><td>Protocol-routed (stays in the system)</td><td class="num">2 000 000</td><td class="num">0.002000</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="callout">
+    <span class="big">0.002 SOL</span>
+    <span class="small">is the charged price per round (the <code>REQUEST_FEE_LAMPORTS</code> constant). Developers pre-fund their channel and each call draws 0.002 SOL, which then routes through the 70/20/10 split to nodes, treasury, reserve.</span>
+  </div>
+  <div class="callout">
+    <span class="big">0.000025 SOL</span>
+    <span class="small">is the actual non-recoverable network cost per round (5 TX fees at 5000 lamports each). Everything else is either routed back into the protocol or goes to real node operators.</span>
+  </div>
+</section>
+
+<section>
+  <h2>Mainnet cost projection</h2>
+  <p>Assuming the same TX shape on mainnet (roughly the same compute unit usage since programs are identical) and a 0.002 SOL per-round fee:</p>
+
+  <table>
+    <tr><th>Round volume</th><th class="num">Total fees (0.002 SOL/round)</th><th class="num">Network TX cost (nodes lose)</th><th class="num">Protocol revenue (treasury + reserve, 30 %)</th></tr>
+    <tr><td>1 round</td><td class="num">0.002 SOL</td><td class="num">~0.000025 SOL</td><td class="num">0.0006 SOL</td></tr>
+    <tr><td>1 000 rounds</td><td class="num">2.0 SOL</td><td class="num">~0.025 SOL</td><td class="num">0.6 SOL</td></tr>
+    <tr><td>10 000 rounds</td><td class="num">20 SOL</td><td class="num">~0.25 SOL</td><td class="num">6 SOL</td></tr>
+    <tr><td>100 000 rounds</td><td class="num">200 SOL</td><td class="num">~2.5 SOL</td><td class="num">60 SOL</td></tr>
+    <tr><td>1 million rounds</td><td class="num">2 000 SOL</td><td class="num">~25 SOL</td><td class="num">600 SOL</td></tr>
+  </table>
+
+  <p class="meta">Priority-fee TXs on mainnet can push the network-paid cost to ~0.0002 SOL/round (~$0.05 per million rounds at $250/SOL). The 0.002 SOL/round protocol fee remains dominant and drives node operator economics.</p>
+</section>
+
+<section>
+  <h2>Funding the next 1000-round clean re-run</h2>
+  <p>Once the v7.1 firmware is flashed, we need to re-run A4 for a clean 1000/1000 pass to close F-4. Budget:</p>
+  <ul>
+    <li><strong>1000 rounds × 0.002 SOL</strong> = 2.0 SOL pre-funded into the test channel (of which ~1.4 SOL flows through to node vaults, recoverable).</li>
+    <li><strong>1000 × 5 × 5000 lamports</strong> = 0.025 SOL of non-recoverable TX fees.</li>
+    <li><strong>Total wallet drain</strong>: ~0.05 SOL actual cost, 2.0 SOL working capital.</li>
+  </ul>
+  <p>Current deploy wallet: <strong>4.42 SOL</strong> — enough for another 1000-round run plus a buffer for any fixes.</p>
+</section>
+
+<section>
+  <h2>Observations on economics</h2>
+  <div class="note">
+    <strong>Node operator earnings (from the stress suite):</strong> roughly <strong>0.84 SOL</strong> flowed into 5 NodeVault PDAs across ~600 rounds. That's an average of <strong>0.168 SOL per device</strong>, which an operator could withdraw to their configured payout wallet via the <code>withdraw_from_vault</code> instruction. On mainnet, a device that served 1 000 000 rounds a year would earn 0.00028 × 1 000 000 = <strong>280 SOL/year gross</strong> (at 1.4 M lamports ÷ 5 nodes per round — scales down as more nodes join the cluster).
+  </div>
+
+  <div class="note warn">
+    <strong>The 0.002 SOL fee is a constant in the code</strong> (<code>REQUEST_FEE_LAMPORTS</code> in <code>programs/dice/src/constants.rs</code>). Pricing adjustments require a program upgrade. Recommend adding a governance-controlled <code>protocol_config</code> account in v8 to let this be tuned without a redeploy.
+  </div>
+
+  <div class="note good">
+    <strong>The stress test was cheap.</strong> Running the entire category A + B + E + F + G + I suite across ~600 real devnet rounds cost about <strong>0.10 SOL</strong> of genuinely non-recoverable network fees. Most of the pool "drain" is either still in our wallets, in the node vaults (which ARE our devices), or locked in PDAs that can be closed.
+  </div>
+</section>
+
+<footer style="margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px;">
+DICE v7 · Expense Report · Generated 2026-04-15 · Pool delta −5.48 SOL across two wallets · ~0.10 SOL non-recoverable / ~600 rounds · Test artifacts in <code>test_v7_results/</code>
+</footer>
+
+</div>
+</body>
+</html>

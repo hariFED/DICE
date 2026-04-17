@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DICE — Build with hardware randomness on Solana</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ─── Design tokens ──────────────────────────────────────────────────────── */
+  :root {
+    --bg:       #060608;
+    --panel:    #0d0d10;
+    --panel-2:  #121217;
+    --line:     #1c1c22;
+    --line-2:   #2a2a32;
+    --ink:      #f5f5f7;
+    --ink-2:    #cfcfd6;
+    --ink-3:    #8a8a95;
+    --ink-4:    #4d4d58;
+    --chrome:   linear-gradient(180deg, #ffffff 0%, #c4c4cc 55%, #6e6e78 100%);
+    --ok:       #34d399;
+    --accent:   #eaeaf1;
+    --code-bg:  #0a0a0d;
+    --c-kw:     #c19bff;
+    --c-str:    #ffc48a;
+    --c-num:    #a8f0c9;
+    --c-type:   #9ed8ff;
+    --c-fn:     #ffd7a3;
+    --c-com:    #5e5e6a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+    font-size: 15.5px;
+    line-height: 1.6;
+  }
+
+  /* Subtle grid texture, radial-masked */
+  body::before {
+    content: ""; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.016) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.016) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 0%, transparent 75%);
+    z-index: 0;
+  }
+
+  /* ─── Layout shell ──────────────────────────────────────────────────────── */
+  .wrap { position: relative; z-index: 1; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 0;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  aside.nav {
+    position: sticky; top: 0;
+    height: 100vh; overflow-y: auto;
+    padding: 40px 28px 60px;
+    border-right: 1px solid var(--line);
+    background: rgba(7, 7, 9, 0.72);
+    backdrop-filter: blur(8px);
+  }
+
+  main {
+    padding: 80px clamp(24px, 5vw, 96px) 160px;
+    max-width: 840px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    aside.nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 24px; }
+    main { padding: 48px 20px 100px; }
+  }
+
+  /* ─── Sidebar ───────────────────────────────────────────────────────────── */
+  .brand {
+    font-weight: 800; font-size: 17px; letter-spacing: 0.34em;
+    background: var(--chrome);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .tag-line { font-size: 10.5px; letter-spacing: 0.20em; text-transform: uppercase; color: var(--ink-3); margin-top: 6px; }
+  aside.nav nav { margin-top: 40px; }
+  aside.nav h4 {
+    font-size: 10.5px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--ink-4); margin: 28px 0 10px; font-weight: 700;
+  }
+  aside.nav a {
+    display: block; padding: 7px 0 7px 14px;
+    margin-left: -14px;
+    color: var(--ink-2); text-decoration: none;
+    font-size: 13.5px; font-weight: 500;
+    border-left: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  aside.nav a:hover { color: var(--ink); }
+  aside.nav a.active { color: var(--ink); border-left-color: #fff; }
+
+  /* ─── Hero ──────────────────────────────────────────────────────────────── */
+  .hero { margin-bottom: 56px; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 600; margin-bottom: 18px;
+  }
+  h1 {
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 800; letter-spacing: -0.025em;
+    line-height: 1.02; margin-bottom: 20px;
+    background: var(--chrome);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .lead {
+    font-size: 18px; line-height: 1.6;
+    color: var(--ink-2);
+    max-width: 64ch;
+    margin-bottom: 28px;
+  }
+
+  /* ─── Chips ─────────────────────────────────────────────────────────────── */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: var(--panel);
+    font-size: 11.5px; letter-spacing: 0.06em;
+    color: var(--ink-2); font-weight: 500;
+  }
+  .chip.ok { color: var(--ok); border-color: #134e3a; background: rgba(52,211,153,0.06); }
+  .chip.ok::before { content: "●"; font-size: 9px; }
+
+  /* ─── Section headers ───────────────────────────────────────────────────── */
+  h2 {
+    font-size: 30px; font-weight: 700; letter-spacing: -0.018em;
+    line-height: 1.15;
+    margin: 96px 0 8px;
+    color: var(--ink);
+    scroll-margin-top: 16px;
+  }
+  h2 + .section-sub {
+    font-size: 14.5px; color: var(--ink-3);
+    margin-bottom: 32px;
+    max-width: 60ch;
+  }
+  h3 {
+    font-size: 17px; font-weight: 600;
+    margin: 36px 0 12px;
+    color: var(--ink);
+  }
+
+  p { color: var(--ink-2); margin: 12px 0; max-width: 64ch; }
+  p b, strong { color: var(--ink); font-weight: 600; }
+  ul { color: var(--ink-2); padding-left: 20px; }
+  ul li { margin: 6px 0; max-width: 60ch; }
+
+  a { color: #a8d0ff; text-decoration: none; border-bottom: 1px dotted #3a5a7a; transition: color .12s, border-color .12s; }
+  a:hover { color: #dae8ff; border-bottom-color: #dae8ff; }
+
+  /* ─── Step cards (3-step integration) ───────────────────────────────────── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 28px 0;
+  }
+  .step {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px 20px;
+    background: linear-gradient(180deg, var(--panel) 0%, rgba(10,10,13,0.6) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .step::before {
+    content: attr(data-n);
+    position: absolute;
+    top: 14px; right: 18px;
+    font-size: 44px; font-weight: 800;
+    line-height: 1;
+    color: rgba(255,255,255,0.04);
+    font-family: "JetBrains Mono", monospace;
+  }
+  .step .k {
+    font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 700; margin-bottom: 10px;
+  }
+  .step h4 {
+    font-size: 15.5px; font-weight: 600; color: var(--ink); margin-bottom: 8px;
+  }
+  .step p { font-size: 13.5px; color: var(--ink-2); margin: 0; }
+  .step code {
+    display: inline-block; margin-top: 8px;
+    font-size: 12px;
+    background: rgba(255,255,255,0.04);
+    padding: 2px 6px; border-radius: 4px;
+    color: var(--c-type);
+  }
+
+  /* ─── Card grid (formulas) ──────────────────────────────────────────────── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    background: var(--panel);
+  }
+  .card .label {
+    font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 700; margin-bottom: 4px;
+  }
+  .card .title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+  .card pre { margin-top: 8px; margin-bottom: 0; padding: 12px 14px; font-size: 12px; }
+
+  /* ─── Callouts ──────────────────────────────────────────────────────────── */
+  .callout {
+    border: 1px solid var(--line-2);
+    border-left: 3px solid #fff;
+    background: linear-gradient(180deg, rgba(18,18,22,0.8), rgba(10,10,13,0.6));
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 24px 0;
+    font-size: 14px;
+    max-width: 64ch;
+  }
+  .callout.ok { border-left-color: var(--ok); }
+  .callout .k {
+    font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 700; margin-bottom: 6px;
+  }
+
+  /* ─── Code blocks ───────────────────────────────────────────────────────── */
+  code, pre, .mono { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  p code, li code, td code {
+    background: var(--code-bg);
+    color: var(--c-type);
+    padding: 1.5px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    border: 1px solid var(--line);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 22px;
+    overflow-x: auto;
+    font-size: 12.8px;
+    line-height: 1.7;
+    position: relative;
+    margin: 16px 0;
+  }
+  pre::before {
+    content: attr(data-lang);
+    position: absolute; top: 12px; right: 16px;
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-4); font-weight: 700;
+    pointer-events: none;
+  }
+  pre .c { color: var(--c-com); font-style: italic; }
+  pre .k { color: var(--c-kw); }
+  pre .s { color: var(--c-str); }
+  pre .n { color: var(--c-num); }
+  pre .t { color: var(--c-type); }
+  pre .f { color: var(--c-fn); }
+
+  .copy {
+    position: absolute; top: 10px; right: 78px;
+    font-family: "Inter", sans-serif;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 999px;
+    border: 1px solid var(--line-2); background: transparent; color: var(--ink-3);
+    cursor: pointer; opacity: 0; transition: opacity .15s, color .15s;
+    font-weight: 600;
+  }
+  pre:hover .copy { opacity: 1; }
+  .copy:hover { color: var(--ink); border-color: #555; }
+  .copy.ok { color: var(--ok); border-color: #134e3a; }
+
+  /* ─── Tables ────────────────────────────────────────────────────────────── */
+  .tbl {
+    width: 100%; border-collapse: collapse;
+    margin: 18px 0; font-size: 13.5px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .tbl th, .tbl td {
+    text-align: left; padding: 11px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl th {
+    font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 700;
+    background: var(--panel);
+  }
+  .tbl td { color: var(--ink-2); }
+  .tbl td:last-child { color: var(--ink); font-weight: 500; }
+
+  /* ─── SVG diagrams ──────────────────────────────────────────────────────── */
+  .diagram {
+    margin: 24px 0 8px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 32px 24px;
+    background: linear-gradient(180deg, var(--panel) 0%, rgba(7,7,9,0.6) 100%);
+  }
+  .diagram svg { width: 100%; height: auto; display: block; }
+  .diagram-caption {
+    font-size: 12px; color: var(--ink-3);
+    text-align: center; margin-top: 16px;
+    font-style: italic;
+  }
+
+  /* ─── Byte layout filmstrip ─────────────────────────────────────────────── */
+  .byte-strip {
+    display: flex; align-items: stretch;
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 20px 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+  }
+  .byte-strip .seg {
+    flex: 1; padding: 14px 12px;
+    border-right: 1px solid var(--line-2);
+    background: var(--panel);
+  }
+  .byte-strip .seg:last-child { border-right: none; }
+  .byte-strip .seg .range {
+    font-size: 10px; color: var(--ink-4); letter-spacing: 0.1em;
+  }
+  .byte-strip .seg .name {
+    color: var(--ink); font-weight: 600; font-size: 12.5px; margin: 4px 0;
+  }
+  .byte-strip .seg .desc { font-size: 10.5px; color: var(--ink-3); line-height: 1.4; font-family: "Inter", sans-serif; }
+  .byte-strip .seg.d { background: linear-gradient(180deg, rgba(193, 155, 255, 0.06), transparent); }
+  .byte-strip .seg.c { background: linear-gradient(180deg, rgba(158, 216, 255, 0.06), transparent); }
+  .byte-strip .seg.r { background: linear-gradient(180deg, rgba(168, 240, 201, 0.06), transparent); }
+
+  /* ─── Footer ────────────────────────────────────────────────────────────── */
+  footer {
+    margin-top: 128px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px; color: var(--ink-4);
+    display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+  }
+  footer .mono { font-size: 11.5px; }
+
+  @media print {
+    aside.nav, .copy { display: none; }
+    main { padding: 32px; max-width: none; }
+    body::before { display: none; }
+    pre, .diagram, .callout { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="shell">
+
+  <!-- ─── Sidebar ────────────────────────────────────────────────────────── -->
+  <aside class="nav">
+    <div class="brand">D&nbsp;I&nbsp;C&nbsp;E</div>
+    <div class="tag-line">Developer Guide · v7.5</div>
+    <nav>
+      <h4>Start</h4>
+      <a href="#hero">Overview</a>
+      <a href="#flow">How it works</a>
+      <a href="#quickstart">Quickstart · 3 steps</a>
+
+      <h4>Integrate</h4>
+      <a href="#install">Install</a>
+      <a href="#request">Request randomness</a>
+      <a href="#callback">Handle result</a>
+      <a href="#setup">Channel setup</a>
+
+      <h4>Reference</h4>
+      <a href="#formulas">Outcome formulas</a>
+      <a href="#payload">Callback payload</a>
+      <a href="#modes">Selection modes</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+  </aside>
+
+  <!-- ─── Main ────────────────────────────────────────────────────────────── -->
+  <main>
+
+    <!-- Hero -->
+    <section class="hero" id="hero">
+      <div class="eyebrow">Hardware VRF on Solana · integrator guide</div>
+      <h1>Randomness you can hold<br/>in your hand.</h1>
+      <p class="lead">DICE gives your Solana dApp verifiable randomness from real ESP32-S3 hardware. One CPI call, one callback, one line of game logic. Rounds finish in under four seconds.</p>
+      <div class="chips">
+        <span class="chip ok">devnet live</span>
+        <span class="chip">v7.5 program</span>
+        <span class="chip">Anchor 0.30</span>
+        <span class="chip">3.8 s avg</span>
+        <span class="chip">0.002 SOL · request</span>
+      </div>
+    </section>
+
+    <!-- How it works — SVG flow diagram -->
+    <h2 id="flow">How it works</h2>
+    <p class="section-sub">One transaction from the player. Four seconds later, your game is settled on chain.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="grad-box" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#1a1a20"/>
+            <stop offset="100%" stop-color="#0e0e12"/>
+          </linearGradient>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6a6a74"/>
+          </marker>
+        </defs>
+
+        <!-- Player -->
+        <g transform="translate(40,100)">
+          <rect width="120" height="60" rx="10" fill="url(#grad-box)" stroke="#2a2a32"/>
+          <text x="60" y="28" text-anchor="middle" fill="#8a8a95" font-family="Inter, sans-serif" font-size="9" font-weight="700" letter-spacing="1.5">PLAYER</text>
+          <text x="60" y="48" text-anchor="middle" fill="#f5f5f7" font-family="Inter, sans-serif" font-size="13" font-weight="600">wallet</text>
+        </g>
+
+        <!-- Your dApp -->
+        <g transform="translate(220,80)">
+          <rect width="150" height="100" rx="10" fill="url(#grad-box)" stroke="#34d399" stroke-width="1.5"/>
+          <text x="75" y="24" text-anchor="middle" fill="#34d399" font-family="Inter, sans-serif" font-size="9" font-weight="700" letter-spacing="1.5">YOUR DAPP</text>
+          <text x="75" y="46" text-anchor="middle" fill="#f5f5f7" font-family="Inter, sans-serif" font-size="13" font-weight="600">play()</text>
+          <line x1="20" y1="58" x2="130" y2="58" stroke="#2a2a32"/>
+          <text x="75" y="76" text-anchor="middle" fill="#f5f5f7" font-family="Inter, sans-serif" font-size="13" font-weight="600">dice_callback()</text>
+          <text x="75" y="92" text-anchor="middle" fill="#8a8a95" font-family="Inter, sans-serif" font-size="10">~60 lines total</text>
+        </g>
+
+        <!-- DICE -->
+        <g transform="translate(430,80)">
+          <rect width="150" height="100" rx="10" fill="url(#grad-box)" stroke="#2a2a32"/>
+          <text x="75" y="24" text-anchor="middle" fill="#8a8a95" font-family="Inter, sans-serif" font-size="9" font-weight="700" letter-spacing="1.5">DICE ORACLE</text>
+          <text x="75" y="46" text-anchor="middle" fill="#f5f5f7" font-family="Inter, sans-serif" font-size="13" font-weight="600">request →</text>
+          <line x1="20" y1="58" x2="130" y2="58" stroke="#2a2a32"/>
+          <text x="75" y="76" text-anchor="middle" fill="#f5f5f7" font-family="Inter, sans-serif" font-size="13" font-weight="600">finalize →</text>
+          <text x="75" y="92" text-anchor="middle" fill="#8a8a95" font-family="Inter, sans-serif" font-size="10">commit-reveal</text>
+        </g>
+
+        <!-- ESP32 devices -->
+        <g transform="translate(640,70)">
+          <rect width="120" height="120" rx="10" fill="url(#grad-box)" stroke="#2a2a32"/>
+          <text x="60" y="22" text-anchor="middle" fill="#8a8a95" font-family="Inter, sans-serif" font-size="9" font-weight="700" letter-spacing="1.5">HARDWARE</text>
+          <g transform="translate(18,34)">
+            <rect width="32" height="22" rx="3" fill="#18181e" stroke="#3a3a44"/>
+            <circle cx="6" cy="11" r="1.5" fill="#34d399"/>
+            <text x="20" y="15" text-anchor="middle" fill="#cfcfd6" font-family="JetBrains Mono, monospace" font-size="8">ESP32</text>
+          </g>
+          <g transform="translate(54,34)">
+            <rect width="32" height="22" rx="3" fill="#18181e" stroke="#3a3a44"/>
+            <circle cx="6" cy="11" r="1.5" fill="#34d399"/>
+            <text x="20" y="15" text-anchor="middle" fill="#cfcfd6" font-family="JetBrains Mono, monospace" font-size="8">ESP32</text>
+          </g>
+          <g transform="translate(18,62)">
+            <rect width="32" height="22" rx="3" fill="#18181e" stroke="#3a3a44"/>
+            <circle cx="6" cy="11" r="1.5" fill="#34d399"/>
+            <text x="20" y="15" text-anchor="middle" fill="#cfcfd6" font-family="JetBrains Mono, monospace" font-size="8">ESP32</text>
+          </g>
+          <g transform="translate(54,62)">
+            <rect width="32" height="22" rx="3" fill="#18181e" stroke="#3a3a44"/>
+            <circle cx="6" cy="11" r="1.5" fill="#34d399"/>
+            <text x="20" y="15" text-anchor="middle" fill="#cfcfd6" font-family="JetBrains Mono, monospace" font-size="8">ESP32</text>
+          </g>
+          <text x="60" y="106" text-anchor="middle" fill="#8a8a95" font-family="Inter, sans-serif" font-size="10">4 nodes · TRNG</text>
+        </g>
+
+        <!-- Arrows -->
+        <line x1="162" y1="130" x2="218" y2="130" stroke="#6a6a74" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="190" y="122" text-anchor="middle" fill="#cfcfd6" font-family="JetBrains Mono, monospace" font-size="9">1 TX</text>
+
+        <line x1="372" y1="130" x2="428" y2="130" stroke="#6a6a74" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="400" y="122" text-anchor="middle" fill="#cfcfd6" font-family="JetBrains Mono, monospace" font-size="9">CPI</text>
+
+        <line x1="582" y1="130" x2="638" y2="130" stroke="#6a6a74" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="610" y="122" text-anchor="middle" fill="#cfcfd6" font-family="JetBrains Mono, monospace" font-size="9">mTLS</text>
+
+        <!-- Return arrows -->
+        <line x1="638" y1="155" x2="582" y2="155" stroke="#34d399" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arr)"/>
+        <line x1="428" y1="155" x2="372" y2="155" stroke="#34d399" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arr)"/>
+        <text x="500" y="172" text-anchor="middle" fill="#34d399" font-family="JetBrains Mono, monospace" font-size="9">randomness → callback</text>
+      </svg>
+      <div class="diagram-caption">Solid arrow · request path · &nbsp;·&nbsp; Dashed arrow · result callback</div>
+    </div>
+
+    <!-- Quickstart 3-step cards -->
+    <h2 id="quickstart">Quickstart in 3 steps</h2>
+    <p class="section-sub">Copy one file. Change three things. Ship.</p>
+
+    <div class="steps">
+      <div class="step" data-n="1">
+        <div class="k">Install</div>
+        <h4>Add the dependency</h4>
+        <p>One line in <code>Cargo.toml</code>. Pulls in DICE's Anchor CPI stubs.</p>
+      </div>
+      <div class="step" data-n="2">
+        <div class="k">Request</div>
+        <h4>Call from your handler</h4>
+        <p>Inside your action, add a single <code>dice::cpi::request_randomness_auto()</code> call.</p>
+      </div>
+      <div class="step" data-n="3">
+        <div class="k">Receive</div>
+        <h4>Write the outcome formula</h4>
+        <p>One line of game logic. Everything else is copy-paste.</p>
+      </div>
+    </div>
+
+    <div class="callout ok">
+      <div class="k">Three things to change</div>
+      <b>1.</b> <code>declare_id!(...)</code> · your program ID &nbsp;&nbsp; <b>2.</b> the outcome formula · 1 line &nbsp;&nbsp; <b>3.</b> your <code>GameState</code> struct
+    </div>
+
+    <!-- Install -->
+    <h2 id="install">1. Install</h2>
+    <p class="section-sub">Add DICE as a dependency and enable the CPI feature.</p>
+
+<pre data-lang="Cargo.toml"><button class="copy">copy</button><span class="c"># One dep. The `cpi` feature gives you dice::cpi::request_randomness_auto.</span>
+<span class="c"># `no-entrypoint` prevents entrypoint collision in your program binary.</span>
+[dependencies]
+anchor-lang = <span class="s">"0.30"</span>
+dice = { git = <span class="s">"https://github.com/hariFED/DICE"</span>, features = [<span class="s">"cpi"</span>, <span class="s">"no-entrypoint"</span>] }</pre>
+
+    <!-- Request -->
+    <h2 id="request">2. Request randomness</h2>
+    <p class="section-sub">Add one CPI call inside your action handler.</p>
+
+<pre data-lang="rust"><button class="copy">copy</button><span class="k">use</span> anchor_lang::prelude::*;
+
+<span class="k">pub fn</span> <span class="f">play</span>(ctx: Context&lt;Play&gt;, bet: <span class="t">u8</span>, wager: <span class="t">u64</span>) -&gt; <span class="t">Result</span>&lt;()&gt; {
+    <span class="c">// ... your game setup: store the bet, take the wager.</span>
+
+    <span class="c">// Ask DICE for randomness. Hardware round starts instantly.</span>
+    dice::cpi::<span class="f">request_randomness_auto</span>(
+        CpiContext::<span class="f">new</span>(
+            ctx.accounts.dice_program.to_account_info(),
+            dice::cpi::accounts::<span class="t">RequestRandomnessAuto</span> {
+                authority:      ctx.accounts.player.to_account_info(),
+                channel:        ctx.accounts.dice_channel.to_account_info(),
+                system_program: ctx.accounts.system_program.to_account_info(),
+            },
+        ),
+        <span class="n">4</span>, <span class="c">// node_count (min 4, max 50)</span>
+    )?;
+    <span class="t">Ok</span>(())
+}</pre>
+
+    <!-- Callback -->
+    <h2 id="callback">3. Handle the result</h2>
+    <p class="section-sub">DICE calls back when the round finishes. You write one line of game logic.</p>
+
+<pre data-lang="rust"><button class="copy">copy</button><span class="c">// DICE's deliver_callback routes here automatically — Anchor's discriminator</span>
+<span class="c">// dispatch matches on the function name. Nothing else to wire.</span>
+<span class="k">pub fn</span> <span class="f">dice_callback</span>(
+    ctx: Context&lt;DiceCallback&gt;,
+    _channel_key: Pubkey,
+    randomness: [<span class="t">u8</span>; <span class="n">32</span>],
+) -&gt; <span class="t">Result</span>&lt;()&gt; {
+    <span class="k">let</span> g = &amp;<span class="k">mut</span> ctx.accounts.game;
+
+    <span class="c">// YOUR ONE LINE: randomness → outcome.</span>
+    g.outcome = (<span class="t">u32</span>::from_le_bytes([randomness[<span class="n">0</span>], randomness[<span class="n">1</span>], randomness[<span class="n">2</span>], randomness[<span class="n">3</span>]]) % <span class="n">6</span>) <span class="k">as</span> <span class="t">u8</span> + <span class="n">1</span>;
+
+    g.settled = <span class="k">true</span>;
+    <span class="t">Ok</span>(())
+}</pre>
+
+    <!-- Channel setup -->
+    <h2 id="setup">Channel setup · once per dApp</h2>
+    <p class="section-sub">A <b>channel</b> is a long-lived PDA that binds your program as DICE's callback target. Create it once at deploy time.</p>
+
+<pre data-lang="typescript"><button class="copy">copy</button><span class="c">// Run ONCE at deploy time. Creates a channel + pre-funds it.</span>
+<span class="k">await</span> diceProgram.methods
+  .<span class="f">initChannel</span>(channelIndex, maxNodes, yourProgram.programId, coordinatorPubkey)
+  .<span class="f">rpc</span>();
+
+<span class="c">// 1 SOL buys ~500 rounds at 0.002 SOL each.</span>
+<span class="k">await</span> diceProgram.methods.<span class="f">fundChannel</span>(<span class="n">1_000_000_000n</span>).<span class="f">rpc</span>();</pre>
+
+    <p>After this, any player calling <code>yourProgram.play()</code> automatically triggers a DICE round. Nothing more to orchestrate client-side.</p>
+
+    <!-- Outcome formulas -->
+    <h2 id="formulas">Outcome formulas</h2>
+    <p class="section-sub">Five patterns cover 90% of VRF use-cases. Pick one, paste into your <code>dice_callback</code>.</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="label">Game</div>
+        <div class="title">Dice · 1 to 6</div>
+<pre data-lang="rust">(<span class="t">u32</span>::from_le_bytes(
+  [r[<span class="n">0</span>],r[<span class="n">1</span>],r[<span class="n">2</span>],r[<span class="n">3</span>]]) % <span class="n">6</span>) + <span class="n">1</span></pre>
+      </div>
+      <div class="card">
+        <div class="label">Game</div>
+        <div class="title">Coin flip</div>
+<pre data-lang="rust">r[<span class="n">0</span>] &amp; <span class="n">1</span>  <span class="c">// 0 or 1</span></pre>
+      </div>
+      <div class="card">
+        <div class="label">Game</div>
+        <div class="title">Lottery winner</div>
+<pre data-lang="rust">(<span class="t">u64</span>::from_le_bytes([r[<span class="n">0</span>]..r[<span class="n">7</span>]])
+  % n_players <span class="k">as u64</span>) <span class="k">as</span> <span class="t">usize</span></pre>
+      </div>
+      <div class="card">
+        <div class="label">Game</div>
+        <div class="title">Weighted wheel</div>
+<pre data-lang="rust"><span class="k">let</span> p = <span class="t">u32</span>::from_le_bytes(
+  [r[<span class="n">0</span>],r[<span class="n">1</span>],r[<span class="n">2</span>],r[<span class="n">3</span>]]) % total;
+<span class="c">// walk segments until acc &gt; p</span></pre>
+      </div>
+      <div class="card">
+        <div class="label">Market</div>
+        <div class="title">Threshold binary</div>
+<pre data-lang="rust"><span class="t">u64</span>::from_le_bytes([r[<span class="n">0</span>]..r[<span class="n">7</span>]])
+  &gt; <span class="t">u64</span>::MAX / <span class="n">2</span></pre>
+      </div>
+    </div>
+
+    <!-- Callback payload byte layout -->
+    <h2 id="payload">Callback payload</h2>
+    <p class="section-sub">What DICE sends to your <code>dice_callback</code> handler as instruction data.</p>
+
+    <div class="byte-strip">
+      <div class="seg d">
+        <div class="range">[0 .. 8]</div>
+        <div class="name">discriminator</div>
+        <div class="desc">Anchor routes on this. <code>SHA-256("global:dice_callback")</code> · 8 bytes.</div>
+      </div>
+      <div class="seg c">
+        <div class="range">[8 .. 40]</div>
+        <div class="name">channel_key</div>
+        <div class="desc">The DiceChannel PDA that produced this result · 32 bytes.</div>
+      </div>
+      <div class="seg r">
+        <div class="range">[40 .. 72]</div>
+        <div class="name">randomness</div>
+        <div class="desc">Hardware-verified random bytes · 32 bytes · your input.</div>
+      </div>
+    </div>
+
+    <p>Your game account is passed as <code>remaining_accounts[0]</code>. Validate it in your <code>Accounts</code> struct as usual.</p>
+
+    <!-- Selection modes -->
+    <h2 id="modes">Selection modes</h2>
+    <p class="section-sub">Two modes. Same randomness shape. Pick at call-time, per request.</p>
+
+    <table class="tbl">
+      <thead>
+        <tr><th></th><th>Streaming (default)</th><th>Audit</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Who picks devices</td><td>Coordinator (off-chain)</td><td>Program · on-chain Fisher-Yates</td></tr>
+        <tr><td>Avg latency</td><td>3.8 s</td><td>4.1 s · +8%</td></tr>
+        <tr><td>p95</td><td>4.3 s</td><td>4.7 s</td></tr>
+        <tr><td>Verifiable selection</td><td>—</td><td>yes · reproducible from SlotHashes</td></tr>
+        <tr><td>Best for</td><td>gaming · UX-critical</td><td>regulated · RWA · high-stakes</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Pricing -->
+    <h2 id="pricing">Pricing</h2>
+    <p class="section-sub">Flat per-request. No surge pricing. Operators get paid in the same transaction that finalises your round.</p>
+
+    <table class="tbl">
+      <thead>
+        <tr><th>Item</th><th>Amount</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Per-round fee</td><td><code>0.002 SOL</code></td><td>Flat. Not load-dependent.</td></tr>
+        <tr><td>Node operators</td><td>70%</td><td>Atomic payout, same TX.</td></tr>
+        <tr><td>Treasury</td><td>20%</td><td>Protocol operations.</td></tr>
+        <tr><td>Reserve</td><td>10%</td><td>Insurance / future use.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- FAQ -->
+    <h2 id="faq">FAQ</h2>
+
+    <h3>Can I test without ESP32-S3 hardware?</h3>
+    <p>Yes. <code>tests/harness/mock_firmware_node</code> simulates 10 devices running the real CBOR protocol and ECDSA signing. Use it for CI.</p>
+
+    <h3>What if my callback handler panics?</h3>
+    <p>Randomness is still recorded on chain (it landed in a prior TX). You can redeploy a fixed handler and replay the callback — the result isn't lost.</p>
+
+    <h3>How do I make it provably unbiased?</h3>
+    <p>Three properties already hold: any one honest device in the N-of-N set makes the output unbiasable · commits land on chain before reveals are disclosed · audit mode adds on-chain device selection. Ship with audit mode on for the strongest guarantee.</p>
+
+    <h3>Is the randomness compatible with my EVM dApp port?</h3>
+    <p>Yes. The 32-byte output matches the format Chainlink VRF and Pyth Entropy use on EVM. If you're porting a game from Ethereum, the <code>dice_callback</code> formula is usually a copy-paste.</p>
+
+    <!-- Footer -->
+    <footer>
+      <span>DICE Labs · 2026 · <span class="mono">exprmntsv2@gmail.com</span></span>
+      <span class="mono">dice v7.5 · 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv</span>
+    </footer>
+
+  </main>
+</div>
+</div>
+
+<script>
+  /* ─── Copy buttons ─────────────────────────────────────────────────────── */
+  document.querySelectorAll('pre').forEach(function(pre) {
+    var btn = pre.querySelector('.copy');
+    if (!btn) return;
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var c = pre.cloneNode(true);
+      var b = c.querySelector('.copy'); if (b) b.remove();
+      var text = c.textContent.replace(/^\s*\n/, '').replace(/\n\s*$/, '');
+      navigator.clipboard.writeText(text).then(function() {
+        btn.classList.add('ok'); var prev = btn.textContent; btn.textContent = 'copied ✓';
+        setTimeout(function(){ btn.classList.remove('ok'); btn.textContent = prev; }, 1400);
+      });
+    });
+  });
+
+  /* ─── Scroll-spy sidebar ───────────────────────────────────────────────── */
+  var links = document.querySelectorAll('aside.nav a[href^="#"]');
+  var targets = Array.from(links).map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function onScroll() {
+    var y = window.scrollY + 60;
+    var active = 0;
+    targets.forEach(function(t, i){ if (t && t.offsetTop <= y) active = i; });
+    links.forEach(function(a, i){ a.classList.toggle('active', i === active); });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+</body>
+</html>

@@ -57,15 +57,36 @@ static int find_free_slot(void)
     return -1;
 }
 
-/** Find slot by request_id or return -1. Caller must hold mutex. */
+/**
+ * Find the active slot for `request_id` with the **highest** round_seq.
+ *
+ * In v2, the on-chain `request_id` is the DiceChannel pubkey and stays
+ * constant across every round on that channel. The coordinator bumps
+ * `round_seq` on each round. If a previous round on the same channel
+ * timed out (e.g. one device was slow and missed the commit deadline),
+ * its slot may still be `active` when the NEXT JobAssignment arrives —
+ * producing TWO active slots with the same request_id but different
+ * round_seq. Returning the first-matching slot (as the original code
+ * did) picked up the stale one, and on reveal the device sent entropy
+ * from the OLD round while the coordinator held a commit_hash for the
+ * NEW round — hash mismatch, reveal rejected, round failed.
+ *
+ * Fix: walk ALL matching slots and return the one with the largest
+ * `round_seq`. Caller must hold mutex.
+ */
 static int find_slot_by_request(const uint8_t request_id[32])
 {
+    int best = -1;
+    uint32_t best_seq = 0;
     for (int i = 0; i < MAX_PENDING_JOBS; i++) {
-        if (s_jobs[i].active && memcmp(s_jobs[i].request_id, request_id, 32) == 0) {
-            return i;
+        if (!s_jobs[i].active) continue;
+        if (memcmp(s_jobs[i].request_id, request_id, 32) != 0) continue;
+        if (best < 0 || s_jobs[i].round_seq > best_seq) {
+            best = i;
+            best_seq = s_jobs[i].round_seq;
         }
     }
-    return -1;
+    return best;
 }
 
 /* ------------------------------------------------------------------ */
@@ -113,6 +134,23 @@ void dice_cr_handle_job(const uint8_t request_id[32],
         ESP_LOGE(TAG, "Could not acquire job mutex");
         memset(entropy, 0, sizeof(entropy));
         return;
+    }
+
+    /* v7.1 fix: if we already have an active slot for this request_id
+     * (common in v2 where request_id == channel PDA is reused across
+     * rounds), evict it before inserting the new round's data. This
+     * prevents a stale round_N slot from shadowing round_{N+1}'s
+     * reveal lookup, and also stops the per-channel slot count from
+     * growing every time a round times out. */
+    for (int i = 0; i < MAX_PENDING_JOBS; i++) {
+        if (s_jobs[i].active
+            && memcmp(s_jobs[i].request_id, request_id, 32) == 0)
+        {
+            ESP_LOGW(TAG, "Evicting stale slot %d (round_seq=%lu) for same request_id",
+                     i, (unsigned long)s_jobs[i].round_seq);
+            memset(s_jobs[i].entropy, 0, sizeof(s_jobs[i].entropy));
+            memset(&s_jobs[i], 0, sizeof(s_jobs[i]));
+        }
     }
 
     int slot = find_free_slot();

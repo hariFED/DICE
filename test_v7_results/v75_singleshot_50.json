@@ -1,0 +1,471 @@
+{
+  "label": "v75-singleshot-helius-50",
+  "channel_index": 907,
+  "channel_pda": "BULVJypyU5SUAbxNX3pftBP4KjcXzcuutEqB8oz5iiMz",
+  "node_count": 4,
+  "total_rounds": 50,
+  "succeeded": 0,
+  "failed": 50,
+  "total_duration_ms": 3017959,
+  "avg_ms": 0,
+  "p50_ms": 0,
+  "p95_ms": 0,
+  "p99_ms": 0,
+  "min_ms": 0,
+  "max_ms": 0,
+  "start_balance_sol": 8.53325292,
+  "end_balance_sol": 8.43231045,
+  "spent_sol": 0.10094247,
+  "rounds": [
+    {
+      "round_index": 0,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46806,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 1,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47162,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 2,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46927,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 3,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46907,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 4,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 49677,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 5,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47249,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 6,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47115,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 7,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46462,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 8,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46873,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 9,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46473,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 10,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47706,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 11,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47328,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 12,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46636,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 13,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47434,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 14,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47158,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 15,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46190,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 16,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46690,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 17,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47052,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 18,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46495,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 19,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46434,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 20,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46585,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 21,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46722,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 22,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47235,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 23,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46766,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 24,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47364,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 25,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47047,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 26,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46597,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 27,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47198,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 28,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46433,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 29,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47391,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 30,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46738,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 31,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46439,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 32,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46458,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 33,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47417,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 34,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47025,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 35,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46862,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 36,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46479,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 37,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46495,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 38,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47063,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 39,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47086,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 40,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46918,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 41,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46985,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 42,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46540,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 43,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46580,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 44,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46473,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 45,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46383,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 46,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46644,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 47,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47197,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 48,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 46524,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    },
+    {
+      "round_index": 49,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 47309,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized/Idle"
+    }
+  ]
+}

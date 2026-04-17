@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE Script 3 — The Trust Problem</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #e8e8e8; font-family: 'Georgia', serif; line-height: 1.9; padding: 3rem 1.5rem; max-width: 720px; margin: 0 auto; }
+  .meta { border-bottom: 1px solid #222; padding-bottom: 2rem; margin-bottom: 3rem; }
+  .meta h1 { font-size: 2rem; font-weight: 400; color: #fff; margin-bottom: 0.5rem; }
+  .meta .subtitle { color: #666; font-size: 0.95rem; font-style: italic; }
+  .meta .details { margin-top: 1rem; display: flex; gap: 2rem; font-size: 0.8rem; color: #555; text-transform: uppercase; letter-spacing: 0.1em; }
+  .line { margin-bottom: 0.4rem; padding: 0.3rem 0.8rem; border-radius: 3px; transition: background 0.2s; cursor: pointer; font-size: 1.15rem; }
+  .line:hover { background: #1a1a1a; }
+  .line.active { background: #1a1a0a; border-left: 3px solid #f0c040; padding-left: calc(0.8rem - 3px); }
+  .spoken { color: #f5f5f5; font-size: 1.2rem; }
+  .direction { color: #4a9eff; font-size: 0.85rem; font-family: 'Consolas', monospace; font-style: italic; padding: 0.6rem 0.8rem; margin: 1rem 0; border-left: 2px solid #1a3a5a; background: #0d1520; }
+  .delivery { color: #ff6b6b; font-size: 0.8rem; font-family: 'Consolas', monospace; padding: 0.4rem 0.8rem; margin: 0.3rem 0 1.2rem 0; opacity: 0.8; }
+  .pause { text-align: center; color: #333; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; padding: 1rem 0; }
+  .pause::before, .pause::after { content: '———'; color: #222; margin: 0 1rem; }
+  .section { margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1a1a1a; }
+  .section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #444; font-weight: 400; font-family: 'Consolas', monospace; }
+  .section .time { float: right; color: #333; font-size: 0.7rem; }
+  .mg { background: #0a1a0a; border: 1px solid #1a3a1a; border-radius: 4px; padding: 1rem; margin: 1.5rem 0; font-size: 0.85rem; color: #5a9a5a; font-family: 'Consolas', monospace; }
+  .mg::before { content: '▶ MOTION GRAPHIC'; display: block; font-size: 0.65rem; letter-spacing: 0.15em; color: #3a6a3a; margin-bottom: 0.5rem; }
+  .controls { position: fixed; bottom: 2rem; right: 2rem; display: flex; gap: 0.5rem; }
+  .controls button { background: #1a1a1a; color: #888; border: 1px solid #333; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-family: monospace; }
+  .controls button:hover { background: #222; color: #fff; }
+  .controls button.active-btn { background: #f0c040; color: #000; border-color: #f0c040; }
+  body.teleprompter .direction, body.teleprompter .delivery, body.teleprompter .mg, body.teleprompter .meta .details, body.teleprompter .section h2, body.teleprompter .controls { display: none; }
+  body.teleprompter { font-size: 1.8rem; line-height: 2.2; max-width: 600px; }
+  body.teleprompter .spoken { font-size: 2rem; }
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <h1>Script 3 — The Trust Problem</h1>
+  <div class="subtitle">Style: philosophical opener — starts with a big idea about trust in crypto, narrows to VRF, then introduces the fix. TED-talk pacing.</div>
+  <div class="details">
+    <span>Runtime: ~75s</span>
+    <span>Energy: thoughtful, building to conviction</span>
+    <span>Arc: big idea → specific failure → solution → vision</span>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The big idea <span class="time">0:00</span></h2>
+</div>
+
+<div class="direction">FACE — medium, centered, calm. Speaking like the opening line of a talk. Measured.</div>
+
+<div class="line spoken">"We built an entire industry on one promise."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"Don't trust. Verify."</div>
+
+<div class="delivery">Pause a full second after "verify." This line is sacred in crypto. You're about to break it. The audience needs to feel it's solid before you crack it.</div>
+
+<div class="line spoken">"Billions of dollars move on Solana</div>
+<div class="line spoken">without anyone trusting a bank, a broker, a middleman.</div>
+<div class="line spoken">That's the whole point."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"But there's one place where we still just... trust."</div>
+
+<div class="delivery">"just... trust" — the ellipsis is real. You're choosing the word carefully, almost reluctantly. Like admitting something the community doesn't want to hear.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>Who we are + what we found <span class="time">0:12</span></h2>
+</div>
+
+<div class="direction">FACE — quick, grounded. Names + context in one breath, then straight into the problem.</div>
+
+<div class="line spoken">"I'm Hari, this is Nikhil. We build lottery games on Solana</div>
+<div class="line spoken">and we built DICE — because we found something</div>
+<div class="line spoken">that we couldn't un-see."</div>
+
+<div class="delivery">Names, product, and hook in 5 seconds. "DICE" lands before the 20-second mark. "Couldn't un-see" creates curiosity — what did they find?</div>
+
+<div class="line spoken">"The random number that picks who wins the pot...</div>
+<div class="line spoken">comes from a rented cloud server.</div>
+<div class="line spoken">One company. One machine.</div>
+<div class="line spoken">And every game on Solana just... trusts it."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"We'd shipped five games on top of this.</div>
+<div class="line spoken">Never questioned it."</div>
+
+<div class="delivery">The admission. Quick, honest. The audience thinks "wait, I haven't checked either."</div>
+
+<div class="line spoken">"That kept us up."</div>
+
+<div class="delivery">Three words. Don't elaborate.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The fix <span class="time">0:30</span></h2>
+</div>
+
+<div class="direction">Energy lifts. You reach for the ESP32. Hold it up. The camera should see the chip clearly.</div>
+
+<div class="line spoken">"So we built the thing that should've existed."</div>
+
+<div class="pause">hold the device — 2 seconds of nothing</div>
+
+<div class="line spoken">"DICE.</div>
+<div class="line spoken">Decentralized Infrastructure for Cryptographic Entropy."</div>
+
+<div class="delivery">First and only time you say the full name. It should sound deliberate, like each word was chosen. Because they were. The "so we built" connects your founder story to the product — you didn't find DICE, you made it because you had to.</div>
+
+<div class="line spoken">"A network of these — eight dollar microcontrollers —</div>
+<div class="line spoken">each with a key that lives and dies in the silicon.</div>
+<div class="line spoken">They generate randomness from hardware noise,</div>
+<div class="line spoken">commit their answers independently,</div>
+<div class="line spoken">and reveal them simultaneously."</div>
+
+<div class="line spoken">"The output is a number that no single device,</div>
+<div class="line spoken">no single person, no single company</div>
+<div class="line spoken">could have predicted or controlled."</div>
+
+<div class="mg">
+4 nodes on a map. Each produces a sealed value (lock icon). All locks open at once. Values merge into one glowing number in the center. Clean, geometric, satisfying.
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The proof <span class="time">0:50</span></h2>
+</div>
+
+<div class="line spoken">"It lands on Solana in one transaction.</div>
+<div class="line spoken">Three and a half seconds."</div>
+
+<div class="line spoken">"Ten lines of code to plug into your game."</div>
+
+<div class="line spoken">"And we're building streaming VRF —</div>
+<div class="line spoken">the first on Solana —</div>
+<div class="line spoken">where random values flow to your contract</div>
+<div class="line spoken">continuously. No request. No wait. Just... there."</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The vision <span class="time">1:02</span></h2>
+</div>
+
+<div class="direction">No device in hand anymore. Just you. Looking at the camera like this is the reason you and Nikhil started the whole thing.</div>
+
+<div class="line spoken">"We said 'don't trust, verify.'</div>
+<div class="line spoken">Nikhil and I are building the part</div>
+<div class="line spoken">where we actually mean it."</div>
+
+<div class="pause">2 seconds — hold, then cut</div>
+
+<div class="delivery">Callback to the opener. The audience remembers "don't trust, verify" from 0:03. Hearing it again at the end, with "I think it's time we meant it," closes the loop. The implication: we haven't been meaning it. Until now. Don't explain that. Let the audience feel it.</div>
+
+<div class="mg">
+DICE logo. White background. "DePIN for cryptographic services." URL. 3 seconds. Fade.
+</div>
+
+<!-- ============================================ -->
+<div class="controls">
+  <button onclick="document.body.classList.toggle('teleprompter');this.classList.toggle('active-btn')">Teleprompter</button>
+  <button onclick="this.classList.toggle('active-btn');document.querySelectorAll('.line').forEach(el=>el.onclick=()=>el.classList.toggle('active'))">Mark Lines</button>
+</div>
+
+</body>
+</html>

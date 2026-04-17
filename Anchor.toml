@@ -7,14 +7,14 @@ skip-lint = false
 
 [programs.localnet]
 dice = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
-coin_toss = "3oJL6bXFaVJhegSU2ah9y1zqGmbFZZu4peQwr9XmfUtn"
+coin_toss = "7r6UstdP6qTFK4HSqU4mFGPGyCVWd3JVjBeafQPyvspH"
 dice_roll = "C1UBkxcNM5g5kfJFDPCFkXVXAgrxsLksFoDTamk6XqJu"
 lucky_wheel = "2P8i6supnfNb2LYg4Dx3aSaJmjqw2fo8y9TtJF57fn82"
 prediction_market = "EvyL8EnSA74p9be1eJeP4dheJcRiM1S97dmnN9XXjdPp"
 
 [programs.devnet]
 dice = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
-coin_toss = "3oJL6bXFaVJhegSU2ah9y1zqGmbFZZu4peQwr9XmfUtn"
+coin_toss = "7r6UstdP6qTFK4HSqU4mFGPGyCVWd3JVjBeafQPyvspH"
 dice_roll = "C1UBkxcNM5g5kfJFDPCFkXVXAgrxsLksFoDTamk6XqJu"
 lucky_wheel = "2P8i6supnfNb2LYg4Dx3aSaJmjqw2fo8y9TtJF57fn82"
 prediction_market = "EvyL8EnSA74p9be1eJeP4dheJcRiM1S97dmnN9XXjdPp"

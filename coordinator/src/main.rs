@@ -4,6 +4,7 @@
 mod api;
 mod config;
 mod db;
+mod feed_crank;
 mod metrics;
 mod node_session;
 mod protocol;
@@ -68,8 +69,15 @@ async fn main() -> Result<()> {
         "DICE Coordinator starting"
     );
 
-    // 3. Connect to PostgreSQL (skipped in simulation mode).
-    let pool: Option<sqlx::PgPool> = if cfg.simulation {
+    // 3. Connect to PostgreSQL (skipped in simulation mode, also skipped
+    //    if DICE_SKIP_DB=1 is set — useful for a stress run when the
+    //    local DNS is temporarily refusing to resolve the DB hostname
+    //    but we still want the on-chain dispatch loop running).
+    let skip_db = std::env::var("DICE_SKIP_DB").unwrap_or_default() == "1";
+    let pool: Option<sqlx::PgPool> = if cfg.simulation || skip_db {
+        if skip_db {
+            warn!("DICE_SKIP_DB=1 — running without round history persistence");
+        }
         None
     } else {
         // Reject default/weak credentials in production
@@ -79,11 +87,21 @@ async fn main() -> Result<()> {
                  Use --simulation for local testing without a database."
             );
         }
-        let p = sqlx::PgPool::connect(&cfg.database_url)
-            .await
-            .context("connect to PostgreSQL")?;
-        run_migrations(&p).await?;
-        Some(p)
+        match sqlx::PgPool::connect(&cfg.database_url).await {
+            Ok(p) => {
+                run_migrations(&p).await?;
+                Some(p)
+            }
+            Err(e) => {
+                warn!(
+                    error = %e,
+                    "DATABASE_URL connect failed — continuing without DB persistence. \
+                     Round history will NOT be written to Postgres. Set DICE_SKIP_DB=1 \
+                     to suppress this retry path explicitly."
+                );
+                None
+            }
+        }
     };
 
     // 4. Initialise shared state.
@@ -239,8 +257,10 @@ async fn main() -> Result<()> {
         })
     };
 
-    // 9. Spawn Solana WebSocket subscriber (production mode only — real-time log events).
-    //    Replaces the old 5-second polling watcher with ~500ms latency via logsSubscribe.
+    // 9. Spawn Solana watcher (production mode only).
+    //    Uses HTTP polling via reqwest because tokio-tungstenite is built
+    //    without a TLS feature in this workspace (rustls 0.21 pin conflict
+    //    with rustls 0.22). Polls Pending DiceChannels every 3s.
     let watcher_handle = if !cfg.simulation {
         let rpc = std::sync::Arc::new(solana_rpc::SolanaRpc::new(&cfg.solana_rpc_url));
         let keypair = std::sync::Arc::new(
@@ -250,7 +270,6 @@ async fn main() -> Result<()> {
         let program_id: solana_sdk::pubkey::Pubkey = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
             .parse()
             .expect("parse program ID");
-        let rpc_url = cfg.solana_rpc_url.clone();
         let reg = registry.clone();
         let r = rounds.clone();
         let m = metrics.clone();
@@ -258,13 +277,31 @@ async fn main() -> Result<()> {
         let max = cfg.max_nodes as usize;
         let timeout = std::time::Duration::from_secs(cfg.commit_timeout_secs);
         Some(tokio::spawn(async move {
-            solana_ws::run_solana_ws_subscriber(
-                rpc, rpc_url, program_id, keypair, reg, r, m, min, max, timeout,
+            solana_ws::run_dice_channel_poller(
+                rpc, program_id, keypair, reg, r, m, min, max, timeout,
             )
             .await;
         }))
     } else {
         info!("Solana WebSocket subscriber disabled in simulation mode");
+        None
+    };
+
+    // 9b. Spawn streaming-VRF feed crank (production mode only).
+    let feed_crank_handle = if !cfg.simulation {
+        let rpc = std::sync::Arc::new(solana_rpc::SolanaRpc::new(&cfg.solana_rpc_url));
+        let keypair = std::sync::Arc::new(
+            solana_rpc::load_keypair(&cfg.coordinator_keypair_path)
+                .expect("load coordinator keypair"),
+        );
+        let program_id: solana_sdk::pubkey::Pubkey = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+            .parse()
+            .expect("parse program ID");
+        Some(tokio::spawn(async move {
+            feed_crank::run_feed_crank(rpc, program_id, keypair).await;
+        }))
+    } else {
+        info!("Feed crank disabled in simulation mode");
         None
     };
 
@@ -288,6 +325,9 @@ async fn main() -> Result<()> {
         _ = async {
             if let Some(h) = watcher_handle { h.await } else { std::future::pending().await }
         } => warn!("Solana watcher exited"),
+        _ = async {
+            if let Some(h) = feed_crank_handle { h.await } else { std::future::pending().await }
+        } => warn!("feed crank exited"),
     }
 
     Ok(())
@@ -679,6 +719,11 @@ async fn handle_node_connection<S>(
                         match entry.round.handle_reveal(node_id, entropy, sig) {
                             Ok(Some(randomness)) => {
                                 let selected = entry.round.selected_nodes.clone();
+                                let onchain_data = entry
+                                    .round
+                                    .finalized_onchain_data()
+                                    .cloned()
+                                    .unwrap_or_default();
                                 let db_id = entry.db_id;
                                 let duration = entry.started_at.elapsed();
                                 info!(
@@ -689,7 +734,7 @@ async fn handle_node_connection<S>(
                                 );
                                 metrics.rounds_total.inc();
                                 metrics.round_duration_seconds.observe(duration.as_secs_f64());
-                                Some((randomness, selected, db_id, entry_requester, entry_sequence, entry_channel_auth, entry_channel_idx))
+                                Some((randomness, selected, db_id, entry_requester, entry_sequence, entry_channel_auth, entry_channel_idx, onchain_data))
                             }
                             Ok(None) => {
                                 info!(
@@ -719,42 +764,94 @@ async fn handle_node_connection<S>(
                     }
                 };
 
-                if let Some((randomness, selected_nodes, db_id, req_pubkey, req_seq, channel_auth, channel_idx)) = finalized {
+                if let Some((randomness, selected_nodes, db_id, req_pubkey, req_seq, channel_auth, channel_idx, onchain_data)) = finalized {
                     // Persist to DB if available.
                     if let Some(ref pool) = db {
                         let _ = db::queries::record_reveal(pool, db_id, &node_id, &entropy).await;
                         let _ = db::queries::finalize_round(pool, db_id, &randomness).await;
                     }
 
-                    // BUNDLED ON-CHAIN TX: submit_commit + submit_reveal + finalize_randomness
-                    // All 3 instructions in ONE transaction — reduces latency from 3 TXs to 1.
+                    // ON-CHAIN SUBMISSION SPLIT INTO 3 TXs (Solana TX size cap is
+                    // 1232 bytes; bundling all of commit×N + reveal×N + finalize +
+                    // claim_rewards_v2 with N=4 nodes overflows at ~2.1KB):
+                    //   TX A: N × submit_commit_v2  → channel: Pending → CommitPhase
+                    //   TX B: N × submit_reveal_v2  → channel: CommitPhase → RevealPhase
+                    //   TX C: finalize_v2 + claim_rewards_v2 → Finalized + payouts
                     if let Some(ref ctx) = on_chain {
                         if req_pubkey != solana_sdk::pubkey::Pubkey::default() {
                             if let (Some(auth), Some(idx)) = (channel_auth, channel_idx) {
-                                // v2.0 channel flow: bundle finalize_v2 + claim_rewards_v2
-                                // in one TX so they either both succeed or both fail
-                                // (prevents stranded finalized-but-unclaimed rounds).
-                                //
-                                // claim_rewards_v2 is ONLY added when treasury + reserve
-                                // are configured AND we have the full contributing-node
-                                // list. Otherwise we fall back to finalize-only, which
-                                // leaves the channel in Finalized status (node operators
-                                // don't get paid, but rounds still complete).
-                                let mut instructions = Vec::new();
-                                instructions.push(solana_tx::build_finalize_v2_ix(
-                                    &ctx.program_id,
-                                    &ctx.keypair.pubkey(),
-                                    &auth,
-                                    idx,
-                                    req_seq,
-                                ));
+                                // Reorder onchain_data into selected_nodes order so
+                                // the on-chain channel.device_pubkeys[] vector ends
+                                // up in the SAME order we'll pass NodeVault accounts
+                                // to claim_rewards_v2 — otherwise the per-vault
+                                // ownership check fails (claim_rewards_v2.rs:146).
+                                let ordered: Vec<&([u8;33],[u8;32],[u8;64],[u8;32],[u8;64])> = selected_nodes
+                                    .iter()
+                                    .filter_map(|n| onchain_data.iter().find(|(node, ..)| node == n))
+                                    .collect();
+                                if ordered.len() != onchain_data.len() {
+                                    warn!(
+                                        ordered = ordered.len(),
+                                        onchain = onchain_data.len(),
+                                        "onchain_data has nodes not in selected_nodes — payout will be misordered"
+                                    );
+                                }
 
+                                // ── ONE TX: submit_round_v2 + claim ──────────
+                                //
+                                // v7.5 (single-shot): all device commits +
+                                // reveals in one ix (`submit_round_v2`),
+                                // followed by `claim_rewards_v2` in the same
+                                // TX. No prior commits TX — atomically writes
+                                // commits, reveals, computed randomness, and
+                                // auto-Idle's the channel.
+                                //
+                                // Threat model: see submit_round_v2.rs — the
+                                // coordinator can grind by silently dropping
+                                // a TX it doesn't like, but bias resistance
+                                // still holds for any honest contributor.
+                                // Acceptable because the coordinator is
+                                // operator-controlled + observable.
+                                //
+                                // Size budget for 4 nodes (legacy TX, no ALT):
+                                //   submit_round_v2 (664 B data + 6 ovh)  = 670 B
+                                //   claim_rewards_v2 (8 accts inline)     =  19 B
+                                //   compute_budget (set_cu_price)          =  12 B
+                                //   static keys (10 × 32)                  = 320 B
+                                //   sig + header + blockhash               = 100 B
+                                //   total                                  ≈1123 B (< 1232)
+                                //
+                                // For 5+ nodes we still fit (~1300 B); for 7+
+                                // we'd need ALT. Production = 4 nodes.
                                 let default_pk = solana_sdk::pubkey::Pubkey::default();
                                 let payouts_enabled = ctx.treasury != default_pk
                                     && ctx.reserve != default_pk
                                     && !selected_nodes.is_empty();
 
+                                let v75_contribs: Vec<solana_tx::V75RoundContribution> = ordered
+                                    .iter()
+                                    .copied()
+                                    .map(|(node_pk, commit_hash, _commit_sig, entropy, reveal_sig)| {
+                                        solana_tx::V75RoundContribution {
+                                            device_pubkey: *node_pk,
+                                            commit_hash: *commit_hash,
+                                            entropy: *entropy,
+                                            signature: *reveal_sig,
+                                        }
+                                    })
+                                    .collect();
+
+                                let mut instructions = Vec::with_capacity(2);
+                                instructions.push(solana_tx::build_submit_round_v2_ix(
+                                    &ctx.program_id,
+                                    &ctx.keypair.pubkey(),
+                                    &auth,
+                                    idx,
+                                    req_seq,
+                                    &v75_contribs,
+                                ));
                                 if payouts_enabled {
+                                    let claim_nodes: Vec<[u8;33]> = ordered.iter().map(|(n, ..)| *n).collect();
                                     instructions.push(solana_tx::build_claim_rewards_v2_ix(
                                         &ctx.program_id,
                                         &ctx.keypair.pubkey(),
@@ -762,18 +859,21 @@ async fn handle_node_connection<S>(
                                         idx,
                                         &ctx.treasury,
                                         &ctx.reserve,
-                                        &selected_nodes,
+                                        &claim_nodes,
                                     ));
                                 }
 
-                                match ctx.rpc.sign_and_send(&ctx.keypair, instructions).await {
+                                match ctx.rpc.sign_send_and_confirm(&ctx.keypair, instructions).await {
                                     Ok(s) => info!(
                                         sig = %s,
                                         payouts_enabled,
                                         num_nodes = selected_nodes.len(),
-                                        "finalize_v2 TX sent"
+                                        "v7.5 submit_round_v2 + claim TX confirmed (single-shot)"
                                     ),
-                                    Err(e) => warn!(error = %e, "finalize_v2 TX failed"),
+                                    Err(e) => {
+                                        warn!(error = %e, "v2 reveals+finalize+claim TX failed");
+                                        continue;
+                                    }
                                 }
                             } else {
                                 // v1.0 legacy flow — BUNDLE commit + reveal + finalize in ONE TX

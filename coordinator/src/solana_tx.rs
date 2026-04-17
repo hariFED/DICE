@@ -25,6 +25,7 @@ const SEED_REVEAL:     &[u8] = b"reveal";
 const SEED_RESULT:     &[u8] = b"result";
 const SEED_ESCROW:     &[u8] = b"escrow";
 const SEED_NODE_VAULT: &[u8] = b"node_vault";
+const SEED_FEED:       &[u8] = b"feed";
 
 // Instruction discriminators — SHA-256("global:<snake_case_name>")[0..8]
 
@@ -449,6 +450,125 @@ pub fn build_finalize_v2_ix(
         accounts: vec![
             AccountMeta::new_readonly(*coordinator, true),
             AccountMeta::new(channel, false),
+        ],
+        data,
+    }
+}
+
+/// One device's full v7.5 contribution (commit + reveal in a single payload).
+///
+/// 161 B per device on the wire — same shape as the on-chain `RoundContribution`
+/// struct in `programs/dice/src/instructions/submit_round_v2.rs`.
+#[derive(Clone, Copy, Debug)]
+pub struct V75RoundContribution {
+    pub device_pubkey: [u8; 33],
+    pub commit_hash: [u8; 32],
+    pub entropy: [u8; 32],
+    pub signature: [u8; 64],
+}
+
+/// Build `submit_round_v2` (v7.5 single-shot round submission).
+///
+/// Replaces the 3-TX flow (commits / reveals / finalize+claim) with one
+/// instruction that takes all device contributions and atomically writes
+/// commits + reveals + computed randomness + auto-Idle into the channel.
+/// `claim_rewards_v2` still runs as a separate ix in the same TX so the
+/// payout split stays explicit.
+///
+/// Per-contribution data: 33+32+32+64 = 161 B. Plus 8 (disc) + 8 (round_id)
+/// + 4 (Vec length prefix, Borsh u32 LE) = 20 B fixed. For 4 nodes: total
+/// ix data = 664 B.
+pub fn build_submit_round_v2_ix(
+    program_id: &Pubkey,
+    coordinator: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    round_id: u64,
+    contributions: &[V75RoundContribution],
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let mut data = anchor_discriminator("submit_round_v2").to_vec();
+    data.extend_from_slice(&round_id.to_le_bytes());
+    // Vec<RoundContribution> length prefix (Borsh u32 LE)
+    data.extend_from_slice(&(contributions.len() as u32).to_le_bytes());
+    for c in contributions {
+        data.extend_from_slice(&c.device_pubkey);
+        data.extend_from_slice(&c.commit_hash);
+        data.extend_from_slice(&c.entropy);
+        data.extend_from_slice(&c.signature);
+    }
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(*coordinator, true),
+            AccountMeta::new(channel, false),
+        ],
+        data,
+    }
+}
+
+/// Derive the RandomnessFeed PDA.
+pub fn feed_pda(program_id: &Pubkey, authority: &Pubkey, feed_index: u16) -> Pubkey {
+    Pubkey::find_program_address(
+        &[SEED_FEED, authority.as_ref(), &feed_index.to_le_bytes()],
+        program_id,
+    )
+    .0
+}
+
+/// Build `publish_feed_value` instruction.
+///
+/// Copies a finalized round's randomness from the bound DiceChannel into
+/// the feed's current slot + history ring. The coordinator is the only
+/// signer that can call this — it must match `feed.coordinator`.
+pub fn build_publish_feed_value_ix(
+    program_id: &Pubkey,
+    coordinator: &Pubkey,
+    feed_authority: &Pubkey,
+    feed_index: u16,
+    channel_authority: &Pubkey,
+    channel_index: u16,
+    randomness: &[u8; 32],
+    round_id: u64,
+) -> Instruction {
+    let feed = feed_pda(program_id, feed_authority, feed_index);
+    let channel = channel_pda(program_id, channel_authority, channel_index);
+    let mut data = anchor_discriminator("publish_feed_value").to_vec();
+    data.extend_from_slice(randomness);
+    data.extend_from_slice(&round_id.to_le_bytes());
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(*coordinator, true),
+            AccountMeta::new(feed, false),
+            AccountMeta::new_readonly(channel, false),
+        ],
+        data,
+    }
+}
+
+/// Build `init_feed` instruction (for driver/test use, not the crank).
+pub fn build_init_feed_ix(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    channel_index: u16,
+    feed_index: u16,
+    publish_interval_slots: u32,
+    name: [u8; 32],
+) -> Instruction {
+    let channel = channel_pda(program_id, authority, channel_index);
+    let feed = feed_pda(program_id, authority, feed_index);
+    let mut data = anchor_discriminator("init_feed").to_vec();
+    data.extend_from_slice(&feed_index.to_le_bytes());
+    data.extend_from_slice(&publish_interval_slots.to_le_bytes());
+    data.extend_from_slice(&name);
+    Instruction {
+        program_id: *program_id,
+        accounts: vec![
+            AccountMeta::new(*authority, true),
+            AccountMeta::new_readonly(channel, false),
+            AccountMeta::new(feed, false),
+            AccountMeta::new_readonly(system_program::id(), false),
         ],
         data,
     }
