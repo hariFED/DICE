@@ -390,6 +390,7 @@
       <a href="#hero">Overview</a>
       <a href="#flow">How it works</a>
       <a href="#quickstart">Quickstart · 3 steps</a>
+      <a href="#declare-id">Why change declare_id!?</a>
 
       <h4>Integrate</h4>
       <a href="#install">Install</a>
@@ -529,7 +530,7 @@
       <div class="step" data-n="3">
         <div class="k">Receive</div>
         <h4>Write the outcome formula</h4>
-        <p>One line of game logic. Everything else is copy-paste.</p>
+        <p>One line of game logic, inside a typed <code>dice_callback(ctx, result)</code> handler. Everything else is copy-paste.</p>
       </div>
     </div>
 
@@ -537,6 +538,24 @@
       <div class="k">Three things to change</div>
       <b>1.</b> <code>declare_id!(...)</code> · your program ID &nbsp;&nbsp; <b>2.</b> the outcome formula · 1 line &nbsp;&nbsp; <b>3.</b> your <code>GameState</code> struct
     </div>
+
+    <!-- Why change declare_id -->
+    <h2 id="declare-id">Why change <code>declare_id!</code>?</h2>
+    <p class="section-sub">A one-minute detour into Anchor's identity check — so step 1 above makes sense.</p>
+
+    <p>Every Anchor program has <code>declare_id!("...")</code> at the top of its <code>lib.rs</code>. At runtime Anchor checks: <i>"Am I deployed at the address I was compiled for?"</i> If the deployed address ≠ the value inside <code>declare_id!</code>, every instruction fails with <code>DeclaredProgramIdMismatch</code>. This prevents anyone from redeploying your bytecode at a different address and confusing clients.</p>
+
+    <p>So when you copy the DICE quickstart template, you replace the placeholder with <b>your own program's ID</b> — the pubkey of <code>target/deploy/&lt;your-dapp&gt;-keypair.json</code>. DICE's ID (<code>78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv</code>) stays inside the <code>dice</code> crate — you don't touch that.</p>
+
+<pre data-lang="bash"><button class="copy">copy</button><span class="c"># 1. Generate your dApp's keypair</span>
+solana-keygen new -o target/deploy/my_game-keypair.json
+
+<span class="c"># 2. Print the pubkey</span>
+solana-keygen pubkey target/deploy/my_game-keypair.json
+<span class="c"># → 7xAbc...YourId</span>
+
+<span class="c"># 3. Paste into lib.rs</span>
+declare_id!(<span class="s">"7xAbc...YourId"</span>);</pre>
 
     <!-- Install -->
     <h2 id="install">1. Install</h2>
@@ -576,21 +595,56 @@ dice = { git = <span class="s">"https://github.com/hariFED/DICE"</span>, feature
     <h2 id="callback">3. Handle the result</h2>
     <p class="section-sub">DICE calls back when the round finishes. You write one line of game logic.</p>
 
-<pre data-lang="rust"><button class="copy">copy</button><span class="c">// DICE's deliver_callback routes here automatically — Anchor's discriminator</span>
-<span class="c">// dispatch matches on the function name. Nothing else to wire.</span>
-<span class="k">pub fn</span> <span class="f">dice_callback</span>(
-    ctx: Context&lt;DiceCallback&gt;,
-    _channel_key: Pubkey,
-    randomness: [<span class="t">u8</span>; <span class="n">32</span>],
-) -&gt; <span class="t">Result</span>&lt;()&gt; {
+<pre data-lang="rust"><button class="copy">copy</button><span class="k">use</span> anchor_lang::prelude::*;
+
+<span class="c">// Typed payload — DICE's deliver_callback sends this as ix args. Borsh</span>
+<span class="c">// serialization is identical to the positional-args form; this is purely</span>
+<span class="c">// a DX upgrade.</span>
+<span class="k">#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug)]</span>
+<span class="k">pub struct</span> <span class="t">DiceResult</span> {
+    <span class="c">/// Which DiceChannel produced this randomness.</span>
+    <span class="k">pub</span> channel_key: <span class="t">Pubkey</span>,
+    <span class="c">/// 32 bytes of hardware-backed verifiable entropy.</span>
+    <span class="k">pub</span> randomness: [<span class="t">u8</span>; <span class="n">32</span>],
+}
+
+<span class="c">// Accounts for the callback handler.</span>
+<span class="k">#[derive(Accounts)]</span>
+<span class="k">pub struct</span> <span class="t">DiceCallback</span>&lt;<span class="k">'info</span>&gt; {
+    <span class="c">/// The game PDA whose outcome this callback settles. Anchor binds it</span>
+    <span class="c">/// via seeds; `constraint` blocks double-settlement at compile time.</span>
+    <span class="k">#[account(
+        mut,
+        seeds = [b"game", game.player.as_ref(), &amp;game.round_nonce.to_le_bytes()],
+        bump  = game.bump,
+        constraint = !game.settled @ GameError::AlreadySettled,
+    )]</span>
+    <span class="k">pub</span> game: <span class="t">Account</span>&lt;<span class="k">'info</span>, <span class="t">GameState</span>&gt;,
+
+    <span class="c">/// CHECK: the DiceChannel — we cross-check it inside the handler so a</span>
+    <span class="c">/// malicious caller can't spoof results from a different channel.</span>
+    <span class="k">pub</span> dice_channel: <span class="t">UncheckedAccount</span>&lt;<span class="k">'info</span>&gt;,
+}
+
+<span class="c">// Handler — clean, typed, 3 lines of game logic.</span>
+<span class="k">pub fn</span> <span class="f">dice_callback</span>(ctx: Context&lt;DiceCallback&gt;, result: <span class="t">DiceResult</span>) -&gt; <span class="t">Result</span>&lt;()&gt; {
+    <span class="f">require_keys_eq!</span>(
+        ctx.accounts.dice_channel.<span class="f">key</span>(),
+        result.channel_key,
+        <span class="t">GameError</span>::WrongChannel
+    );
+
     <span class="k">let</span> g = &amp;<span class="k">mut</span> ctx.accounts.game;
-
-    <span class="c">// YOUR ONE LINE: randomness → outcome.</span>
-    g.outcome = (<span class="t">u32</span>::from_le_bytes([randomness[<span class="n">0</span>], randomness[<span class="n">1</span>], randomness[<span class="n">2</span>], randomness[<span class="n">3</span>]]) % <span class="n">6</span>) <span class="k">as</span> <span class="t">u8</span> + <span class="n">1</span>;
-
-    g.settled = <span class="k">true</span>;
+    g.outcome = (<span class="t">u32</span>::from_le_bytes([
+        result.randomness[<span class="n">0</span>], result.randomness[<span class="n">1</span>],
+        result.randomness[<span class="n">2</span>], result.randomness[<span class="n">3</span>],
+    ]) % <span class="n">6</span>) <span class="k">as</span> <span class="t">u8</span> + <span class="n">1</span>;
+    g.randomness = result.randomness;
+    g.settled    = <span class="k">true</span>;
     <span class="t">Ok</span>(())
 }</pre>
+
+    <p>Wire-format identical to passing <code>(channel_key: Pubkey, randomness: [u8; 32])</code> positionally — Borsh serialises a two-field struct the same way. This is a pure DX upgrade: cleaner IDE autocomplete, future-proof (we can add fields to <code>DiceResult</code> without breaking old integrators), and forces you to acknowledge <code>channel_key</code> exists rather than prefixing it with <code>_</code> and ignoring it.</p>
 
     <!-- Channel setup -->
     <h2 id="setup">Channel setup · once per dApp</h2>
@@ -645,7 +699,7 @@ dice = { git = <span class="s">"https://github.com/hariFED/DICE"</span>, feature
 
     <!-- Callback payload byte layout -->
     <h2 id="payload">Callback payload</h2>
-    <p class="section-sub">What DICE sends to your <code>dice_callback</code> handler as instruction data.</p>
+    <p class="section-sub">What DICE's <code>deliver_callback</code> CPIs into your program as instruction data — deserialized into a <code>DiceResult</code> struct by Anchor.</p>
 
     <div class="byte-strip">
       <div class="seg d">
