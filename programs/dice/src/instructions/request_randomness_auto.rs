@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::slot_hashes;
+use solana_program::sysvar::slot_hashes;
 
 use crate::constants::{
     COMMIT_TIMEOUT_SLOTS, MIN_NODES_REQUIRED, REQUEST_FEE_LAMPORTS, SEED_CHANNEL,
@@ -33,7 +33,7 @@ pub struct RequestRandomnessAuto<'info> {
 }
 
 pub fn handler<'info>(
-    ctx: Context<'_, '_, 'info, 'info, RequestRandomnessAuto<'info>>,
+    ctx: Context<'info, RequestRandomnessAuto<'info>>,
     node_count: u8,
 ) -> Result<()> {
     let clock = Clock::get()?;

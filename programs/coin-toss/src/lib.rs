@@ -10,7 +10,7 @@
 // This serves as both a reference implementation and integration test.
 
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::hash::hashv;
+use solana_program::hash::hashv;
 
 declare_id!("7r6UstdP6qTFK4HSqU4mFGPGyCVWd3JVjBeafQPyvspH");
 
@@ -351,7 +351,7 @@ mod tests {
 
     #[test]
     fn test_dice_callback_discriminator_matches() {
-        use anchor_lang::solana_program::hash::hashv;
+        use solana_program::hash::hashv;
         let hash = hashv(&[b"global:dice_callback"]);
         let expected: [u8; 8] = hash.to_bytes()[..8].try_into().unwrap();
         assert_eq!(

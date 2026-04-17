@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::instruction::{AccountMeta, Instruction as SolInstruction};
-use anchor_lang::solana_program::program::invoke;
+use solana_program::instruction::{AccountMeta, Instruction as SolInstruction};
+use solana_program::program::invoke;
 
 use crate::constants::SEED_CHANNEL;
 use crate::error::DiceError;
@@ -27,7 +27,7 @@ pub struct DeliverCallback<'info> {
 }
 
 pub fn handler<'info>(
-    ctx: Context<'_, '_, 'info, 'info, DeliverCallback<'info>>,
+    ctx: Context<'info, DeliverCallback<'info>>,
     round_id: u64,
 ) -> Result<()> {
     let channel = &mut ctx.accounts.channel;
