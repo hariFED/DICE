@@ -59,7 +59,7 @@ pub fn handler<'info>(
 
         // CPI transfer from authority to channel
         let cpi_ctx = CpiContext::new(
-            ctx.accounts.system_program.to_account_info(),
+            anchor_lang::system_program::System::id(),
             anchor_lang::system_program::Transfer {
                 from: ctx.accounts.authority.to_account_info(),
                 to: channel.to_account_info(),

@@ -49,7 +49,7 @@ pub mod coin_toss {
         if vault_ai.lamports() < min_rent {
             let needed = min_rent - vault_ai.lamports();
             let cpi_ctx = CpiContext::new(
-                ctx.accounts.system_program.to_account_info(),
+                anchor_lang::system_program::System::id(),
                 anchor_lang::system_program::Transfer {
                     from: ctx.accounts.authority.to_account_info(),
                     to: vault_ai,
@@ -87,7 +87,7 @@ pub mod coin_toss {
 
         // Transfer wager from player to vault
         let cpi_ctx = CpiContext::new(
-            ctx.accounts.system_program.to_account_info(),
+            anchor_lang::system_program::System::id(),
             anchor_lang::system_program::Transfer {
                 from: ctx.accounts.player.to_account_info(),
                 to: ctx.accounts.vault.to_account_info(),

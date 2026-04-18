@@ -6,7 +6,6 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "lib"]
 name       = "dice"
-
 [features]
 no-entrypoint  = []
 no-idl         = []
@@ -14,7 +13,6 @@ no-log-cx      = []
 cpi            = ["no-entrypoint"]
 default        = []
 idl-build      = ["anchor-lang/idl-build"]
-
 [dependencies]
 anchor-lang = { workspace = true, features = ["init-if-needed"] }
 solana-program = { workspace = true }
@@ -23,10 +21,8 @@ blake3               = { workspace = true }
 unicode-segmentation = { workspace = true }
 # borsh is NOT added here — adding borsh 1.x alongside anchor-lang's borsh 0.x
 # re-exports causes E0659 "borsh is ambiguous" in AnchorDeserialize macros.
-
 [dev-dependencies]
 anchor-lang = { workspace = true }
-solana-program = { workspace = true }
 # k256 is dev-only — used by NodeVault binding-signature tests to produce
 # real ECDSA signatures. Not included in the BPF binary.
 k256        = { workspace = true }

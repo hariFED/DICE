@@ -23,7 +23,7 @@ pub struct FundChannel<'info> {
 pub fn handler(ctx: Context<FundChannel>, amount: u64) -> Result<()> {
     // Transfer lamports from authority to channel account
     let cpi_ctx = CpiContext::new(
-        ctx.accounts.system_program.to_account_info(),
+        anchor_lang::system_program::System::id(),
         Transfer {
             from: ctx.accounts.authority.to_account_info(),
             to: ctx.accounts.channel.to_account_info(),
