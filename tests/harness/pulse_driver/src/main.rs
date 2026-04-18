@@ -36,7 +36,7 @@ use solana_sdk::{
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
-const DICE_PROGRAM_ID: &str = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv";
+const DICE_PROGRAM_ID: &str = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD";
 const PULSE_PROGRAM_ID: &str = "J1THpEwf5kYMG25CjeKH2Nfr1oJWMQHW8SzxbvnVwy8t";
 const MAX_NODES: u8 = 7;
 const NODE_COUNT_REQUESTED: u8 = 4;

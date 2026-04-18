@@ -1,23 +1,25 @@
 [toolchain]
-anchor_version = "0.30.1"
+anchor_version = "1.0.0"
 
 [features]
 seeds = true
 skip-lint = false
 
 [programs.localnet]
-dice = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+# v7.7 dice — new program-id, side-by-side with v7.5 (78Qv6cy...).
+dice = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD"
 coin_toss = "7r6UstdP6qTFK4HSqU4mFGPGyCVWd3JVjBeafQPyvspH"
-dice_roll = "C1UBkxcNM5g5kfJFDPCFkXVXAgrxsLksFoDTamk6XqJu"
-lucky_wheel = "2P8i6supnfNb2LYg4Dx3aSaJmjqw2fo8y9TtJF57fn82"
-prediction_market = "EvyL8EnSA74p9be1eJeP4dheJcRiM1S97dmnN9XXjdPp"
+dice_roll = "CLpaMPxyu5Up4fuZb1JiY2uzj4s4iYVg9RfQHNFRuzAj"
+lucky_wheel = "FzUuegZpKT4BHhzms1eJX7L2f6r3NTxMRexs8uqxtnbf"
+prediction_market = "EHf5YLG2p7Wca9nUqJXRB6yATZidrBzJKM4Qj4k1EUvc"
 
 [programs.devnet]
-dice = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+# v7.7 dice — new program-id, side-by-side with v7.5 (78Qv6cy...).
+dice = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD"
 coin_toss = "7r6UstdP6qTFK4HSqU4mFGPGyCVWd3JVjBeafQPyvspH"
-dice_roll = "C1UBkxcNM5g5kfJFDPCFkXVXAgrxsLksFoDTamk6XqJu"
-lucky_wheel = "2P8i6supnfNb2LYg4Dx3aSaJmjqw2fo8y9TtJF57fn82"
-prediction_market = "EvyL8EnSA74p9be1eJeP4dheJcRiM1S97dmnN9XXjdPp"
+dice_roll = "CLpaMPxyu5Up4fuZb1JiY2uzj4s4iYVg9RfQHNFRuzAj"
+lucky_wheel = "FzUuegZpKT4BHhzms1eJX7L2f6r3NTxMRexs8uqxtnbf"
+prediction_market = "EHf5YLG2p7Wca9nUqJXRB6yATZidrBzJKM4Qj4k1EUvc"
 
 [registry]
 url = "https://api.apr.dev"

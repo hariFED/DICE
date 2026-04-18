@@ -21,13 +21,11 @@ export const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 export const REFRESH_INTERVAL = 5000 // 5s polling for live data
 
-// NAV_LINKS deliberately omits "Docs" — there is no public docs site yet.
-// The interactive HTML explainers in how-it-works/ are not deployed publicly,
-// and dead "#" links ship a visible bug. Add the entry back when a real docs
-// URL exists.
 export const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Explorer", href: "/explorer" },
+  { label: "Docs", href: "/docs" },
+  { label: "Pre-order", href: "/preorder" },
 ] as const
 
 // discord is intentionally absent — no server exists yet. Shipping a "#" link

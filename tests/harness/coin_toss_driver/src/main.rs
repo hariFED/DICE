@@ -50,7 +50,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const DICE_PROGRAM_ID: &str = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv";
+const DICE_PROGRAM_ID: &str = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD";
 const COIN_TOSS_PROGRAM_ID: &str = "7r6UstdP6qTFK4HSqU4mFGPGyCVWd3JVjBeafQPyvspH";
 
 const TREASURY: &str = "C2JugYQztp1XDGG1ZCagbqRivqGsmE1vG1uMHaMHPDaQ";

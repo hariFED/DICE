@@ -140,7 +140,10 @@ export default function ExplorerPage() {
               ) : (
                 recentRounds.map((round, i) => (
                   <motion.tr
-                    key={round.request_id}
+                    // v2 channel path reuses request_id (=channel pubkey)
+                    // across every round on a channel — compose with
+                    // timestamp + index so each row stays identity-stable.
+                    key={`${round.request_id}-${round.timestamp}-${i}`}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03 }}

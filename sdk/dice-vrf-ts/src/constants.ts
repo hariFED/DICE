@@ -8,7 +8,7 @@ import { PublicKey } from "@solana/web3.js";
  * to the same base58 value.
  */
 export const DICE_PROGRAM_ID = new PublicKey(
-  "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+  "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD"
 );
 
 /** Seed bytes for the `DiceChannel` PDA. */

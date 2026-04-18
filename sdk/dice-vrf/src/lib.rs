@@ -26,7 +26,7 @@ pub use client::DiceVrfClient;
 /// Prefer [`DICE_PROGRAM_ID_PUBKEY`] when you need a `Pubkey` — that avoids
 /// the `.parse().unwrap()` pattern that shows up at every call site and
 /// eliminates a potential runtime panic if the constant ever drifts.
-pub const DICE_PROGRAM_ID: &str = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv";
+pub const DICE_PROGRAM_ID: &str = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD";
 
 /// The canonical DICE program ID as a compile-time `Pubkey`.
 ///
@@ -35,7 +35,7 @@ pub const DICE_PROGRAM_ID: &str = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
 /// Keep in lockstep with [`DICE_PROGRAM_ID`]; the unit test below enforces
 /// that they resolve to the same value.
 pub const DICE_PROGRAM_ID_PUBKEY: solana_sdk::pubkey::Pubkey =
-    solana_sdk::pubkey!("78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv");
+    solana_sdk::pubkey!("FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD");
 
 #[cfg(test)]
 mod tests {

@@ -28,7 +28,7 @@ use solana_sdk::{
 use std::str::FromStr;
 use std::time::Duration;
 
-const DICE_PROGRAM_ID: &str = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv";
+const DICE_PROGRAM_ID: &str = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD";
 
 #[derive(Parser)]
 struct Args {
