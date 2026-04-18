@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
+// Anchor 1.0: AccountMeta + Pubkey come from prelude. hashv stays in
+// anchor_lang's solana_program facade.
 use solana_program::hash::hashv;
-use solana_program::instruction::{AccountMeta, Instruction as SolInstruction};
-use solana_program::program::invoke;
+use anchor_lang::solana_program::instruction::Instruction as SolInstruction;
+use anchor_lang::solana_program::program::invoke;
 
 use crate::constants::{MIN_NODES_REQUIRED, SEED_REQUEST, SEED_RESULT};
 use crate::error::DiceError;
@@ -199,7 +201,8 @@ pub fn handler<'info>(ctx: Context<'info, FinalizeRandomness<'info>>) -> Result<
         // The callback program itself must also be in the account_infos
         account_infos.push(callback_program_info.clone());
 
-        invoke(&ix, &account_infos).map_err(|_| error!(DiceError::CallbackFailed))?;
+        // Anchor 1.0: invoke() takes &[AccountInfo] strictly, no &Vec coercion.
+        invoke(&ix, &account_infos[..]).map_err(|_| error!(DiceError::CallbackFailed))?;
 
         msg!("CPI callback invoked: program={}", callback_program_id);
     }

@@ -151,7 +151,7 @@ pub mod prediction_market {
 
         // Transfer to vault
         let cpi_ctx = CpiContext::new(
-            ctx.accounts.system_program.to_account_info(),
+            anchor_lang::system_program::System::id(),
             anchor_lang::system_program::Transfer {
                 from: ctx.accounts.player.to_account_info(),
                 to: ctx.accounts.vault.to_account_info(),

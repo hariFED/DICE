@@ -79,15 +79,18 @@ pub fn transfer_lamports_program_owned(
 /// Use this variant when the source is a plain wallet (e.g., developer
 /// topping up a vault directly). For PDA-to-PDA transfers use
 /// `transfer_lamports_program_owned` instead.
+// Anchor 1.0: CpiContext::new takes the program *Pubkey*, not its
+// AccountInfo. We no longer need the system_program AccountInfo to be
+// passed in — `solana_invoke` resolves it from the instruction's program_id.
 #[allow(dead_code)]
 pub fn transfer_lamports_from_signer<'info>(
     from: AccountInfo<'info>,
     to: AccountInfo<'info>,
-    system_program: AccountInfo<'info>,
+    _system_program: AccountInfo<'info>,
     amount: u64,
 ) -> Result<()> {
     let cpi_ctx = CpiContext::new(
-        system_program,
+        anchor_lang::system_program::System::id(),
         system_program::Transfer { from, to },
     );
     system_program::transfer(cpi_ctx, amount)

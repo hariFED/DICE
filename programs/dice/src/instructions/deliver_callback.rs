@@ -1,6 +1,10 @@
 use anchor_lang::prelude::*;
-use solana_program::instruction::{AccountMeta, Instruction as SolInstruction};
-use solana_program::program::invoke;
+// Anchor 1.0: AccountMeta + Pubkey come from the prelude (solana-instruction +
+// solana-address). Importing them from solana_program 3.x directly would
+// re-trigger the __Pubkey/Pubkey disambiguation. `Instruction` likewise lives
+// in the prelude as anchor_lang's re-export of solana_instruction::Instruction.
+use anchor_lang::solana_program::instruction::Instruction as SolInstruction;
+use anchor_lang::solana_program::program::invoke;
 
 use crate::constants::SEED_CHANNEL;
 use crate::error::DiceError;
@@ -108,8 +112,9 @@ pub fn handler<'info>(
     }
     account_infos.push(callback_program.clone());
 
-    // If CPI fails, revert status back to Finalized so it can be retried
-    match invoke(&ix, &account_infos) {
+    // If CPI fails, revert status back to Finalized so it can be retried.
+    // Anchor 1.0: invoke() takes &[AccountInfo] strictly, no &Vec coercion.
+    match invoke(&ix, &account_infos[..]) {
         Ok(()) => {
             msg!("Callback delivered, channel is Idle");
             Ok(())
