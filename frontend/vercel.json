@@ -1,13 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd frontend && pnpm install --frozen-lockfile && pnpm build",
-  "installCommand": "echo 'skip root install'",
-  "outputDirectory": "frontend/.next",
-  "framework": null,
-  "ignoreCommand": "bash -lc 'git diff --quiet HEAD^ HEAD -- frontend/ vercel.json 2>/dev/null; [ $? -eq 0 ] && exit 0 || exit 1'",
+  "framework": "nextjs",
   "github": {
     "silent": true
   },
+  "ignoreCommand": "bash -lc 'cd .. && git diff --quiet HEAD^ HEAD -- frontend/ 2>/dev/null; [ $? -eq 0 ] && exit 0 || exit 1'",
   "headers": [
     {
       "source": "/api/v1/:path*",
