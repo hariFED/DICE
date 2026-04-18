@@ -1,0 +1,47 @@
+# Vercel builds only from frontend/. Everything else is repo noise
+# (Rust workspaces, solana-test-validator state, build artifacts).
+# vercel.json handles the actual build command; this just keeps the
+# upload tarball small and avoids locked-file EACCES errors.
+
+# Rust / Anchor / Solana
+target/
+.anchor/
+test-ledger/
+**/target/
+**/.anchor/
+**/test-ledger/
+*.so
+*.rlib
+
+# Node / pnpm workspace noise outside frontend
+node_modules/
+**/node_modules/
+.pnpm-store/
+
+# Local envs / secrets (defense in depth — gitignored already)
+.env
+.env.local
+.env.*.local
+*-keypair.json
+certs/
+
+# Harness driver outputs
+test_v7_results/
+harness/
+tests/harness/
+
+# Docs/source-only dirs (leading slash = repo root only, so
+# frontend/app/docs/ is NOT matched)
+/programs/
+/coordinator/
+/sdk/
+/tests/
+/scripts/
+/docs/
+/migrations/
+
+# Git / IDE
+.git/
+.vscode/
+.idea/
+*.log
