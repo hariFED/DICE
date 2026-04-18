@@ -36,7 +36,7 @@ use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::watch;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
-const DICE_PROGRAM_ID: &str = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv";
+const DICE_PROGRAM_ID: &str = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD";
 const REQUEST_FEE_LAMPORTS: u64 = 2_000_000;
 
 #[derive(Parser)]

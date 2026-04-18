@@ -126,7 +126,7 @@ impl DiceConfig {
     /// Create a [`DiceConfig`] pointing at the mainnet DICE program.
     ///
     /// Uses the canonical mainnet program ID
-    /// `78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv`.
+    /// `FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD`.
     pub fn mainnet() -> Self {
         Self {
             program_id: crate::DICE_PROGRAM_ID.parse().unwrap(),

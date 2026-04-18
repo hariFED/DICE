@@ -105,7 +105,10 @@ export default function RoundsPage() {
             ) : (
               filtered.map((round, i) => (
                 <motion.tr
-                  key={round.request_id}
+                  // v2 channel path: request_id (=channel pubkey) repeats
+                  // across rounds on one channel — compose with timestamp
+                  // + index for a stable per-row identity.
+                  key={`${round.request_id}-${round.timestamp}-${i}`}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.02 }}

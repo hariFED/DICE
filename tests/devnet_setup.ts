@@ -23,7 +23,7 @@ import { BN } from "@coral-xyz/anchor";
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
-const PROGRAM_ID = new PublicKey("78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv");
+const PROGRAM_ID = new PublicKey("FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD");
 const RPC_URL = "https://api.devnet.solana.com";
 const DEVICE_PUBKEY_HEX = "025e62666100d9ee1973a02032dbe41f3e5d7b3e54bb11e9ba9cc839b43c35a01d";
 

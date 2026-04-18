@@ -114,7 +114,7 @@ async fn main() -> Result<()> {
         match solana_rpc::load_keypair(&cfg.coordinator_keypair_path) {
             Ok(keypair) => {
                 let program_id: solana_sdk::pubkey::Pubkey =
-                    "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+                    "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD"
                         .parse()
                         .expect("parse program ID");
 
@@ -267,7 +267,7 @@ async fn main() -> Result<()> {
             solana_rpc::load_keypair(&cfg.coordinator_keypair_path)
                 .expect("load coordinator keypair"),
         );
-        let program_id: solana_sdk::pubkey::Pubkey = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+        let program_id: solana_sdk::pubkey::Pubkey = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD"
             .parse()
             .expect("parse program ID");
         let reg = registry.clone();
@@ -294,7 +294,7 @@ async fn main() -> Result<()> {
             solana_rpc::load_keypair(&cfg.coordinator_keypair_path)
                 .expect("load coordinator keypair"),
         );
-        let program_id: solana_sdk::pubkey::Pubkey = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv"
+        let program_id: solana_sdk::pubkey::Pubkey = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD"
             .parse()
             .expect("parse program ID");
         Some(tokio::spawn(async move {

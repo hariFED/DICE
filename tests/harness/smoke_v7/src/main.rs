@@ -49,7 +49,7 @@ struct Args {
     #[arg(long, default_value = "C2JugYQztp1XDGG1ZCagbqRivqGsmE1vG1uMHaMHPDaQ")]
     payout_wallet: String,
 
-    #[arg(long, default_value = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv")]
+    #[arg(long, default_value = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD")]
     program_id: String,
 }
 

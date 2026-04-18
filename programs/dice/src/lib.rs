@@ -11,7 +11,10 @@ pub mod state;
 
 use instructions::*;
 
-declare_id!("78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv");
+// v7.7 deployed at NEW address (not an upgrade of 78Qv6cy...) so we keep
+// version-based on-chain contracts side-by-side: clients on v7.5/v7.6 keep
+// hitting the original program; new integrators target v7.7 explicitly.
+declare_id!("FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD");
 
 #[program]
 pub mod dice {

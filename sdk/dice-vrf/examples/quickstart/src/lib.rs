@@ -187,7 +187,7 @@ pub struct Play<'info> {
     /// `init_channel(callback_program_id = <THIS_PROGRAM_ID>)`.
     #[account(mut)]
     pub dice_channel: AccountInfo<'info>,
-    /// CHECK: DICE program — `78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv`.
+    /// CHECK: DICE program — `FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD`.
     pub dice_program: Program<'info, dice::program::Dice>,
 
     pub system_program: Program<'info, System>,

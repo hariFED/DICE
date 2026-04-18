@@ -1,0 +1,15 @@
+/* Syntax highlighting tokens — paired with `components/docs/CodeBlock.tsx`. */
+
+.tk-c { color: #6b7280; font-style: italic; }   /* comment */
+.tk-s { color: #a5e075; }                       /* string */
+.tk-k { color: #7dd3fc; }                       /* keyword */
+.tk-t { color: #f3b97b; }                       /* type */
+.tk-n { color: #e4b4ff; }                       /* number */
+.tk-m { color: #ff9aa7; }                       /* macro! */
+.tk-a { color: #fbbf24; }                       /* attribute #[...] */
+
+/* Light-weight focus ring for anchor-link hover targets inside docs. */
+article h2 > a:hover,
+article h3 > a:hover {
+  color: #fff;
+}

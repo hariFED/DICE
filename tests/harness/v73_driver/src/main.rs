@@ -34,7 +34,7 @@ use solana_sdk::{
 use std::str::FromStr;
 use std::time::Duration;
 
-const DICE_PROGRAM_ID: &str = "78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv";
+const DICE_PROGRAM_ID: &str = "FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD";
 
 /// The 5 ESP32-S3 devices currently bound to the cluster.
 /// Captured from the coordinator's /nodes endpoint during the A4 stress run.
