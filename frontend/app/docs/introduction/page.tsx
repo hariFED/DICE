@@ -135,7 +135,7 @@ export default function IntroductionPage() {
           deferred-reveal flows. It is <i>not</i> fine for latency-sensitive
           interactions like frame-by-frame procedural generation. Use a
           streaming feed if you need randomness at a higher rate — see{" "}
-          <a href="/docs/advanced/streaming" className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4">
+          <a href="/docs/advanced/streaming" className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4">
             Streaming feed
           </a>
           .

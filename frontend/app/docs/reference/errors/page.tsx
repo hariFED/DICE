@@ -213,18 +213,18 @@ const DEP: Row[] = [
 
 function ErrorTable({ rows }: { rows: Row[] }) {
   return (
-    <div className="my-4 overflow-x-auto rounded-xl border border-white/[0.08]">
+    <div className="my-4 overflow-x-auto rounded-sm border border-border">
       <table className="w-full text-left text-[13.5px]">
-        <thead className="bg-white/[0.03] text-zinc-300">
+        <thead className="bg-muted/40 text-foreground">
           <tr>
             <th className="px-3 py-2 font-medium">Variant</th>
             <th className="px-3 py-2 font-medium">Message</th>
             <th className="px-3 py-2 font-medium">Root cause</th>
           </tr>
         </thead>
-        <tbody className="text-zinc-400">
+        <tbody className="text-muted-foreground">
           {rows.map((r) => (
-            <tr key={r.name} className="border-t border-white/[0.04]">
+            <tr key={r.name} className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1] align-top">
                 {r.name}
               </td>
@@ -271,7 +271,7 @@ export default function ErrorsPage() {
         Relevant only if you're consuming the streaming VRF feed PDA. See{" "}
         <a
           href="/docs/advanced/streaming"
-          className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+          className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
         >
           Streaming feed
         </a>

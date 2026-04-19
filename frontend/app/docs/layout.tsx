@@ -24,18 +24,20 @@ export default function DocsLayout({
     <>
       <Header />
       <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        {/* Docs sub-header: search + mobile menu */}
-        <div className="sticky top-16 z-40 -mx-4 flex items-center gap-3 border-b border-white/[0.06] bg-black/70 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        {/* Docs sub-header — terminal-style with prompt + search */}
+        <div className="sticky top-14 z-40 -mx-4 flex items-center gap-3 border-b border-dashed border-border bg-background/85 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <DocsMobileNav />
+          <span className="hidden sm:inline font-mono text-xs text-muted-foreground">
+            <span className="text-muted-foreground/60">$</span> man dice <span className="text-foreground">v7.7</span>
+          </span>
           <div className="ml-auto w-full max-w-xs">
             <DocsSearchStub />
           </div>
         </div>
 
         <div className="flex gap-10 pt-6 pb-16">
-          {/* Left sidebar — sticky on desktop */}
-          <aside className="hidden lg:block w-64 shrink-0">
-            <div className="sticky top-32 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 pb-8">
+          <aside className="hidden lg:block w-60 shrink-0">
+            <div className="sticky top-32 max-h-[calc(100vh-9rem)] overflow-y-auto pr-2 pb-8">
               <DocsSidebar />
             </div>
           </aside>

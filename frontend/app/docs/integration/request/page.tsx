@@ -137,7 +137,7 @@ export default function RequestPage() {
           <Code>channel</Code> is the PDA you created in{" "}
           <a
             href="/docs/integration/setup"
-            className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+            className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
           >
             channel setup
           </a>
@@ -161,29 +161,29 @@ export default function RequestPage() {
         more Byzantine devices. The fee is flat (<Code>0.002 SOL</Code>)
         regardless of N; operators split it proportionally.
       </P>
-      <div className="my-4 overflow-x-auto rounded-xl border border-white/[0.08]">
+      <div className="my-4 overflow-x-auto rounded-sm border border-border">
         <table className="w-full text-left text-[14px]">
-          <thead className="bg-white/[0.03] text-zinc-300">
+          <thead className="bg-muted/40 text-foreground">
             <tr>
               <th className="px-3 py-2 font-medium">node_count</th>
               <th className="px-3 py-2 font-medium">Recommended for</th>
               <th className="px-3 py-2 font-medium">Notes</th>
             </tr>
           </thead>
-          <tbody className="text-zinc-400">
-            <tr className="border-t border-white/[0.06]">
+          <tbody className="text-muted-foreground">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">4</td>
               <td className="px-3 py-2">Default · games · mints</td>
               <td className="px-3 py-2">Fastest path. Tolerates 3 faulty.</td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">8–16</td>
               <td className="px-3 py-2">High-stakes rounds</td>
               <td className="px-3 py-2">
                 More devices sign → more costly to collude against.
               </td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">32–50</td>
               <td className="px-3 py-2">Regulated / RWA draws</td>
               <td className="px-3 py-2">Slight latency bump; maximum assurance.</td>
@@ -209,7 +209,7 @@ export default function RequestPage() {
         A full table of error variants lives on the{" "}
         <a
           href="/docs/reference/errors"
-          className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+          className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
         >
           errors reference
         </a>

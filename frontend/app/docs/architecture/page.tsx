@@ -56,18 +56,18 @@ export default function ArchitecturePage() {
         ].map((l) => (
           <div
             key={l.tag}
-            className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4"
+            className="rounded-sm border border-border bg-muted/30 p-4"
           >
-            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#00FF85]/40 text-[11px] font-semibold text-[#00FF85]">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border text-[11px] font-semibold text-[var(--foreground)]">
               {l.tag}
             </span>
-            <p className="mt-3 text-[15px] font-semibold text-white">
+            <p className="mt-3 text-[15px] font-semibold text-foreground">
               {l.name}
             </p>
-            <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-zinc-500">
+            <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               {l.where}
             </p>
-            <p className="mt-2 text-[13.5px] leading-[1.55] text-zinc-400">
+            <p className="mt-2 text-[13.5px] leading-[1.55] text-muted-foreground">
               {l.does}
             </p>
           </div>
@@ -184,7 +184,7 @@ export default function ArchitecturePage() {
         commits, reveals, and signatures is publicly reproducible. See{" "}
         <a
           href="/docs/advanced/verify"
-          className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+          className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
         >
           Verifying randomness
         </a>{" "}
@@ -196,43 +196,43 @@ export default function ArchitecturePage() {
         Here's the wall-clock view — numbers taken from a 50-round devnet
         bench on real hardware, v7.7 streaming:
       </P>
-      <div className="my-5 overflow-x-auto rounded-xl border border-white/[0.08]">
+      <div className="my-5 overflow-x-auto rounded-sm border border-border">
         <table className="w-full text-left text-[14px]">
-          <thead className="bg-white/[0.03] text-zinc-300">
+          <thead className="bg-muted/40 text-foreground">
             <tr>
               <th className="px-3 py-2 font-medium">t</th>
               <th className="px-3 py-2 font-medium">Layer</th>
               <th className="px-3 py-2 font-medium">Event</th>
             </tr>
           </thead>
-          <tbody className="text-zinc-400">
-            <tr className="border-t border-white/[0.06]">
+          <tbody className="text-muted-foreground">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">0 ms</td>
               <td className="px-3 py-2">Your program</td>
               <td className="px-3 py-2">
                 <Code>request_randomness_auto</Code> lands. Round is open.
               </td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">~400 ms</td>
               <td className="px-3 py-2">Coordinator → devices</td>
               <td className="px-3 py-2">4 nodes selected, commit request broadcast.</td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">~1.5 s</td>
               <td className="px-3 py-2">Chain</td>
               <td className="px-3 py-2">
                 <Code>submit_round</Code> lands with all 4 commits.
               </td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">~3.0 s</td>
               <td className="px-3 py-2">Chain</td>
               <td className="px-3 py-2">
                 <Code>submit_reveal</Code> lands with signatures.
               </td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">~4.0 s</td>
               <td className="px-3 py-2">Chain</td>
               <td className="px-3 py-2">

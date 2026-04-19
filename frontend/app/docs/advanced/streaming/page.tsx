@@ -117,7 +117,7 @@ export default function StreamingPage() {
         with the wrong channel, <Code>FeedChannelMismatch</Code>. See the{" "}
         <a
           href="/docs/reference/errors"
-          className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+          className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
         >
           errors reference
         </a>

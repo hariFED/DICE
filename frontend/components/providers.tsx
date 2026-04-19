@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactLenis } from "lenis/react"
+import { ThemeProvider } from "next-themes"
 import { useState, type ReactNode } from "react"
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -18,10 +19,17 @@ export function Providers({ children }: { children: ReactNode }) {
   )
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ReactLenis root options={{ lerp: 0.1, duration: 1.2 }}>
-        {children}
-      </ReactLenis>
-    </QueryClientProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <QueryClientProvider client={queryClient}>
+        <ReactLenis root options={{ lerp: 0.1, duration: 1.2 }}>
+          {children}
+        </ReactLenis>
+      </QueryClientProvider>
+    </ThemeProvider>
   )
 }

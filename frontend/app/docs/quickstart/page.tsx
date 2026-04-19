@@ -179,7 +179,7 @@ export default function QuickstartPage() {
           through the{" "}
           <a
             href="https://www.anchor-lang.com/docs/installation"
-            className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+            className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
           >
             Anchor installation guide
           </a>{" "}
@@ -306,7 +306,7 @@ solana-keygen pubkey target/deploy/my_game-keypair.json`}
         that cover ~90% of use-cases on the{" "}
         <a
           href="/docs/integration/formulas"
-          className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+          className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
         >
           formulas page
         </a>
@@ -319,7 +319,7 @@ solana-keygen pubkey target/deploy/my_game-keypair.json`}
           Read{" "}
           <a
             href="/docs/integration/setup"
-            className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+            className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
           >
             Channel setup
           </a>{" "}
@@ -329,7 +329,7 @@ solana-keygen pubkey target/deploy/my_game-keypair.json`}
           Skim the{" "}
           <a
             href="/docs/reference/pricing"
-            className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+            className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
           >
             pricing breakdown
           </a>{" "}
@@ -339,7 +339,7 @@ solana-keygen pubkey target/deploy/my_game-keypair.json`}
           If you're in a regulated environment, switch from streaming to{" "}
           <a
             href="/docs/reference/modes"
-            className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+            className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
           >
             audit mode
           </a>{" "}

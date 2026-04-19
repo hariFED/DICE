@@ -159,7 +159,7 @@ export default function CallbackPage() {
         is boilerplate that applies to every integration. See the{" "}
         <a
           href="/docs/integration/formulas"
-          className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+          className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
         >
           formulas page
         </a>{" "}

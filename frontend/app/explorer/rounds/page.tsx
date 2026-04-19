@@ -3,32 +3,25 @@
 import { useState, useMemo } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { GlowCard } from "@/components/shared/GlowCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { CopyButton } from "@/components/shared/CopyButton"
 import { useRounds } from "@/lib/hooks"
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table"
 import type { Round } from "@/lib/types"
+import { cn } from "@/lib/utils"
+import { CornerBox } from "@/components/shared/CornerBox"
 
 const FILTERS = [
-  { key: "all", label: "All" },
-  { key: "finalized", label: "Finalized" },
-  { key: "failed", label: "Failed" },
-  { key: "in_progress", label: "In Progress" },
+  { key: "all", label: "all" },
+  { key: "finalized", label: "finalized" },
+  { key: "failed", label: "failed" },
+  { key: "in_progress", label: "in-progress" },
 ] as const
 
 type FilterKey = (typeof FILTERS)[number]["key"]
 
 function truncateId(id: string) {
   if (id.length <= 16) return id
-  return id.slice(0, 8) + "..." + id.slice(-4)
+  return id.slice(0, 8) + "…" + id.slice(-4)
 }
 
 function formatElapsed(ms: number) {
@@ -59,111 +52,96 @@ export default function RoundsPage() {
   )
 
   return (
-    <div className="py-8 space-y-6">
-      <h1 className="text-3xl font-bold text-white">Rounds</h1>
+    <div className="pb-12 space-y-6">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Rounds</h1>
+        <div className="flex gap-2 text-xs font-mono">
+          <Link href="/explorer" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1 uppercase tracking-wider"><span className="mr-1"> </span>overview</Link>
+          <Link href="/explorer/rounds" className="border border-foreground bg-foreground text-background px-3 py-1 uppercase tracking-wider"><span className="mr-1">▸</span>rounds</Link>
+          <Link href="/explorer/nodes" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1 uppercase tracking-wider"><span className="mr-1"> </span>nodes</Link>
+        </div>
+      </div>
 
-      {/* Filter tabs */}
-      <div className="flex items-center gap-2">
+      {/* Filter row */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="ascii-label mr-2">filter</span>
         {FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+            className={cn(
+              "border px-3 py-1 text-xs font-mono uppercase tracking-wider transition-colors",
               filter === f.key
-                ? "bg-[#00FF85]/15 text-[#00FF85] border border-[#00FF85]/30"
-                : "bg-white/[0.04] text-zinc-400 border border-white/[0.08] hover:bg-white/[0.06] hover:text-zinc-300"
-            }`}
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:text-foreground hover:border-foreground"
+            )}
           >
             {f.label}
           </button>
         ))}
+        <span className="ml-auto font-mono text-xs text-muted-foreground">
+          {filtered.length} / {rounds.length}
+        </span>
       </div>
 
       {/* Rounds table */}
-      <GlowCard className="overflow-hidden">
-        <Table className="bg-transparent">
-          <TableHeader>
-            <TableRow className="border-white/[0.06] hover:bg-transparent">
-              <TableHead className="text-zinc-500">Request ID</TableHead>
-              <TableHead className="text-zinc-500">Status</TableHead>
-              <TableHead className="text-zinc-500">Nodes</TableHead>
-              <TableHead className="text-zinc-500">Progress</TableHead>
-              <TableHead className="text-zinc-500">Elapsed</TableHead>
-              <TableHead className="text-zinc-500">Randomness</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <CornerBox title={`rounds · n=${filtered.length}`} tag={filter} innerClassName="p-0">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm font-mono">
+          <thead>
+            <tr className="border-b border-border bg-muted/30">
+              {["request_id", "status", "nodes", "commits/reveals", "elapsed", "randomness"].map((h) => (
+                <th key={h} className="text-left px-3 py-2 ascii-label text-[10px]">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
             {filtered.length === 0 ? (
-              <TableRow className="border-white/[0.06]">
-                <TableCell
-                  colSpan={6}
-                  className="text-center text-zinc-600 py-8"
-                >
-                  No rounds found
-                </TableCell>
-              </TableRow>
+              <tr>
+                <td colSpan={6} className="text-center text-muted-foreground py-10">— no rounds found —</td>
+              </tr>
             ) : (
               filtered.map((round, i) => (
                 <motion.tr
-                  // v2 channel path: request_id (=channel pubkey) repeats
-                  // across rounds on one channel — compose with timestamp
-                  // + index for a stable per-row identity.
                   key={`${round.request_id}-${round.timestamp}-${i}`}
-                  initial={{ opacity: 0, y: 6 }}
+                  initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.02 }}
-                  className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors"
+                  transition={{ delay: i * 0.015 }}
+                  className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                 >
-                  <TableCell>
-                    <Link
-                      href={`/explorer/rounds/${round.request_id}`}
-                      className="flex items-center gap-1 group"
-                    >
-                      <span className="font-mono text-sm text-zinc-300 group-hover:text-[#00FF85] transition-colors">
-                        {truncateId(round.request_id)}
-                      </span>
+                  <td className="px-3 py-2.5">
+                    <Link href={`/explorer/rounds/${round.request_id}`} className="inline-flex items-center gap-1.5 group">
+                      <span className="text-foreground group-hover:underline underline-offset-4">{truncateId(round.request_id)}</span>
                       <CopyButton text={round.request_id} />
                     </Link>
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-3 py-2.5">
                     <StatusBadge
-                      status={
-                        round.status as
-                          | "finalized"
-                          | "failed"
-                          | "collecting_commits"
-                          | "collecting_reveals"
-                      }
+                      status={round.status as "finalized" | "failed" | "collecting_commits" | "collecting_reveals"}
                     />
-                  </TableCell>
-                  <TableCell className="text-zinc-300">
-                    {round.node_count}
-                  </TableCell>
-                  <TableCell className="text-zinc-400 font-mono text-sm">
-                    {round.commits_received}/{round.node_count} |{" "}
-                    {round.reveals_received}/{round.node_count}
-                  </TableCell>
-                  <TableCell className="text-zinc-300">
-                    {formatElapsed(round.elapsed_ms)}
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-3 py-2.5 text-muted-foreground">{round.node_count}</td>
+                  <td className="px-3 py-2.5 text-muted-foreground tabular-nums">
+                    {round.commits_received}/{round.node_count} · {round.reveals_received}/{round.node_count}
+                  </td>
+                  <td className="px-3 py-2.5 text-foreground tabular-nums">{formatElapsed(round.elapsed_ms)}</td>
+                  <td className="px-3 py-2.5">
                     {round.randomness ? (
-                      <div className="flex items-center gap-1">
-                        <span className="font-mono text-sm text-zinc-400">
-                          {truncateId(round.randomness)}
-                        </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground">{truncateId(round.randomness)}</span>
                         <CopyButton text={round.randomness} />
                       </div>
                     ) : (
-                      <span className="text-zinc-600">&mdash;</span>
+                      <span className="text-muted-foreground/50">—</span>
                     )}
-                  </TableCell>
+                  </td>
                 </motion.tr>
               ))
             )}
-          </TableBody>
-        </Table>
-      </GlowCard>
+          </tbody>
+        </table>
+        </div>
+      </CornerBox>
     </div>
   )
 }

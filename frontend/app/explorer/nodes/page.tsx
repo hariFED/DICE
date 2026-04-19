@@ -1,19 +1,12 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import Link from "next/link"
 import { motion } from "framer-motion"
-import { GlowCard } from "@/components/shared/GlowCard"
 import { useNodes } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table"
-import type { Node } from "@/lib/types"
+import { CornerBox } from "@/components/shared/CornerBox"
+import { AsciiBar } from "@/components/shared/AsciiBar"
 
 const CITY_MAP: Record<string, string> = {
   "node-01": "San Francisco",
@@ -38,28 +31,7 @@ const CITY_MAP: Record<string, string> = {
   "node-20": "Cape Town",
 }
 
-const FALLBACK_CITIES = [
-  "San Francisco",
-  "New York",
-  "London",
-  "Tokyo",
-  "Singapore",
-  "Sydney",
-  "Berlin",
-  "Toronto",
-  "Seoul",
-  "Mumbai",
-  "Sao Paulo",
-  "Dubai",
-  "Amsterdam",
-  "Paris",
-  "Hong Kong",
-  "Chicago",
-  "Zurich",
-  "Stockholm",
-  "Jakarta",
-  "Cape Town",
-]
+const FALLBACK_CITIES = Object.values(CITY_MAP)
 
 function getCity(nodeId: string, index: number): string {
   return CITY_MAP[nodeId] ?? FALLBACK_CITIES[index % FALLBACK_CITIES.length]
@@ -67,7 +39,7 @@ function getCity(nodeId: string, index: number): string {
 
 function truncateId(id: string) {
   if (id.length <= 16) return id
-  return id.slice(0, 8) + "..." + id.slice(-4)
+  return id.slice(0, 8) + "…" + id.slice(-4)
 }
 
 function formatUptime(secs: number) {
@@ -94,9 +66,7 @@ export default function NodesPage() {
       const av = a[sortKey]
       const bv = b[sortKey]
       if (typeof av === "string" && typeof bv === "string") {
-        return sortDir === "asc"
-          ? av.localeCompare(bv)
-          : bv.localeCompare(av)
+        return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av)
       }
       if (typeof av === "number" && typeof bv === "number") {
         return sortDir === "asc" ? av - bv : bv - av
@@ -107,138 +77,93 @@ export default function NodesPage() {
   }, [nodes, sortKey, sortDir])
 
   function handleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
-    } else {
-      setSortKey(key)
-      setSortDir("asc")
-    }
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"))
+    else { setSortKey(key); setSortDir("asc") }
   }
 
-  function SortIndicator({ column }: { column: SortKey }) {
-    if (sortKey !== column) return null
+  function SortHeader({ column, label }: { column: SortKey; label: string }) {
+    const active = sortKey === column
     return (
-      <span className="ml-1 text-[#00FF85]">
-        {sortDir === "asc" ? "\u2191" : "\u2193"}
-      </span>
+      <button
+        onClick={() => handleSort(column)}
+        className="ascii-label text-[10px] hover:text-foreground transition-colors inline-flex items-center gap-1"
+      >
+        <span>{label}</span>
+        {active && <span className="text-foreground">{sortDir === "asc" ? "↑" : "↓"}</span>}
+      </button>
     )
   }
 
-  return (
-    <div className="py-8 space-y-6">
-      <h1 className="text-3xl font-bold text-white">Nodes</h1>
+  const pct = (onlineCount / totalRegistered) * 100
 
-      {/* Status summary */}
-      <GlowCard className="p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-zinc-400">
-            <span className="text-[#00FF85] font-semibold">{onlineCount}</span>{" "}
-            of {totalRegistered} nodes online
-          </p>
-          <p className="text-xs text-zinc-600">
-            {((onlineCount / totalRegistered) * 100).toFixed(0)}%
-          </p>
+  return (
+    <div className="pb-12 space-y-6">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Nodes</h1>
+        <div className="flex gap-2 text-xs font-mono">
+          <Link href="/explorer" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1 uppercase tracking-wider"><span className="mr-1"> </span>overview</Link>
+          <Link href="/explorer/rounds" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1 uppercase tracking-wider"><span className="mr-1"> </span>rounds</Link>
+          <Link href="/explorer/nodes" className="border border-foreground bg-foreground text-background px-3 py-1 uppercase tracking-wider"><span className="mr-1">▸</span>nodes</Link>
         </div>
-        <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-[#00FF85] rounded-full"
-            initial={{ width: 0 }}
-            animate={{
-              width: `${(onlineCount / totalRegistered) * 100}%`,
-            }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          />
+      </div>
+
+      {/* Online / total ASCII bar */}
+      <CornerBox title="fleet · uptime" innerClassName="p-5">
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+          <p className="font-mono text-sm">
+            <span className="text-foreground font-semibold tabular-nums">{onlineCount}</span>
+            <span className="text-muted-foreground"> / {totalRegistered} nodes online</span>
+          </p>
+          <p className="ascii-label text-[10px]">{pct.toFixed(0)} pct</p>
         </div>
-      </GlowCard>
+        <div className="text-sm">
+          <AsciiBar value={pct / 100} width={48} />
+        </div>
+      </CornerBox>
 
       {/* Nodes table */}
-      <GlowCard className="overflow-hidden">
-        <Table className="bg-transparent">
-          <TableHeader>
-            <TableRow className="border-white/[0.06] hover:bg-transparent">
-              <TableHead
-                className="text-zinc-500 cursor-pointer select-none"
-                onClick={() => handleSort("node_id")}
-              >
-                Device ID
-                <SortIndicator column="node_id" />
-              </TableHead>
-              <TableHead className="text-zinc-500">Location</TableHead>
-              <TableHead className="text-zinc-500">Status</TableHead>
-              <TableHead
-                className="text-zinc-500 cursor-pointer select-none"
-                onClick={() => handleSort("latency_ms")}
-              >
-                Latency
-                <SortIndicator column="latency_ms" />
-              </TableHead>
-              <TableHead
-                className="text-zinc-500 cursor-pointer select-none"
-                onClick={() => handleSort("uptime_secs")}
-              >
-                Uptime
-                <SortIndicator column="uptime_secs" />
-              </TableHead>
-              <TableHead
-                className="text-zinc-500 cursor-pointer select-none"
-                onClick={() => handleSort("jobs_completed")}
-              >
-                Jobs Completed
-                <SortIndicator column="jobs_completed" />
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <CornerBox title={`fleet · n=${sorted.length}`} innerClassName="p-0">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm font-mono">
+          <thead>
+            <tr className="border-b border-border bg-muted/30">
+              <th className="text-left px-3 py-2"><SortHeader column="node_id" label="device_id" /></th>
+              <th className="text-left px-3 py-2 ascii-label text-[10px]">location</th>
+              <th className="text-left px-3 py-2 ascii-label text-[10px]">status</th>
+              <th className="text-left px-3 py-2"><SortHeader column="latency_ms" label="latency" /></th>
+              <th className="text-left px-3 py-2"><SortHeader column="uptime_secs" label="uptime" /></th>
+              <th className="text-left px-3 py-2"><SortHeader column="jobs_completed" label="jobs" /></th>
+            </tr>
+          </thead>
+          <tbody>
             {sorted.length === 0 ? (
-              <TableRow className="border-white/[0.06]">
-                <TableCell
-                  colSpan={6}
-                  className="text-center text-zinc-600 py-8"
-                >
-                  No nodes connected
-                </TableCell>
-              </TableRow>
+              <tr><td colSpan={6} className="text-center text-muted-foreground py-10">— no nodes connected —</td></tr>
             ) : (
               sorted.map((node, i) => (
                 <motion.tr
                   key={node.node_id}
-                  initial={{ opacity: 0, y: 6 }}
+                  initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.02 }}
-                  className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors"
+                  className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                 >
-                  <TableCell>
-                    <span className="font-mono text-sm text-zinc-300">
-                      {truncateId(node.node_id)}
+                  <td className="px-3 py-2.5 text-foreground">{truncateId(node.node_id)}</td>
+                  <td className="px-3 py-2.5 text-muted-foreground">{getCity(node.node_id, i)}</td>
+                  <td className="px-3 py-2.5">
+                    <span className={cn("inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[10px] uppercase tracking-wider pill-ok")}>
+                      <span>●</span> ONLINE
                     </span>
-                  </TableCell>
-                  <TableCell className="text-zinc-400 text-sm">
-                    {getCity(node.node_id, i)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className="relative flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00FF85] opacity-75" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-[#00FF85]" />
-                      </span>
-                      <span className="text-sm text-[#00FF85]">Online</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-zinc-300 text-sm">
-                    {node.latency_ms}ms
-                  </TableCell>
-                  <TableCell className="text-zinc-300 text-sm">
-                    {formatUptime(node.uptime_secs)}
-                  </TableCell>
-                  <TableCell className="text-zinc-300 text-sm">
-                    {node.jobs_completed}
-                  </TableCell>
+                  </td>
+                  <td className="px-3 py-2.5 text-foreground tabular-nums">{node.latency_ms}ms</td>
+                  <td className="px-3 py-2.5 text-muted-foreground">{formatUptime(node.uptime_secs)}</td>
+                  <td className="px-3 py-2.5 text-foreground tabular-nums">{node.jobs_completed}</td>
                 </motion.tr>
               ))
             )}
-          </TableBody>
-        </Table>
-      </GlowCard>
+          </tbody>
+        </table>
+        </div>
+      </CornerBox>
     </div>
   )
 }

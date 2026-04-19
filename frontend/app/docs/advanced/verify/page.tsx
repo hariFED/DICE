@@ -81,7 +81,7 @@ export default function VerifyPage() {
       <P>
         The aggregation rule is:
       </P>
-      <div className="my-4 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-3 font-mono text-[14px] text-zinc-300">
+      <div className="my-4 rounded-sm border border-border bg-muted/30 px-4 py-3 font-mono text-[14px] text-foreground">
         randomness = SHA-256(reveal_1 ‖ reveal_2 ‖ … ‖ reveal_n)
       </div>
       <P>

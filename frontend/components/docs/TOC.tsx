@@ -35,11 +35,9 @@ export function DocsTOC({ items }: { items: TocItem[] }) {
       aria-label="On this page"
       className="hidden xl:block w-60 shrink-0"
     >
-      <div className="sticky top-24 flex flex-col gap-2 text-[13px]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          On this page
-        </p>
-        <ul className="flex flex-col gap-1">
+      <div className="sticky top-32 flex flex-col gap-2 text-[13px] font-mono">
+        <p className="ascii-label">on · this · page</p>
+        <ul className="flex flex-col gap-0.5 mt-1">
           {items.map((item) => (
             <li key={item.id}>
               <a
@@ -48,8 +46,8 @@ export function DocsTOC({ items }: { items: TocItem[] }) {
                   "block border-l py-1 transition-colors",
                   item.level === 3 ? "pl-6" : "pl-3",
                   activeId === item.id
-                    ? "border-[#00FF85] text-white"
-                    : "border-white/10 text-zinc-500 hover:text-zinc-200"
+                    ? "border-foreground text-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground hover:border-foreground"
                 )}
               >
                 {item.label}

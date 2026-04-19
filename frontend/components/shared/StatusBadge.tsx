@@ -12,43 +12,33 @@ interface StatusBadgeProps {
   className?: string
 }
 
-const STATUS_CONFIG: Record<Status, { label: string; classes: string }> = {
-  finalized: {
-    label: "Finalized",
-    classes: "bg-green-500/20 text-green-400 border border-green-500/30",
-  },
-  failed: {
-    label: "Failed",
-    classes: "bg-red-500/20 text-red-400 border border-red-500/30",
-  },
-  collecting_commits: {
-    label: "Collecting Commits",
-    classes:
-      "bg-blue-500/20 text-blue-400 border border-blue-500/30 animate-pulse",
-  },
-  collecting_reveals: {
-    label: "Collecting Reveals",
-    classes:
-      "bg-blue-500/20 text-blue-400 border border-blue-500/30 animate-pulse",
-  },
-  idle: {
-    label: "Idle",
-    classes: "bg-zinc-500/20 text-zinc-400 border border-zinc-500/30",
-  },
+/**
+ * ASCII-style status pill. The ONLY place in the app that uses semantic color
+ * (var(--status-*)). Everything else stays mono.
+ *
+ *   [ ● FINALIZED ]   [ ◌ COMMITS ]   [ ✕ FAILED ]
+ */
+const STATUS_CONFIG: Record<Status, { label: string; glyph: string; pillClass: string; pulse?: boolean }> = {
+  finalized:          { label: "FINALIZED", glyph: "●", pillClass: "pill-ok" },
+  failed:             { label: "FAILED",    glyph: "✕", pillClass: "pill-err" },
+  collecting_commits: { label: "COMMITS",   glyph: "◌", pillClass: "pill-warn", pulse: true },
+  collecting_reveals: { label: "REVEALS",   glyph: "◔", pillClass: "pill-warn", pulse: true },
+  idle:               { label: "IDLE",      glyph: "·", pillClass: "" },
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = STATUS_CONFIG[status]
-
+  const cfg = STATUS_CONFIG[status]
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
-        config.classes,
+        "inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider",
+        cfg.pillClass || "border border-border text-muted-foreground",
+        cfg.pulse && "animate-pulse",
         className
       )}
     >
-      {config.label}
+      <span className="leading-none">{cfg.glyph}</span>
+      <span>{cfg.label}</span>
     </span>
   )
 }
