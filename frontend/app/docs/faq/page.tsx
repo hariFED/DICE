@@ -78,7 +78,7 @@ export default function FaqPage() {
         For the strongest version of the guarantee, switch to{" "}
         <a
           href="/docs/reference/modes"
-          className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+          className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
         >
           audit mode
         </a>
@@ -102,7 +102,7 @@ export default function FaqPage() {
         on the{" "}
         <a
           href="/docs"
-          className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+          className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
         >
           overview page
         </a>
@@ -111,7 +111,7 @@ export default function FaqPage() {
         status on the{" "}
         <a
           href="/explorer"
-          className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+          className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
         >
           explorer
         </a>

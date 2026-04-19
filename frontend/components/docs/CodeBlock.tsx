@@ -36,56 +36,23 @@ export function CodeBlock({
   const highlighted = highlight(code, lang)
 
   return (
-    <div className="group/code relative my-4 overflow-hidden rounded-xl border border-white/[0.08] bg-[#060606]">
+    <div className="group/code relative my-4 overflow-hidden border border-border bg-background">
       {(filename || lang !== "text") && (
-        <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-4 py-1.5 text-[11px]">
-          <span className="font-mono text-zinc-500">
+        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-1.5 text-[11px] font-mono">
+          <span className="ascii-label text-[10px]">
             {filename ?? langLabel(lang)}
           </span>
           <button
             type="button"
             onClick={handleCopy}
-            className="flex items-center gap-1 rounded-md px-2 py-0.5 text-zinc-500 hover:text-white hover:bg-white/[0.06] transition-colors"
+            className="rounded-sm px-2 py-0.5 text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider"
             aria-label="Copy code"
           >
-            {copied ? (
-              <>
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#00FF85"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <span className="text-[#00FF85]">Copied</span>
-              </>
-            ) : (
-              <>
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="9" y="9" width="13" height="13" rx="2" />
-                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                </svg>
-                Copy
-              </>
-            )}
+            {copied ? "✓ COPIED" : "⧉ COPY"}
           </button>
         </div>
       )}
-      <pre className="overflow-x-auto px-4 py-4 text-[13px] leading-[1.65] font-mono text-zinc-300">
+      <pre className="overflow-x-auto px-4 py-4 text-[13px] leading-[1.65] font-mono text-foreground">
         <code
           className={cn("language-" + lang)}
           dangerouslySetInnerHTML={{ __html: highlighted }}

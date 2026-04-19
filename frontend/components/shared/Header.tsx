@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { NAV_LINKS, SITE } from "@/lib/constants"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/shared/ThemeToggle"
+import { BracketLink } from "@/components/shared/BracketButton"
 
 export function Header() {
   const pathname = usePathname()
@@ -13,22 +15,23 @@ export function Header() {
 
   return (
     <motion.header
-      initial={{ y: -20, opacity: 0 }}
+      initial={{ y: -10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="sticky top-0 z-50 w-full bg-black/50 backdrop-blur-xl border-b border-white/[0.06]"
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="sticky top-0 z-50 w-full bg-background/85 backdrop-blur border-b border-dashed border-border"
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <span className="inline-block h-2 w-2 rounded-full bg-[#00FF85] group-hover:shadow-[0_0_8px_rgba(0,255,133,0.6)] transition-shadow duration-300" />
-          <span className="text-xl font-bold text-metallic tracking-tight">
-            {SITE.name}
-          </span>
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo — TUI bracket frame */}
+        <Link href="/" className="flex items-center gap-1 font-mono text-sm group">
+          <span className="text-muted-foreground group-hover:text-foreground transition-colors">[</span>
+          <span className="text-muted-foreground/50 group-hover:text-foreground transition-colors">▣</span>
+          <span className="font-semibold tracking-wider text-foreground px-1">{SITE.name}</span>
+          <span className="text-muted-foreground/60 text-[11px] group-hover:text-foreground transition-colors">v7.7</span>
+          <span className="text-muted-foreground group-hover:text-foreground transition-colors">]</span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Desktop nav — bracketed items */}
+        <nav className="hidden md:flex items-center gap-1 font-mono text-xs uppercase tracking-wider">
           {NAV_LINKS.map((link) => {
             const isActive = pathname === link.href
             return (
@@ -36,61 +39,34 @@ export function Header() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "relative py-1 text-sm font-medium transition-colors duration-200",
-                  isActive
-                    ? "text-white"
-                    : "text-zinc-400 hover:text-white"
+                  "relative px-3 py-1 transition-colors",
+                  isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {link.label}
-                {isActive && (
-                  <motion.span
-                    layoutId="nav-underline"
-                    className="absolute inset-x-0 -bottom-0.5 h-0.5 bg-[#00FF85] rounded-full"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
+                <span className={cn("transition-opacity", isActive ? "opacity-100" : "opacity-0")}>›</span>
+                <span className="px-1">{link.label}</span>
               </Link>
             )
           })}
         </nav>
 
-        {/* Desktop CTA */}
-        <div className="hidden md:block">
-          <Link
-            href={SITE.launchAppUrl}
-            className="inline-flex items-center justify-center rounded-lg border border-[#00FF85]/50 px-4 py-2 text-sm font-medium text-[#00FF85] transition-all duration-200 hover:bg-[#00FF85] hover:text-black hover:shadow-[0_0_20px_rgba(0,255,133,0.2)]"
-          >
-            Launch App
-          </Link>
-        </div>
+        {/* Right cluster */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle className="hidden sm:inline-flex" />
+          <BracketLink href={SITE.launchAppUrl} variant="primary" className="hidden md:inline-flex">
+            Launch_App
+          </BracketLink>
 
-        {/* Mobile hamburger */}
-        <button
-          type="button"
-          className="md:hidden flex flex-col items-center justify-center gap-1.5 p-2"
-          onClick={() => setMobileOpen((o) => !o)}
-          aria-label="Toggle menu"
-        >
-          <span
-            className={cn(
-              "block h-0.5 w-5 bg-zinc-300 transition-all duration-300",
-              mobileOpen && "translate-y-[4px] rotate-45"
-            )}
-          />
-          <span
-            className={cn(
-              "block h-0.5 w-5 bg-zinc-300 transition-all duration-300",
-              mobileOpen && "opacity-0"
-            )}
-          />
-          <span
-            className={cn(
-              "block h-0.5 w-5 bg-zinc-300 transition-all duration-300",
-              mobileOpen && "-translate-y-[4px] -rotate-45"
-            )}
-          />
-        </button>
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            className="md:hidden font-mono px-2 py-1 text-foreground"
+            onClick={() => setMobileOpen((o) => !o)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? "[ ✕ ]" : "[ ≡ ]"}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -100,10 +76,10 @@ export function Header() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="md:hidden overflow-hidden border-t border-white/[0.06] bg-black/80 backdrop-blur-xl"
+            transition={{ duration: 0.2 }}
+            className="md:hidden overflow-hidden border-t border-dashed border-border bg-background"
           >
-            <nav className="flex flex-col gap-1 px-4 py-4">
+            <nav className="flex flex-col gap-0.5 px-4 py-3 font-mono text-sm">
               {NAV_LINKS.map((link) => {
                 const isActive = pathname === link.href
                 return (
@@ -112,26 +88,21 @@ export function Header() {
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
-                      "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-white/[0.06] text-white"
-                        : "text-zinc-400 hover:bg-white/[0.04] hover:text-white"
+                      "px-2 py-2 transition-colors",
+                      isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    {isActive && (
-                      <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#00FF85]" />
-                    )}
+                    <span className="text-muted-foreground mr-2">{isActive ? "▸" : " "}</span>
                     {link.label}
                   </Link>
                 )
               })}
-              <Link
-                href={SITE.launchAppUrl}
-                onClick={() => setMobileOpen(false)}
-                className="mt-2 inline-flex items-center justify-center rounded-lg border border-[#00FF85]/50 px-4 py-2 text-sm font-medium text-[#00FF85] transition-all duration-200 hover:bg-[#00FF85] hover:text-black"
-              >
-                Launch App
-              </Link>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <ThemeToggle />
+                <BracketLink href={SITE.launchAppUrl} variant="primary">
+                  Launch_App
+                </BracketLink>
+              </div>
             </nav>
           </motion.div>
         )}

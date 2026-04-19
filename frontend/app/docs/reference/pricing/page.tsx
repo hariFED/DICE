@@ -44,9 +44,9 @@ export default function PricingPage() {
       </Callout>
 
       <H2 id="breakdown">Where the 0.002 SOL goes</H2>
-      <div className="my-5 overflow-x-auto rounded-xl border border-white/[0.08]">
+      <div className="my-5 overflow-x-auto rounded-sm border border-border">
         <table className="w-full text-left text-[14.5px]">
-          <thead className="bg-white/[0.03] text-zinc-300">
+          <thead className="bg-muted/40 text-foreground">
             <tr>
               <th className="px-3 py-2 font-medium">Recipient</th>
               <th className="px-3 py-2 font-medium">Share</th>
@@ -54,25 +54,25 @@ export default function PricingPage() {
               <th className="px-3 py-2 font-medium">Purpose</th>
             </tr>
           </thead>
-          <tbody className="text-zinc-400">
-            <tr className="border-t border-white/[0.06]">
-              <td className="px-3 py-2 text-[#00FF85]">Node operators</td>
+          <tbody className="text-muted-foreground">
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-[var(--foreground)]">Node operators</td>
               <td className="px-3 py-2 font-mono">70 %</td>
               <td className="px-3 py-2 font-mono">1_400_000</td>
               <td className="px-3 py-2">
                 Credited to node vaults. Split proportionally by participants.
               </td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
-              <td className="px-3 py-2 text-zinc-300">Treasury</td>
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-foreground">Treasury</td>
               <td className="px-3 py-2 font-mono">20 %</td>
               <td className="px-3 py-2 font-mono">400_000</td>
               <td className="px-3 py-2">
                 Coordinator infra, device onboarding, R&amp;D.
               </td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
-              <td className="px-3 py-2 text-zinc-300">Reserve</td>
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-foreground">Reserve</td>
               <td className="px-3 py-2 font-mono">10 %</td>
               <td className="px-3 py-2 font-mono">200_000</td>
               <td className="px-3 py-2">

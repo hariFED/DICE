@@ -1,13 +1,16 @@
 export const BRAND = {
   name: "DICE",
+  parent: "DICELabs",
+  /** Backronym shown under the wordmark on the hero. */
+  acronym: {
+    D: "Decentralized",
+    I: "Incentivized",
+    C: "Cryptographic",
+    E: "Entropy",
+  },
   tagline: "Hardware-Backed Verifiable Randomness for Solana",
   description:
     "20 physical devices. Commit-reveal protocol. 0.002 SOL per request.",
-  colors: {
-    green: "#00FF85",
-    greenDim: "#00cc6a",
-    black: "#000000",
-  },
 } as const
 
 // Alias used by shared components (Header, Footer)
@@ -31,6 +34,7 @@ export const NAV_LINKS = [
 // discord is intentionally absent — no server exists yet. Shipping a "#" link
 // as a social icon would be a visible bug. Add it back when there's a real URL.
 export const SOCIAL_LINKS = {
-  github: "https://github.com/dice-network",
-  twitter: "https://x.com/dice_network",
+  github: "https://github.com/dicelabsnetwork",
+  twitter: "https://x.com/dicelabsnetwork",
+  twitterHandle: "@dicelabsnetwork",
 } as const

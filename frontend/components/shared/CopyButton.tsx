@@ -8,6 +8,10 @@ interface CopyButtonProps {
   className?: string
 }
 
+/**
+ * Mono ASCII-style copy button. Glyph swaps from `⧉` (copy) to `✓` (copied),
+ * with a small toast above for 2s.
+ */
 export function CopyButton({ text, className }: CopyButtonProps) {
   const [copied, setCopied] = useState(false)
 
@@ -17,7 +21,6 @@ export function CopyButton({ text, className }: CopyButtonProps) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Fallback for non-secure contexts
       const textarea = document.createElement("textarea")
       textarea.value = text
       textarea.style.position = "fixed"
@@ -36,45 +39,16 @@ export function CopyButton({ text, className }: CopyButtonProps) {
       type="button"
       onClick={handleCopy}
       className={cn(
-        "relative inline-flex items-center justify-center rounded-md p-1.5 text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.06] transition-colors duration-200",
-        className
+        "relative inline-flex items-center justify-center rounded-sm h-5 w-5 font-mono text-xs leading-none text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors",
+        className,
       )}
       aria-label="Copy to clipboard"
     >
-      {copied ? (
-        <>
-          {/* Check icon */}
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#00FF85"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <span className="absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-[#00FF85]/20 px-2 py-0.5 text-xs font-medium text-[#00FF85] whitespace-nowrap border border-[#00FF85]/30">
-            Copied!
-          </span>
-        </>
-      ) : (
-        /* Copy icon */
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-        </svg>
+      <span>{copied ? "✓" : "⧉"}</span>
+      {copied && (
+        <span className="absolute -top-7 left-1/2 -translate-x-1/2 ascii-label text-[10px] bg-background border border-border px-1.5 py-0.5 whitespace-nowrap">
+          copied
+        </span>
       )}
     </button>
   )

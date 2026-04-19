@@ -59,16 +59,16 @@ export default function IntegrationLanding() {
           <Link
             key={s.href}
             href={s.href}
-            className="group flex gap-4 rounded-xl border border-white/[0.08] bg-white/[0.02] p-5 transition-colors hover:border-[#00FF85]/40 hover:bg-white/[0.04]"
+            className="group flex gap-4 rounded-sm border border-border bg-muted/30 p-5 transition-colors hover:border-border hover:bg-muted/40"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#00FF85]/40 text-[13px] font-semibold text-[#00FF85]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-[13px] font-semibold text-[var(--foreground)]">
               {s.step}
             </span>
             <span className="flex flex-col">
-              <span className="text-[15px] font-semibold text-white group-hover:text-[#00FF85] transition-colors">
+              <span className="text-[15px] font-semibold text-foreground group-hover:text-[var(--foreground)] transition-colors">
                 {s.title}
               </span>
-              <span className="mt-1 text-[13.5px] leading-[1.55] text-zinc-400">
+              <span className="mt-1 text-[13.5px] leading-[1.55] text-muted-foreground">
                 {s.desc}
               </span>
             </span>

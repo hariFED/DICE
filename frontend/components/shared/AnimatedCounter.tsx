@@ -50,7 +50,7 @@ export function AnimatedCounter({
   return (
     <motion.span
       ref={ref}
-      className={cn("text-4xl font-bold text-white tabular-nums", className)}
+      className={cn("text-4xl font-semibold text-foreground tabular-nums font-mono", className)}
     >
       {rounded}
     </motion.span>

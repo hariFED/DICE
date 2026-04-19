@@ -69,18 +69,18 @@ export default function DocsHome() {
           <Link
             key={p.href}
             href={p.href}
-            className="group flex flex-col justify-between rounded-xl border border-white/[0.08] bg-white/[0.02] p-5 transition-colors hover:border-[#00FF85]/40 hover:bg-white/[0.04]"
+            className="group flex flex-col justify-between rounded-sm border border-border bg-muted/30 p-5 transition-colors hover:border-border hover:bg-muted/40"
           >
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#00FF85]">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--foreground)]">
               {p.label}
             </span>
-            <span className="mt-2 text-lg font-semibold text-white group-hover:text-[#00FF85] transition-colors">
+            <span className="mt-2 text-lg font-semibold text-foreground group-hover:text-[var(--foreground)] transition-colors">
               {p.title}
             </span>
-            <span className="mt-1 text-[14px] leading-[1.55] text-zinc-400">
+            <span className="mt-1 text-[14px] leading-[1.55] text-muted-foreground">
               {p.desc}
             </span>
-            <span className="mt-4 text-[12px] text-zinc-600 group-hover:text-zinc-300">
+            <span className="mt-4 text-[12px] text-muted-foreground/60 group-hover:text-foreground">
               Read →
             </span>
           </Link>
@@ -92,15 +92,15 @@ export default function DocsHome() {
         {HIGHLIGHTS.map((h) => (
           <div
             key={h.label}
-            className="rounded-lg border border-white/[0.06] bg-white/[0.015] p-4"
+            className="rounded-sm border border-border bg-muted/30 p-4"
           >
-            <p className="font-heading text-xl font-semibold text-white">
+            <p className="font-heading text-xl font-semibold text-foreground">
               {h.value}
             </p>
-            <p className="mt-0.5 text-[12px] font-medium text-zinc-300">
+            <p className="mt-0.5 text-[12px] font-medium text-foreground">
               {h.label}
             </p>
-            <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+            <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
               {h.sub}
             </p>
           </div>
@@ -108,19 +108,19 @@ export default function DocsHome() {
       </div>
 
       {/* Program IDs */}
-      <div className="mt-10 rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+      <div className="mt-10 rounded-sm border border-border bg-muted/30 p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           On chain (v7.7 · production)
         </p>
         <div className="mt-3 flex flex-col gap-2 text-[13px]">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-zinc-400">dice</span>
+            <span className="text-muted-foreground">dice</span>
             <code className="truncate font-mono text-[#7cf9c1]">
               FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD
             </code>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-zinc-400">coin_toss</span>
+            <span className="text-muted-foreground">coin_toss</span>
             <code className="truncate font-mono text-[#7cf9c1]">
               7r6UstdP6qTFK4HSqU4mFGPGyCVWd3JVjBeafQPyvspH
             </code>

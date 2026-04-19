@@ -1,10 +1,9 @@
 import type { Metadata } from "next"
-import { Space_Grotesk } from "next/font/google"
-import { Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Silkscreen } from "next/font/google"
 import { Providers } from "@/components/providers"
 import "./globals.css"
 
-const spaceGrotesk = Space_Grotesk({
+const geistSans = Geist({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
@@ -13,13 +12,21 @@ const spaceGrotesk = Space_Grotesk({
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
+})
+
+/** Pixel font — used for chapter numbers and big numerical readouts. */
+const silkscreen = Silkscreen({
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "700"],
+  variable: "--font-pixel",
 })
 
 export const metadata: Metadata = {
   title: "DICE — Hardware-Backed VRF Oracle",
   description:
-    "Verifiable randomness for Solana powered by 20 physical ESP32-S3 devices. Commit-reveal protocol, hardware-backed entropy, 0.002 SOL per request.",
+    "Verifiable randomness for Solana powered by physical ESP32-S3 devices. Commit-reveal protocol, hardware-backed entropy, 0.002 SOL per request.",
   keywords: [
     "Solana",
     "VRF",
@@ -39,7 +46,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${silkscreen.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">

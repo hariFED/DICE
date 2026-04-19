@@ -124,7 +124,7 @@ export default function SetupPage() {
           and visible on the{" "}
           <a
             href="/explorer"
-            className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+            className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
           >
             explorer
           </a>

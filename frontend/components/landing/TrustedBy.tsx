@@ -1,66 +1,62 @@
 "use client"
 
 const ITEMS = [
-  "Solana",
-  "Anchor",
-  "ESP32-S3",
+  "solana",
+  "anchor",
+  "esp32-s3",
   "secp256k1",
-  "SHA-256",
-  "Rust",
-  "TypeScript",
+  "sha-256",
+  "rust",
+  "typescript",
+  "tokio",
+  "rustls",
 ]
 
 export function TrustedBy() {
-  // Duplicate items for seamless infinite scroll
-  const duplicated = [...ITEMS, ...ITEMS]
+  const duplicated = [...ITEMS, ...ITEMS, ...ITEMS]
 
   return (
-    <section className="py-16 border-y border-white/[0.04] overflow-hidden">
-      <p className="text-xs uppercase tracking-[0.2em] text-zinc-600 text-center mb-8">
-        Built On
-      </p>
+    <section className="py-12 border-b border-border overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
+        <p className="ascii-label">stack · built · on</p>
+      </div>
 
       <div className="relative">
-        {/* Fade edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-r from-black to-transparent pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-l from-black to-transparent pointer-events-none" />
+        {/* Edge fade — solid color stops in light + dark */}
+        <div className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, var(--background), transparent)" }} />
+        <div className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, var(--background), transparent)" }} />
 
-        {/* Marquee track */}
         <div className="flex">
-          <div
-            className="flex gap-4 shrink-0"
-            style={{
-              animation: "marquee 30s linear infinite",
-            }}
-          >
+          <div className="flex gap-3 shrink-0" style={{ animation: "marquee 40s linear infinite" }}>
             {duplicated.map((item, i) => (
               <span
                 key={`${item}-${i}`}
-                className="shrink-0 border border-white/[0.06] bg-white/[0.02] rounded-full px-6 py-2 text-sm text-zinc-400 whitespace-nowrap"
+                className="shrink-0 font-mono text-xs uppercase tracking-wider text-muted-foreground border border-border px-4 py-1.5 whitespace-nowrap"
               >
-                {item}
+                <span className="text-muted-foreground/50 mr-1">›</span>{item}
               </span>
             ))}
           </div>
-          {/* Second copy for seamless loop */}
-          <div
-            className="flex gap-4 shrink-0"
-            style={{
-              animation: "marquee 30s linear infinite",
-            }}
-          >
+          <div className="flex gap-3 shrink-0" style={{ animation: "marquee 40s linear infinite" }} aria-hidden>
             {duplicated.map((item, i) => (
               <span
                 key={`dup-${item}-${i}`}
-                className="shrink-0 border border-white/[0.06] bg-white/[0.02] rounded-full px-6 py-2 text-sm text-zinc-400 whitespace-nowrap"
+                className="shrink-0 font-mono text-xs uppercase tracking-wider text-muted-foreground border border-border px-4 py-1.5 whitespace-nowrap"
               >
-                {item}
+                <span className="text-muted-foreground/50 mr-1">›</span>{item}
               </span>
             ))}
           </div>
         </div>
       </div>
 
+      {/* keyframes shipped via globals.css's @keyframes marquee — verify it's still there. */}
+      <style jsx>{`
+        @keyframes marquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-100%); }
+        }
+      `}</style>
     </section>
   )
 }

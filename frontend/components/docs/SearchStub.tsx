@@ -47,19 +47,8 @@ export function DocsSearchStub() {
 
   return (
     <div className="relative">
-      <div className="relative flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5">
-        <svg
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          className="text-zinc-500"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+      <div className="relative flex items-center gap-2 rounded-sm border border-border bg-background px-2.5 py-1.5">
+        <span className="text-muted-foreground font-mono text-xs">›</span>
         <input
           ref={inputRef}
           type="text"
@@ -77,17 +66,17 @@ export function DocsSearchStub() {
               setQ("")
             }
           }}
-          placeholder="Search docs"
-          className="flex-1 bg-transparent text-[13px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none"
+          placeholder="search docs"
+          className="flex-1 bg-transparent font-mono text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
           aria-label="Search documentation"
         />
-        <kbd className="rounded border border-white/[0.1] bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-zinc-500">
+        <kbd className="rounded-sm border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
           /
         </kbd>
       </div>
 
       {open && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-80 overflow-y-auto rounded-lg border border-white/[0.08] bg-[#060606] py-1 shadow-2xl">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-80 overflow-y-auto border border-border bg-background py-1 shadow-lg">
           {results.slice(0, 10).map((d) => (
             <button
               key={d.href}
@@ -97,12 +86,10 @@ export function DocsSearchStub() {
                 setOpen(false)
                 setQ("")
               }}
-              className="block w-full px-3 py-2 text-left text-[13px] hover:bg-white/[0.04]"
+              className="block w-full px-3 py-2 text-left text-[13px] font-mono hover:bg-muted/40"
             >
-              <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-600">
-                {d.sectionTitle}
-              </span>
-              <span className="block text-zinc-200">{d.title}</span>
+              <span className="ascii-label text-[10px]">{d.sectionTitle}</span>
+              <span className="block text-foreground">{d.title}</span>
             </button>
           ))}
         </div>

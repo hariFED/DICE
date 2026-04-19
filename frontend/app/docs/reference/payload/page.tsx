@@ -28,7 +28,7 @@ const SEGMENTS = [
     range: "[8 .. 40]",
     name: "channel_key",
     desc: "The DiceChannel PDA that signed this result.",
-    color: "bg-[#00FF85]",
+    color: "bg-[var(--foreground)]",
   },
   {
     range: "[40 .. 72]",
@@ -76,21 +76,21 @@ export default function PayloadPage() {
       </P>
 
       {/* Filmstrip */}
-      <div className="my-6 grid grid-cols-3 overflow-hidden rounded-xl border border-white/[0.08]">
+      <div className="my-6 grid grid-cols-3 overflow-hidden rounded-sm border border-border">
         {SEGMENTS.map((s) => (
           <div
             key={s.name}
-            className="flex flex-col border-r border-white/[0.06] last:border-r-0"
+            className="flex flex-col border-r border-border last:border-r-0"
           >
             <div className={`${s.color} h-1`} />
             <div className="flex flex-col gap-1 p-3">
-              <span className="font-mono text-[11px] text-zinc-500">
+              <span className="font-mono text-[11px] text-muted-foreground">
                 {s.range}
               </span>
-              <span className="font-mono text-[13.5px] font-semibold text-white">
+              <span className="font-mono text-[13.5px] font-semibold text-foreground">
                 {s.name}
               </span>
-              <span className="text-[12.5px] leading-[1.45] text-zinc-400">
+              <span className="text-[12.5px] leading-[1.45] text-muted-foreground">
                 {s.desc}
               </span>
             </div>
@@ -98,9 +98,9 @@ export default function PayloadPage() {
         ))}
       </div>
 
-      <div className="my-4 overflow-x-auto rounded-xl border border-white/[0.08]">
+      <div className="my-4 overflow-x-auto rounded-sm border border-border">
         <table className="w-full text-left text-[14px]">
-          <thead className="bg-white/[0.03] text-zinc-300">
+          <thead className="bg-muted/40 text-foreground">
             <tr>
               <th className="px-3 py-2 font-medium">Field</th>
               <th className="px-3 py-2 font-medium">Offset</th>
@@ -108,20 +108,20 @@ export default function PayloadPage() {
               <th className="px-3 py-2 font-medium">Type</th>
             </tr>
           </thead>
-          <tbody className="text-zinc-400">
-            <tr className="border-t border-white/[0.06]">
+          <tbody className="text-muted-foreground">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">discriminator</td>
               <td className="px-3 py-2">0</td>
               <td className="px-3 py-2">8</td>
               <td className="px-3 py-2 font-mono">[u8; 8]</td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">channel_key</td>
               <td className="px-3 py-2">8</td>
               <td className="px-3 py-2">32</td>
               <td className="px-3 py-2 font-mono">Pubkey</td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
+            <tr className="border-t border-border">
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">randomness</td>
               <td className="px-3 py-2">40</td>
               <td className="px-3 py-2">32</td>

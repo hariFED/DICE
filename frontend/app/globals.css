@@ -8,13 +8,9 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-mono);
+  --font-pixel: var(--font-pixel);
   --font-heading: var(--font-sans);
-
-  /* DICE custom colors */
-  --color-dice-green: #00FF85;
-  --color-dice-green-dim: #00cc6a;
-  --color-dice-green-glow: rgba(0, 255, 133, 0.15);
 
   /* shadcn tokens */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -53,77 +49,97 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Status colors — used ONLY in /explorer pills + form validation. Never as theme accent. */
+  --color-status-ok: var(--status-ok);
+  --color-status-warn: var(--status-warn);
+  --color-status-err: var(--status-err);
 }
 
-/* DICE: Force dark mode — true black theme */
+/* ── LIGHT MODE (default) ───────────────────────────────────────── */
 :root {
-  --background: #000000;
-  --foreground: #fafafa;
-  --card: #0a0a0a;
-  --card-foreground: #fafafa;
-  --popover: #0a0a0a;
-  --popover-foreground: #fafafa;
-  --primary: #00FF85;
-  --primary-foreground: #000000;
-  --secondary: #111111;
-  --secondary-foreground: #fafafa;
-  --muted: #111111;
-  --muted-foreground: #a1a1aa;
-  --accent: #111111;
-  --accent-foreground: #fafafa;
-  --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.12);
-  --ring: #00FF85;
-  --chart-1: #00FF85;
-  --chart-2: #00cc6a;
-  --chart-3: #009950;
-  --chart-4: #006636;
-  --chart-5: #00331b;
-  --radius: 0.625rem;
-  --sidebar: #0a0a0a;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #00FF85;
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #111111;
-  --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #00FF85;
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #0a0a0a;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f5f5f5;
+  --muted-foreground: #525252;
+  --accent: #f5f5f5;
+  --accent-foreground: #0a0a0a;
+  --destructive: #b91c1c;
+  --border: rgba(0, 0, 0, 0.10);
+  --input: rgba(0, 0, 0, 0.14);
+  --ring: rgba(0, 0, 0, 0.40);
+  --chart-1: #0a0a0a;
+  --chart-2: #404040;
+  --chart-3: #737373;
+  --chart-4: #a3a3a3;
+  --chart-5: #d4d4d4;
+  --radius: 0.25rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #0a0a0a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #0a0a0a;
+  --sidebar-border: rgba(0, 0, 0, 0.10);
+  --sidebar-ring: rgba(0, 0, 0, 0.40);
+
+  --status-ok:   #15803d;  /* explorer: finalized */
+  --status-warn: #a16207;  /* explorer: in-progress */
+  --status-err:  #b91c1c;  /* explorer: failed */
+
+  /* ASCII background pattern char color (very subtle) */
+  --ascii-bg: rgba(0, 0, 0, 0.05);
+  --ascii-bg-strong: rgba(0, 0, 0, 0.10);
 }
 
-/* Dark variant still uses same — single-theme app */
+/* ── DARK MODE ──────────────────────────────────────────────────── */
 .dark {
-  --background: #000000;
+  --background: #0a0a0a;
   --foreground: #fafafa;
   --card: #0a0a0a;
   --card-foreground: #fafafa;
   --popover: #0a0a0a;
   --popover-foreground: #fafafa;
-  --primary: #00FF85;
-  --primary-foreground: #000000;
-  --secondary: #111111;
+  --primary: #fafafa;
+  --primary-foreground: #0a0a0a;
+  --secondary: #141414;
   --secondary-foreground: #fafafa;
-  --muted: #111111;
+  --muted: #141414;
   --muted-foreground: #a1a1aa;
-  --accent: #111111;
+  --accent: #141414;
   --accent-foreground: #fafafa;
-  --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.12);
-  --ring: #00FF85;
-  --chart-1: #00FF85;
-  --chart-2: #00cc6a;
-  --chart-3: #009950;
-  --chart-4: #006636;
-  --chart-5: #00331b;
+  --destructive: #f87171;
+  --border: rgba(255, 255, 255, 0.10);
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: rgba(255, 255, 255, 0.40);
+  --chart-1: #fafafa;
+  --chart-2: #d4d4d8;
+  --chart-3: #a1a1aa;
+  --chart-4: #71717a;
+  --chart-5: #52525b;
   --sidebar: #0a0a0a;
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #00FF85;
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #111111;
+  --sidebar-primary: #fafafa;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #141414;
   --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #00FF85;
+  --sidebar-border: rgba(255, 255, 255, 0.10);
+  --sidebar-ring: rgba(255, 255, 255, 0.40);
+
+  --status-ok:   #4ade80;
+  --status-warn: #facc15;
+  --status-err:  #f87171;
+
+  --ascii-bg: rgba(255, 255, 255, 0.04);
+  --ascii-bg-strong: rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
@@ -132,97 +148,132 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv11";
   }
   html {
+    @apply font-mono;
+  }
+  /* Headings use sans for character; body stays mono per the ASCII brief. */
+  h1, h2, h3, h4, h5, h6 {
     @apply font-sans;
+    letter-spacing: -0.01em;
   }
 }
 
-/* DICE custom utilities */
 @layer utilities {
-  .text-metallic {
-    background: linear-gradient(to right, #d4d4d8, #ffffff, #a1a1aa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  /* ── Pixel type ────────────────────────────────────────────── */
+
+  .font-pixel {
+    font-family: var(--font-pixel), "Silkscreen", ui-monospace, monospace;
+    letter-spacing: 0;
   }
 
-  .text-metallic-green {
-    background: linear-gradient(to right, #00FF85, #00cc6a, #00FF85);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+  /* ── Dither / halftone textures ────────────────────────────── */
 
-  .glow-green {
-    box-shadow: 0 0 30px rgba(0, 255, 133, 0.15);
+  /* Tight 1px checker — subtle texture for blocks / bands. */
+  .dither-fine {
+    background-image:
+      repeating-conic-gradient(var(--ascii-bg) 0% 25%, transparent 0% 50%);
+    background-size: 3px 3px;
   }
-
-  .glow-green-strong {
-    box-shadow: 0 0 40px rgba(0, 255, 133, 0.25), 0 0 80px rgba(0, 255, 133, 0.1);
+  /* Larger 2px dot grid — for display-type overlays. */
+  .dither-dots {
+    background-image: radial-gradient(var(--ascii-bg-strong) 1px, transparent 1px);
+    background-size: 5px 5px;
   }
-
-  .glass {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .glass-strong {
-    background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  /* Marquee animation for TrustedBy */
-  @keyframes marquee {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-100%);
-    }
-  }
-
-  .noise {
-    position: relative;
-  }
-  .noise::after {
+  /* Horizontal-band dither — like old CRT monitor. */
+  .scanlines::before {
     content: "";
     position: absolute;
     inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
     pointer-events: none;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      var(--ascii-bg) 2px,
+      var(--ascii-bg) 3px
+    );
+    mix-blend-mode: overlay;
     z-index: 1;
   }
 
-  /* Form inputs — used by /preorder and any other form pages.
-     Intentionally subtle; the focus ring is the only loud bit. */
+  /* ── ASCII chrome ──────────────────────────────────────────── */
+
+  /* Section dividers like  ── × ── × ──  */
+  .ascii-rule {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    user-select: none;
+  }
+  .ascii-rule::before,
+  .ascii-rule::after {
+    content: "";
+    flex: 1;
+    border-top: 1px dashed var(--border);
+  }
+
+  /* Bracketed inline label — [ LIVE · DEVNET ] */
+  .ascii-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+  }
+  .ascii-label::before { content: "[ "; }
+  .ascii-label::after { content: " ]"; }
+
+  /* Crisp 1px box border with hover accent — replaces all the old GlowCards */
+  .ascii-box {
+    border: 1px solid var(--border);
+    background: var(--background);
+    transition: border-color .15s ease, background-color .15s ease;
+  }
+  .ascii-box:hover {
+    border-color: var(--foreground);
+  }
+
+  /* The signature shaded block strip — used for stat panels, hero bg accents */
+  .ascii-shade {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent 0,
+      transparent 6px,
+      var(--ascii-bg) 6px,
+      var(--ascii-bg) 7px
+    );
+  }
+
+  /* Text-color status pills (used by /explorer only) */
+  .pill-ok   { color: var(--status-ok);   border: 1px solid currentColor; }
+  .pill-warn { color: var(--status-warn); border: 1px solid currentColor; }
+  .pill-err  { color: var(--status-err);  border: 1px solid currentColor; }
+
+  /* ── Form inputs (mono-friendly, no green focus ring) ──────── */
   .input {
     display: block;
     width: 100%;
     padding: 10px 14px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(0, 0, 0, 0.4);
-    color: rgb(228, 228, 231);
-    font-size: 14px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-mono);
+    font-size: 13px;
     line-height: 1.4;
     transition: border-color .12s, background .12s;
   }
-  .input::placeholder {
-    color: rgb(82, 82, 91);
-  }
-  .input:hover {
-    border-color: rgba(255, 255, 255, 0.14);
-  }
-  .input:focus {
+  .input::placeholder { color: var(--muted-foreground); opacity: 0.6; }
+  .input:hover  { border-color: var(--ring); }
+  .input:focus  {
     outline: none;
-    border-color: rgba(0, 255, 133, 0.45);
-    box-shadow: 0 0 0 3px rgba(0, 255, 133, 0.08);
-    background: rgba(0, 0, 0, 0.55);
+    border-color: var(--foreground);
+    box-shadow: 0 0 0 1px var(--foreground);
   }
   select.input {
     appearance: none;

@@ -44,50 +44,50 @@ export default function ModesPage() {
       </Ul>
 
       <H2 id="comparison">Comparison table</H2>
-      <div className="my-5 overflow-x-auto rounded-xl border border-white/[0.08]">
+      <div className="my-5 overflow-x-auto rounded-sm border border-border">
         <table className="w-full text-left text-[14.5px]">
-          <thead className="bg-white/[0.03] text-zinc-300">
+          <thead className="bg-muted/40 text-foreground">
             <tr>
               <th className="px-3 py-2 font-medium">&nbsp;</th>
               <th className="px-3 py-2 font-medium">Streaming (default)</th>
               <th className="px-3 py-2 font-medium">Audit</th>
             </tr>
           </thead>
-          <tbody className="text-zinc-400">
-            <tr className="border-t border-white/[0.06]">
-              <td className="px-3 py-2 text-zinc-300">Who picks devices</td>
+          <tbody className="text-muted-foreground">
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-foreground">Who picks devices</td>
               <td className="px-3 py-2">Coordinator · off-chain</td>
               <td className="px-3 py-2">Program · on-chain Fisher-Yates</td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
-              <td className="px-3 py-2 text-zinc-300">Seed source</td>
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-foreground">Seed source</td>
               <td className="px-3 py-2">Coordinator-local</td>
               <td className="px-3 py-2">
                 <Code>SlotHashes</Code> sysvar
               </td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
-              <td className="px-3 py-2 text-zinc-300">Avg round latency</td>
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-foreground">Avg round latency</td>
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">4.05 s</td>
               <td className="px-3 py-2 font-mono text-[#7cf9c1]">4.15 s (+8%)</td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
-              <td className="px-3 py-2 text-zinc-300">p95</td>
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-foreground">p95</td>
               <td className="px-3 py-2">4.62 s</td>
               <td className="px-3 py-2">4.93 s</td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
-              <td className="px-3 py-2 text-zinc-300">Verifiable selection</td>
-              <td className="px-3 py-2 text-zinc-600">—</td>
-              <td className="px-3 py-2 text-[#00FF85]">Yes · reproducible</td>
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-foreground">Verifiable selection</td>
+              <td className="px-3 py-2 text-muted-foreground/60">—</td>
+              <td className="px-3 py-2 text-[var(--foreground)]">Yes · reproducible</td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
-              <td className="px-3 py-2 text-zinc-300">Fee</td>
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-foreground">Fee</td>
               <td className="px-3 py-2">0.002 SOL</td>
               <td className="px-3 py-2">0.002 SOL</td>
             </tr>
-            <tr className="border-t border-white/[0.04]">
-              <td className="px-3 py-2 text-zinc-300">Best for</td>
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-foreground">Best for</td>
               <td className="px-3 py-2">Gaming · UX-critical</td>
               <td className="px-3 py-2">Regulated · RWA · high-stakes</td>
             </tr>
@@ -129,7 +129,7 @@ export default function ModesPage() {
         walk-through of the reproduction is on{" "}
         <a
           href="/docs/advanced/selection"
-          className="text-[#00FF85] underline decoration-[#00FF85]/30 underline-offset-4"
+          className="text-[var(--foreground)] underline decoration-[var(--foreground)]/30 underline-offset-4"
         >
           On-chain selection
         </a>
