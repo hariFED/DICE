@@ -1,8 +1,9 @@
 "use client"
 
+import Link from "next/link"
 import { motion } from "framer-motion"
 import { useStats } from "@/lib/hooks"
-import { DottedWorldMap } from "@/components/landing/DottedWorldMap"
+import { DottedSphereGlobe } from "@/components/landing/DottedSphereGlobe"
 import { BracketLink } from "@/components/shared/BracketButton"
 import { BRAND } from "@/lib/constants"
 
@@ -19,6 +20,14 @@ const fadeUp = {
   }),
 }
 
+/**
+ * Landing hero — editorial two-column.
+ *
+ *   left  : chapter marker · wordmark · D.I.C.E. · headline · pillars · CTAs
+ *   right : rotating dotted sphere · node strip · stat readouts
+ *
+ * Scroll-cued fade/rise on left column. Globe is client-only (cobe + WebGL).
+ */
 export function Hero() {
   const { data: stats } = useStats()
 
@@ -34,13 +43,16 @@ export function Hero() {
 
   return (
     <section className="relative overflow-hidden border-b border-border">
-      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-14 md:py-20">
-        {/* Meta row */}
+      {/* faint blueprint grid bg */}
+      <div className="absolute inset-0 bg-grid opacity-60 pointer-events-none" aria-hidden />
+
+      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-14 md:py-20">
+        {/* Top meta strip */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="mb-10 md:mb-16 grid grid-cols-2 md:grid-cols-12 gap-4 items-baseline font-mono text-[11px] uppercase tracking-wider text-muted-foreground"
+          className="mb-12 md:mb-20 grid grid-cols-2 md:grid-cols-12 gap-4 items-baseline font-mono text-[11px] uppercase tracking-wider text-muted-foreground border-b border-dashed border-border pb-4"
         >
           <span className="col-span-1 md:col-span-2 font-pixel text-foreground text-xs">00 / HERO</span>
           <span className="hidden md:flex md:col-span-3 items-center gap-1.5">
@@ -56,76 +68,80 @@ export function Hero() {
           </span>
         </motion.div>
 
-        {/* Main — content left, globe right (proper circle, no mask) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+        {/* Main — copy left, globe right */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
           {/* LEFT — copy */}
-          <div className="lg:col-span-6 xl:col-span-5">
-            {/* Wordmark + D.I.C.E. acronym */}
+          <div className="lg:col-span-7">
+            {/* Chapter + D.I.C.E. acronym row */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="mb-7"
+              className="mb-6 flex items-end gap-6"
             >
-              <p className="font-pixel text-foreground text-5xl md:text-6xl leading-none tracking-tight">
-                DICE
-              </p>
-              <div className="mt-3 grid grid-cols-4 gap-x-3 max-w-md font-mono text-[10px] uppercase tracking-wider">
-                {(
-                  [
-                    ["D", BRAND.acronym.D],
-                    ["I", BRAND.acronym.I],
-                    ["C", BRAND.acronym.C],
-                    ["E", BRAND.acronym.E],
-                  ] as const
-                ).map(([letter, word]) => (
-                  <div key={letter}>
-                    <p className="font-pixel text-foreground text-sm">{letter}</p>
-                    <p className="text-muted-foreground mt-0.5">{word}</p>
-                  </div>
-                ))}
+              <span className="chapter-num">01</span>
+              <div className="mb-2">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
+                  The DICE Network
+                </p>
+                <div className="grid grid-cols-4 gap-x-3 max-w-md font-mono text-[10px] uppercase tracking-wider">
+                  {(
+                    [
+                      ["D", BRAND.acronym.D],
+                      ["I", BRAND.acronym.I],
+                      ["C", BRAND.acronym.C],
+                      ["E", BRAND.acronym.E],
+                    ] as const
+                  ).map(([letter, word]) => (
+                    <div key={letter}>
+                      <p className="font-pixel text-foreground text-sm">{letter}</p>
+                      <p className="text-muted-foreground/70 mt-0.5 text-[9px]">{word}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
 
-            {/* Editorial headline */}
+            {/* Headline */}
             <motion.h1
               custom={1}
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="font-sans text-[11vw] sm:text-[8vw] md:text-[5.5vw] lg:text-[4.4vw] xl:text-[4vw] font-medium tracking-[-0.025em] leading-[0.92] text-foreground"
+              className="font-sans text-[13vw] sm:text-[9vw] md:text-[6.5vw] lg:text-[5.2vw] xl:text-[4.6vw] font-medium tracking-[-0.03em] leading-[0.9] text-foreground"
               style={{ wordBreak: "keep-all" }}
             >
               Hardware-
               <br />
-              <span className="italic font-light">backed</span>
+              <span className="italic font-light">backed</span>{" "}
+              randomness
               <br />
-              randomness.
+              <span className="text-muted-foreground">for Solana.</span>
             </motion.h1>
 
-            {/* Subtitle */}
-            <motion.div
+            {/* Pillars */}
+            <motion.ul
               custom={2}
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="mt-8 max-w-[42ch] border-l-2 border-foreground/30 pl-4 font-mono text-[13px] text-muted-foreground leading-[1.7]"
+              className="mt-10 max-w-[48ch] space-y-2.5 font-mono text-[13px] text-muted-foreground leading-[1.7]"
             >
-              <p>
-                <span className="text-muted-foreground/50 mr-1.5">»</span>
-                Physical ESP32 devices producing true entropy via commit-reveal.
-              </p>
-              <p className="mt-1.5">
-                <span className="text-muted-foreground/50 mr-1.5">»</span>
-                Sub-four-second VRF rounds on Solana.
-              </p>
-              <p className="mt-1.5">
-                <span className="text-muted-foreground/50 mr-1.5">»</span>
-                <span className="text-foreground">0.002 SOL</span> per request, no token.
-              </p>
-            </motion.div>
+              <li className="flex gap-3">
+                <span className="font-pixel text-foreground w-6 shrink-0">01</span>
+                <span>Physical ESP32 devices producing <span className="text-foreground">true entropy</span> via commit-reveal.</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-pixel text-foreground w-6 shrink-0">02</span>
+                <span>Sub-four-second VRF rounds on <span className="text-foreground">Solana mainnet</span>.</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-pixel text-foreground w-6 shrink-0">03</span>
+                <span><span className="text-foreground">0.002 SOL</span> per request — no token, no gatekeeping.</span>
+              </li>
+            </motion.ul>
 
-            {/* Dual pixel displays */}
+            {/* Dual stat readout */}
             <motion.div
               custom={3}
               variants={fadeUp}
@@ -133,13 +149,13 @@ export function Hero() {
               animate="visible"
               className="mt-10 grid grid-cols-2 gap-6 max-w-md"
             >
-              <div className="border-t border-foreground pt-2">
+              <div className="border-t-2 border-foreground pt-2">
                 <p className="ascii-label text-[10px] mb-1">avg / round</p>
                 <p className="font-pixel text-4xl md:text-5xl text-foreground tabular-nums leading-none">
                   {latencyDisplay}
                 </p>
               </div>
-              <div className="border-t border-foreground pt-2">
+              <div className="border-t-2 border-foreground pt-2">
                 <p className="ascii-label text-[10px] mb-1">success</p>
                 <p className="font-pixel text-4xl md:text-5xl text-foreground tabular-nums leading-none">
                   {rateDisplay}
@@ -153,39 +169,41 @@ export function Hero() {
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="mt-12 flex flex-wrap items-center gap-3"
+              className="mt-10 flex flex-wrap items-center gap-3"
             >
               <BracketLink href="/explorer" variant="primary">Explore_Network</BracketLink>
               <BracketLink href="/docs" variant="ghost">Read_Docs</BracketLink>
+              <Link
+                href="/preorder"
+                className="ml-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors border-b border-dashed border-border hover:border-foreground"
+              >
+                or run a node →
+              </Link>
             </motion.div>
           </div>
 
-          {/* RIGHT — globe, circular, with framing labels */}
+          {/* RIGHT — globe */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 1, ease: [0.25, 0.4, 0.25, 1] }}
-            className="relative lg:col-span-6 xl:col-span-7 lg:pt-4"
+            className="relative lg:col-span-5 lg:pt-2"
           >
-            {/* Top meta */}
-            <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-3">
+            <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-4">
               <span>[ entropy · mesh ]</span>
               <span className="font-pixel text-foreground">20 NODES</span>
             </div>
 
-            {/* Dotted world map */}
-            <div className="relative">
-              <DottedWorldMap className="w-full" />
+            <div className="relative aspect-square w-full max-w-[560px] mx-auto corner-ticks">
+              <DottedSphereGlobe size={560} className="w-full h-auto" />
 
-              {/* Subtle corner glyphs framing it */}
-              <span aria-hidden className="absolute top-0 left-0 font-mono text-muted-foreground/40 text-xs leading-none select-none">╭</span>
-              <span aria-hidden className="absolute top-0 right-0 font-mono text-muted-foreground/40 text-xs leading-none select-none">╮</span>
-              <span aria-hidden className="absolute bottom-0 left-0 font-mono text-muted-foreground/40 text-xs leading-none select-none">╰</span>
-              <span aria-hidden className="absolute bottom-0 right-0 font-mono text-muted-foreground/40 text-xs leading-none select-none">╯</span>
+              {/* Axis labels */}
+              <span className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">N · 90°</span>
+              <span className="absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">S · 90°</span>
+              <span className="absolute top-1/2 right-3 -translate-y-1/2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">180° E</span>
             </div>
 
-            {/* Bottom caption — city codes */}
-            <div className="mt-3 flex items-baseline justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            <div className="mt-4 flex items-baseline justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               <span className="truncate">sf · nyc · ldn · par · ber · tyo · sgp · hkg · syd · dxb · bom · sao · bue · del</span>
               <span className="font-pixel text-foreground ml-3 shrink-0">GLOBAL</span>
             </div>

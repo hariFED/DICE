@@ -36,6 +36,23 @@ export const metadata: Metadata = {
     "ESP32",
     "blockchain",
   ],
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
+  openGraph: {
+    title: "DICE — Hardware-Backed VRF Oracle",
+    description: "Physical ESP32 devices. Commit-reveal. 0.002 SOL per request.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: "@dicelabsnetwork",
+  },
 }
 
 export default function RootLayout({

@@ -8,6 +8,7 @@ import { NAV_LINKS, SITE } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
 import { BracketLink } from "@/components/shared/BracketButton"
+import { Logo } from "@/components/shared/Logo"
 
 export function Header() {
   const pathname = usePathname()
@@ -21,13 +22,12 @@ export function Header() {
       className="sticky top-0 z-50 w-full bg-background/85 backdrop-blur border-b border-dashed border-border"
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo — TUI bracket frame */}
-        <Link href="/" className="flex items-center gap-1 font-mono text-sm group">
-          <span className="text-muted-foreground group-hover:text-foreground transition-colors">[</span>
-          <span className="text-muted-foreground/50 group-hover:text-foreground transition-colors">▣</span>
-          <span className="font-semibold tracking-wider text-foreground px-1">{SITE.name}</span>
-          <span className="text-muted-foreground/60 text-[11px] group-hover:text-foreground transition-colors">v7.7</span>
-          <span className="text-muted-foreground group-hover:text-foreground transition-colors">]</span>
+        {/* Logo — iso cube + wordmark + version chip */}
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <Logo size={26} />
+          <span className="hidden sm:inline font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70 border border-border rounded-sm px-1.5 py-0.5 leading-none">
+            v7.7 · devnet
+          </span>
         </Link>
 
         {/* Desktop nav — bracketed items */}

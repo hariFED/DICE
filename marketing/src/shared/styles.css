@@ -1,0 +1,113 @@
+/*  DICE brand tokens + print helpers.
+ *  Shared across slides, cards, and brandbook. Kept fully self-contained
+ *  so the HTML files can be opened as standalone previews in a browser. */
+
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Silkscreen:wght@400;700&display=swap");
+
+:root {
+  /* Core palette */
+  --bg:        #0a0a0a;
+  --fg:        #fafafa;
+  --muted:     #a1a1aa;
+  --border:    rgba(255, 255, 255, 0.14);
+
+  /* Accent (used sparingly — status only) */
+  --accent-ok:   #4ade80;
+  --accent-warn: #facc15;
+  --accent-err:  #f87171;
+
+  /* Light-theme overrides for print-friendly pages */
+  --light-bg:    #ffffff;
+  --light-fg:    #0a0a0a;
+  --light-muted: #525252;
+  --light-border: rgba(0, 0, 0, 0.12);
+
+  /* Type */
+  --sans:  "Geist",        ui-sans-serif, system-ui, sans-serif;
+  --mono:  "Geist Mono",   ui-monospace, "Menlo", monospace;
+  --pixel: "Silkscreen",   ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.5;
+}
+
+.light { background: var(--light-bg); color: var(--light-fg); }
+
+.font-mono  { font-family: var(--mono); }
+.font-pixel { font-family: var(--pixel); letter-spacing: 0; }
+
+.label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+
+.chapter {
+  font-family: var(--pixel);
+  font-size: 64px;
+  line-height: 0.85;
+  opacity: 0.2;
+}
+
+.rule {
+  border: none;
+  border-top: 1px dashed var(--border);
+}
+.rule-solid {
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+/* Grid backgrounds */
+.grid-bg {
+  background-image:
+    linear-gradient(to right,  rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.grid-bg.light-variant {
+  background-image:
+    linear-gradient(to right,  rgba(0,0,0,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+}
+
+/* Corner ticks */
+.corners { position: relative; }
+.corners::before,
+.corners::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid currentColor;
+  opacity: 0.35;
+}
+.corners::before { top: 0; left: 0; border-right: none; border-bottom: none; }
+.corners::after  { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+/* Iso cube logo inline */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo svg { width: 28px; height: 28px; }
+.logo .mark { font-family: var(--pixel); font-size: 16px; letter-spacing: 0; }
+
+/* Slide frame — 1920×1080 */
+@page { size: Letter; margin: 0; }

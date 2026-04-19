@@ -28,6 +28,14 @@ export type DocsNode = DocsLeaf | DocsSection
 
 export const DOCS_NAV: DocsNode[] = [
   {
+    title: "For Beginners",
+    pages: [
+      { title: "Start here · what is VRF?", href: "/docs/getting-started" },
+      { title: "Your first request", href: "/docs/getting-started/first-request" },
+      { title: "Glossary", href: "/docs/getting-started/glossary" },
+    ],
+  },
+  {
     title: "Overview",
     pages: [
       { title: "Welcome", href: "/docs" },

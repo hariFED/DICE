@@ -254,6 +254,74 @@
   .pill-warn { color: var(--status-warn); border: 1px solid currentColor; }
   .pill-err  { color: var(--status-err);  border: 1px solid currentColor; }
 
+  /* ── Blueprint grid — used as bg for isometric illustrations ── */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right,  var(--ascii-bg) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--ascii-bg) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .bg-grid-fine {
+    background-image:
+      linear-gradient(to right,  var(--ascii-bg) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--ascii-bg) 1px, transparent 1px);
+    background-size: 8px 8px;
+  }
+  .bg-iso-grid {
+    background-image:
+      linear-gradient(30deg,  var(--ascii-bg) 1px, transparent 1px),
+      linear-gradient(-30deg, var(--ascii-bg) 1px, transparent 1px);
+    background-size: 28px 16px;
+  }
+
+  /* ── Editorial chrome ─────────────────────────────────────── */
+  .corner-ticks::before,
+  .corner-ticks::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--foreground);
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .corner-ticks::before { top: 0; left: 0; border-right: none; border-bottom: none; }
+  .corner-ticks::after  { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+  /* Chapter marker — big editorial section numbers */
+  .chapter-num {
+    font-family: var(--font-pixel);
+    font-size: clamp(48px, 6vw, 92px);
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+    opacity: 0.15;
+  }
+
+  /* Ticker marquee keyframes */
+  @keyframes marquee-x {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  .animate-marquee {
+    animation: marquee-x var(--marquee-duration, 60s) linear infinite;
+  }
+
+  /* Sticky section progress indicator */
+  .progress-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted-foreground);
+    opacity: 0.3;
+    transition: opacity .3s, transform .3s;
+  }
+  .progress-dot.active {
+    opacity: 1;
+    transform: scale(1.5);
+    background: var(--foreground);
+  }
+
   /* ── Form inputs (mono-friendly, no green focus ring) ──────── */
   .input {
     display: block;

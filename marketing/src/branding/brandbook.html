@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>DICE · Brand Book</title>
+<meta name="pdf-size" content="Letter" />
+<meta name="pdf-orientation" content="portrait" />
+<link rel="stylesheet" href="../shared/styles.css" />
+<style>
+  @page { size: Letter; margin: 0.5in; }
+  body { background: var(--bg); }
+
+  .page {
+    page-break-after: always;
+    break-after: page;
+    padding: 18px 0;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .hdr .n { font-family: var(--pixel); font-size: 14px; letter-spacing: 0; color: var(--fg); }
+
+  h1 {
+    font-family: var(--sans);
+    font-size: 48px;
+    letter-spacing: -0.025em;
+    line-height: 1;
+    margin: 0 0 12px 0;
+    font-weight: 500;
+  }
+  h1 .it { font-style: italic; font-weight: 300; color: var(--muted); }
+
+  h2 {
+    font-family: var(--sans);
+    font-size: 24px;
+    letter-spacing: -0.015em;
+    font-weight: 500;
+    margin: 0 0 10px 0;
+  }
+
+  p {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 62ch;
+  }
+
+  .lead {
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--fg);
+    margin-bottom: 18px;
+    max-width: 66ch;
+  }
+
+  .section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--border);
+  }
+
+  /* Logo display */
+  .logo-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 16px;
+  }
+  .logo-cell {
+    border: 1px solid var(--border);
+    padding: 28px;
+    text-align: center;
+  }
+  .logo-cell.dark  { background: var(--bg); color: var(--fg); }
+  .logo-cell.light { background: var(--light-bg); color: var(--light-fg); }
+  .logo-cell svg { width: 88px; height: 88px; }
+  .logo-cell .meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-top: 14px;
+  }
+  .logo-cell.light .meta { color: var(--light-muted); }
+
+  /* Color swatches */
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .swatch {
+    border: 1px solid var(--border);
+    padding: 20px 14px;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .swatch .hex {
+    font-family: var(--pixel);
+    font-size: 15px;
+    letter-spacing: 0;
+  }
+  .swatch .name {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  /* Type scale */
+  .type-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--border);
+    align-items: baseline;
+  }
+  .type-row:last-child { border-bottom: 0; }
+  .type-row .lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+  }
+
+  /* Rules row */
+  .rules {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .rule-card {
+    border: 1px solid var(--border);
+    padding: 14px;
+  }
+  .rule-card h3 {
+    font-family: var(--pixel);
+    font-size: 12px;
+    color: var(--fg);
+    margin: 0 0 6px 0;
+  }
+  .rule-card .body {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .rule-card.do   { border-color: rgba(74, 222, 128, 0.35); }
+  .rule-card.dont { border-color: rgba(248, 113, 113, 0.35); }
+  .rule-card.do    .tag { color: var(--accent-ok); }
+  .rule-card.dont  .tag { color: var(--accent-err); }
+  .tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<section class="page">
+  <div class="hdr">
+    <span>DICE · brand · guidelines · v1.0</span>
+    <span class="n">01 / 06</span>
+  </div>
+  <div style="min-height: 9in; display:flex; flex-direction:column; justify-content:space-between">
+    <div>
+      <div style="font-family:var(--mono); font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:20px">
+        brandbook · 2026 edition
+      </div>
+      <h1>Brand<br><span class="it">Guidelines.</span></h1>
+      <p class="lead" style="margin-top:28px; max-width: 58ch">
+        This document is the long version of: please don&apos;t add
+        gradients. DICE is an editorial, mono-palette, pixel-mixed
+        brand — born from ASCII terminals and technical drawings.
+        Keep that shape and it reads right.
+      </p>
+    </div>
+    <div>
+      <svg viewBox="0 0 64 64" style="width:140px; height:140px; color:var(--fg)">
+        <path d="M32 4 L60 19 L60 45 L32 60 L4 45 L4 19 Z" fill="currentColor"/>
+        <path d="M4 19 L32 34 L60 19" stroke="var(--bg)" stroke-width="2" fill="none"/>
+        <path d="M32 4 L32 34" stroke="var(--bg)" stroke-width="2" fill="none"/>
+        <path d="M32 34 L32 60" stroke="var(--bg)" stroke-width="2" fill="none"/>
+        <path d="M18 26.5 L18 52.5 M46 26.5 L46 52.5" stroke="var(--bg)" stroke-width="1.25" opacity="0.9" fill="none"/>
+        <path d="M4 32 L32 47 M60 32 L32 47" stroke="var(--bg)" stroke-width="1.25" opacity="0.9" fill="none"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- LOGO -->
+<section class="page">
+  <div class="hdr"><span>chapter · 02 · logo</span><span class="n">02 / 06</span></div>
+  <h1>The <span class="it">mark.</span></h1>
+  <p class="lead">
+    An isometric cube with a top-right sub-cube offset. Reads as a dice,
+    a block, a stack, a unit — a single token of entropy.
+  </p>
+
+  <div class="section">
+    <h2>Primary lockups</h2>
+    <div class="logo-row">
+      <div class="logo-cell dark">
+        <svg viewBox="0 0 64 64"><path d="M32 4 L60 19 L60 45 L32 60 L4 45 L4 19 Z" fill="currentColor"/><path d="M4 19 L32 34 L60 19 M32 4 L32 34 M32 34 L32 60" stroke="var(--bg)" stroke-width="2" fill="none"/><path d="M18 26.5 L18 52.5 M46 26.5 L46 52.5 M4 32 L32 47 M60 32 L32 47" stroke="var(--bg)" stroke-width="1.25" opacity="0.9" fill="none"/></svg>
+        <div class="meta">dark · primary · on 0A0A0A</div>
+      </div>
+      <div class="logo-cell light">
+        <svg viewBox="0 0 64 64"><path d="M32 4 L60 19 L60 45 L32 60 L4 45 L4 19 Z" fill="currentColor"/><path d="M4 19 L32 34 L60 19 M32 4 L32 34 M32 34 L32 60" stroke="var(--light-bg)" stroke-width="2" fill="none"/><path d="M18 26.5 L18 52.5 M46 26.5 L46 52.5 M4 32 L32 47 M60 32 L32 47" stroke="var(--light-bg)" stroke-width="1.25" opacity="0.9" fill="none"/></svg>
+        <div class="meta">light · inverse · on FFFFFF</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Clear space</h2>
+    <p>Minimum clear space on all sides is equal to the height of the
+      sub-cube in the mark. No text, imagery, or other marks inside
+      that zone. Minimum render size is 20 px square for digital, 8 mm
+      for print.</p>
+  </div>
+
+  <div class="section">
+    <h2>Do / Don&apos;t</h2>
+    <div class="rules">
+      <div class="rule-card do">
+        <span class="tag">DO</span>
+        <h3>Render in pure mono</h3>
+        <div class="body">White on dark. Black on light. Use currentColor so it inherits the surrounding text color.</div>
+      </div>
+      <div class="rule-card dont">
+        <span class="tag">DON&apos;T</span>
+        <h3>Don&apos;t color the cube</h3>
+        <div class="body">No gradients, no chrome, no brand-accent tint. The mark is geometric — color diminishes it.</div>
+      </div>
+      <div class="rule-card do">
+        <span class="tag">DO</span>
+        <h3>Pair with DICE wordmark</h3>
+        <div class="body">On primary surfaces. Use Silkscreen (pixel) or set the wordmark in uppercase Geist Sans tracked tight.</div>
+      </div>
+      <div class="rule-card dont">
+        <span class="tag">DON&apos;T</span>
+        <h3>Don&apos;t rotate or skew</h3>
+        <div class="body">The isometric angle is canonical. Rotation flattens its geometry; skews break the sub-cube readout.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COLOR -->
+<section class="page">
+  <div class="hdr"><span>chapter · 03 · color</span><span class="n">03 / 06</span></div>
+  <h1>Three <span class="it">values.</span></h1>
+  <p class="lead">Pure mono, status accents only. No decorative color. Ever.</p>
+
+  <div class="section">
+    <h2>Base palette</h2>
+    <div class="palette">
+      <div class="swatch" style="background:#0a0a0a; color:#fafafa">
+        <span class="name">ink</span>
+        <div>
+          <div class="hex">#0A0A0A</div>
+          <div style="font-family:var(--mono); font-size:10px; opacity:0.7; margin-top:4px">dark bg · page · card</div>
+        </div>
+      </div>
+      <div class="swatch" style="background:#fafafa; color:#0a0a0a; border-color: rgba(0,0,0,0.12)">
+        <span class="name" style="color:#525252">paper</span>
+        <div>
+          <div class="hex">#FAFAFA</div>
+          <div style="font-family:var(--mono); font-size:10px; color:#525252; margin-top:4px">light bg · print</div>
+        </div>
+      </div>
+      <div class="swatch" style="background:#141414; color:#fafafa">
+        <span class="name">mute · dark</span>
+        <div>
+          <div class="hex">#141414</div>
+          <div style="font-family:var(--mono); font-size:10px; opacity:0.7; margin-top:4px">secondary surface · dark</div>
+        </div>
+      </div>
+      <div class="swatch" style="background:#f5f5f5; color:#525252; border-color: rgba(0,0,0,0.12)">
+        <span class="name">mute · light</span>
+        <div>
+          <div class="hex">#F5F5F5</div>
+          <div style="font-family:var(--mono); font-size:10px; margin-top:4px">secondary surface · light</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Status accents</h2>
+    <p>Used in the /explorer UI and form validation only. Never as theme or decoration.</p>
+    <div class="palette" style="grid-template-columns:repeat(3, 1fr)">
+      <div class="swatch" style="background:#0a0a0a; color:#4ade80; border-color: rgba(74,222,128,0.35)">
+        <span class="name" style="color: #4ade80">ok · online</span>
+        <div>
+          <div class="hex">#4ADE80</div>
+          <div style="font-family:var(--mono); font-size:10px; color:#4ade80; opacity:0.7; margin-top:4px">finalized · healthy</div>
+        </div>
+      </div>
+      <div class="swatch" style="background:#0a0a0a; color:#facc15; border-color: rgba(250,204,21,0.35)">
+        <span class="name" style="color: #facc15">warn</span>
+        <div>
+          <div class="hex">#FACC15</div>
+          <div style="font-family:var(--mono); font-size:10px; color:#facc15; opacity:0.7; margin-top:4px">in-progress</div>
+        </div>
+      </div>
+      <div class="swatch" style="background:#0a0a0a; color:#f87171; border-color: rgba(248,113,113,0.35)">
+        <span class="name" style="color: #f87171">err</span>
+        <div>
+          <div class="hex">#F87171</div>
+          <div style="font-family:var(--mono); font-size:10px; color:#f87171; opacity:0.7; margin-top:4px">failed · offline</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TYPE -->
+<section class="page">
+  <div class="hdr"><span>chapter · 04 · typography</span><span class="n">04 / 06</span></div>
+  <h1>Three <span class="it">families.</span></h1>
+  <p class="lead">Sans for display, mono for prose, pixel for emphasis. Nothing else.</p>
+
+  <div class="section">
+    <h2>Type pairing</h2>
+    <div class="type-row">
+      <div class="lbl">display</div>
+      <div style="font-family: var(--sans); font-weight:500; font-size:42px; line-height:1; letter-spacing:-0.02em">Geist — for headlines.</div>
+    </div>
+    <div class="type-row">
+      <div class="lbl">italic</div>
+      <div style="font-family: var(--sans); font-weight:300; font-style: italic; font-size:42px; line-height:1; color:var(--muted); letter-spacing:-0.02em">Light italic — for the second clause.</div>
+    </div>
+    <div class="type-row">
+      <div class="lbl">body · mono</div>
+      <div style="font-family: var(--mono); font-size:14px; line-height:1.7; color:var(--muted)">
+        Geist Mono — used for everything except headings. Keeps the page
+        reading like a terminal. Set at 13–14 px, loose leading.
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="lbl">numerals</div>
+      <div style="font-family: var(--pixel); font-size:52px; line-height:0.85">3.9s · 99.4% · 0.002</div>
+    </div>
+    <div class="type-row">
+      <div class="lbl">labels</div>
+      <div style="font-family: var(--mono); font-size:10px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--muted)">
+        meta · row · devnet · 00 : 12 UTC
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VOICE -->
+<section class="page">
+  <div class="hdr"><span>chapter · 05 · voice</span><span class="n">05 / 06</span></div>
+  <h1>How DICE <span class="it">speaks.</span></h1>
+  <p class="lead">Short sentences. Hardware specifics. No marketing fog.</p>
+
+  <div class="section">
+    <h2>Principles</h2>
+    <div class="rules">
+      <div class="rule-card do">
+        <span class="tag">DO</span>
+        <h3>Name the hardware</h3>
+        <div class="body">
+          &quot;ESP32-S3&quot; · &quot;secp256k1&quot; · &quot;commit-reveal&quot;.
+          The specificity is the substance.
+        </div>
+      </div>
+      <div class="rule-card dont">
+        <span class="tag">DON&apos;T</span>
+        <h3>Adjective stacking</h3>
+        <div class="body">
+          &quot;Revolutionary, next-gen, enterprise-grade&quot; — cut them.
+          The chip doesn&apos;t care, neither do builders.
+        </div>
+      </div>
+      <div class="rule-card do">
+        <span class="tag">DO</span>
+        <h3>Prefer numbers</h3>
+        <div class="body">
+          &quot;3.9 s avg · 50-round bench&quot; beats &quot;extremely fast&quot;.
+          Quote measured, publish the methodology.
+        </div>
+      </div>
+      <div class="rule-card dont">
+        <span class="tag">DON&apos;T</span>
+        <h3>Pretend to be bigger</h3>
+        <div class="body">
+          20 nodes is 20 nodes. Pre-orders are pre-orders. Describe what
+          is, roadmap what isn&apos;t — never blur them.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Sample lines</h2>
+    <p style="color: var(--fg); font-size: 13px">
+      ✓ &nbsp; Hardware-backed randomness for Solana. 0.002 SOL per request.
+    </p>
+    <p style="color: var(--muted); font-size: 13px; margin-top: 8px">
+      ✓ &nbsp; 20 physical ESP32-S3 devices. Commit-reveal across the mesh.
+      Sub-four-second VRF rounds.
+    </p>
+    <p style="color: var(--muted); font-size: 13px; margin-top: 8px">
+      ✕ &nbsp; The world&apos;s most advanced decentralized randomness ecosystem.
+      <span style="color: var(--accent-err); font-family: var(--mono); font-size:10px">(too puffed)</span>
+    </p>
+  </div>
+</section>
+
+<!-- BACK / CONTACT -->
+<section class="page">
+  <div class="hdr"><span>chapter · 06 · contact</span><span class="n">06 / 06</span></div>
+  <h1>Get in <span class="it">touch.</span></h1>
+  <div class="section">
+    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 24px;">
+      <div>
+        <div class="tag" style="color:var(--muted)">web</div>
+        <div style="font-family: var(--pixel); font-size: 16px; margin-top:6px; color: var(--fg)">dicelabs.network</div>
+      </div>
+      <div>
+        <div class="tag" style="color:var(--muted)">x</div>
+        <div style="font-family: var(--pixel); font-size: 16px; margin-top:6px; color: var(--fg)">@dicelabsnetwork</div>
+      </div>
+      <div>
+        <div class="tag" style="color:var(--muted)">github</div>
+        <div style="font-family: var(--pixel); font-size: 16px; margin-top:6px; color: var(--fg)">dicelabsnetwork</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px; padding: 20px; border: 1px dashed var(--border)">
+      <div class="tag" style="color:var(--muted)">press + partnerships</div>
+      <div style="font-family: var(--mono); font-size: 13px; margin-top:8px; color: var(--fg)">
+        exprmntsv2@gmail.com
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 80px; padding-top: 14px; border-top: 1px dashed var(--border); display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color: var(--muted)">
+    <span>DICELabs · 2026</span>
+    <span>end of brandbook · v1.0</span>
+  </div>
+</section>
+
+</body>
+</html>
