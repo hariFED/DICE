@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 const PATHS = [
   {
     label: "I'm new here",
-    title: "Start with the introduction",
-    href: "/docs/introduction",
-    desc: "What DICE is, why hardware matters, and how the trust model works.",
+    title: "Start with the beginner guide",
+    href: "/docs/getting-started",
+    desc: "What VRF means, why DICE uses hardware, and how to ship your first request in under 10 minutes.",
   },
   {
     label: "I want to ship, now",

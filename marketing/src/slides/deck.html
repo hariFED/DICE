@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>DICE · Pitch Deck</title>
+<meta name="pdf-size" content="Letter" />
+<meta name="pdf-orientation" content="landscape" />
+<link rel="stylesheet" href="../shared/styles.css" />
+<style>
+  @page { size: 11in 6.1875in; margin: 0; }  /* 16:9 letter-width */
+
+  .slide {
+    width: 11in;
+    height: 6.1875in;
+    padding: 0.8in 0.9in;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--bg);
+    color: var(--fg);
+    page-break-after: always;
+    break-after: page;
+    position: relative;
+    overflow: hidden;
+  }
+  .slide:last-child { page-break-after: auto; }
+
+  .slide.light {
+    background: var(--light-bg);
+    color: var(--light-fg);
+  }
+  .slide.light .label      { color: var(--light-muted); }
+  .slide.light .rule       { border-color: var(--light-border); }
+  .slide.light .footer     { border-color: var(--light-border); color: var(--light-muted); }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+  .slide.light .header { color: var(--light-muted); }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-top: 1px dashed var(--border);
+    padding-top: 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+  }
+
+  .body h1 {
+    font-family: var(--sans);
+    font-size: 88px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 0.92;
+    margin: 0;
+  }
+  .body h2 {
+    font-family: var(--sans);
+    font-size: 56px;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.02;
+    margin: 0;
+  }
+  .body h3 {
+    font-family: var(--sans);
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    margin: 0;
+  }
+  .body .italic { font-style: italic; font-weight: 300; color: var(--muted); }
+  .slide.light .body .italic { color: var(--light-muted); }
+
+  .body p {
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 56ch;
+  }
+  .slide.light .body p { color: var(--light-muted); }
+
+  .chapter {
+    color: inherit;
+  }
+  .slide.light .chapter { color: var(--light-fg); opacity: 0.12; }
+
+  /* utility layouts */
+  .two-col  { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+  .three    { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .four     { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+
+  .metric {
+    padding: 20px;
+    border: 1px solid var(--border);
+  }
+  .metric .n {
+    font-family: var(--pixel);
+    font-size: 72px;
+    color: var(--fg);
+    line-height: 0.9;
+  }
+  .slide.light .metric { border-color: var(--light-border); }
+  .slide.light .metric .n { color: var(--light-fg); }
+  .metric .lbl {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  .logo svg path[stroke="#0a0a0a"] { stroke: var(--bg); }
+  .slide.light .logo svg path[stroke="#0a0a0a"] { stroke: var(--light-bg); }
+
+  /* Inline step chips */
+  .step {
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+  .step-num {
+    font-family: var(--pixel);
+    font-size: 28px;
+    line-height: 1;
+  }
+  .step-label {
+    font-family: var(--pixel);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 10px;
+  }
+  .step-body {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* Comparison table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  th, td {
+    padding: 10px 14px;
+    border-bottom: 1px dashed var(--border);
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--pixel);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+  }
+  .slide.light th { background: rgba(0,0,0,0.03); }
+  td.dim { color: var(--muted); }
+  td.hi  { color: var(--fg); }
+
+  /* Pills */
+  .pill {
+    display: inline-block;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 01 · COVER -->
+<section class="slide">
+  <header class="header">
+    <div class="logo">
+      <svg viewBox="0 0 64 64" fill="none"><use href="#cube"/></svg>
+      <span class="mark">DICE</span>
+    </div>
+    <span>pitch deck · v1 · 2026</span>
+  </header>
+
+  <div class="body">
+    <span class="chapter" style="font-family:var(--pixel);font-size:96px;opacity:0.2">00</span>
+    <h1 style="margin-top:12px">Hardware-<br><span class="italic">backed</span> randomness<br>for Solana.</h1>
+    <p style="margin-top:32px">
+      20 physical ESP32-S3 nodes. Commit-reveal across the mesh.
+      Sub-four-second VRF rounds. 0.002 SOL per request. No token.
+    </p>
+  </div>
+
+  <footer class="footer">
+    <span>by DICELabs</span>
+    <span>x.com/dicelabsnetwork</span>
+    <span>01 / 12</span>
+  </footer>
+</section>
+
+<!-- SLIDE 02 · PROBLEM -->
+<section class="slide">
+  <header class="header">
+    <span>problem</span>
+    <span>02 / 12</span>
+  </header>
+  <div class="body">
+    <span class="chapter" style="font-family:var(--pixel);font-size:96px;opacity:0.2">01</span>
+    <h2 style="margin-top:12px">Software VRFs live or die<br><span class="italic">on one private key.</span></h2>
+    <p style="margin-top:24px; max-width: 62ch">
+      Every major randomness oracle on Solana today relies on a single
+      cryptographic key held by an operator. If that key leaks — or
+      the operator misuses it — they can bias every lottery, every
+      mint, every raffle that depends on them. The entire trust model
+      reduces to: <em>please don&apos;t mishandle this one file.</em>
+    </p>
+  </div>
+  <footer class="footer"><span>DICELabs</span><span>pitch · v1</span></footer>
+</section>
+
+<!-- SLIDE 03 · SOLUTION -->
+<section class="slide">
+  <header class="header">
+    <span>solution</span>
+    <span>03 / 12</span>
+  </header>
+  <div class="body" style="display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center;height:100%">
+    <div>
+      <span class="chapter" style="font-family:var(--pixel);font-size:96px;opacity:0.2">02</span>
+      <h2 style="margin-top:12px">We generate randomness<br><span class="italic">in silicon.</span></h2>
+      <p style="margin-top:24px">
+        Each DICE node is a physical ESP32-S3 module. The chip contains a
+        hardware true-RNG that samples thermal noise — not derivable
+        from any algorithm or prior state. The value is signed by a key
+        the chip generated itself and never exposes.
+      </p>
+      <p style="margin-top: 14px">
+        Nobody, including us, can reveal a key we&apos;ve never seen.
+      </p>
+    </div>
+    <div style="text-align:center;opacity:0.75;font-family:var(--mono);font-size:10px;letter-spacing:0.15em">
+      <svg viewBox="0 0 240 240" style="width:260px;height:260px;color:var(--fg)">
+        <defs>
+          <pattern id="hatchA" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="0.5" opacity="0.25"/>
+          </pattern>
+        </defs>
+        <!-- dimetric ESP32-S3 chip -->
+        <polygon points="120,40 200,80 120,120 40,80" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+        <polygon points="200,80 200,160 120,200 120,120" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+        <polygon points="40,80 40,160 120,200 120,120" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+        <polygon points="80,100 160,100 160,140 80,140" fill="url(#hatchA)" stroke="currentColor" stroke-width="0.6"/>
+        <text x="120" y="125" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="currentColor">ESP32-S3</text>
+      </svg>
+      <div style="margin-top:14px">FIG · ENTROPY · NODE</div>
+    </div>
+  </div>
+  <footer class="footer"><span>DICELabs</span><span>pitch · v1</span></footer>
+</section>
+
+<!-- SLIDE 04 · HOW IT WORKS -->
+<section class="slide">
+  <header class="header">
+    <span>protocol · flow</span>
+    <span>04 / 12</span>
+  </header>
+  <div class="body">
+    <span class="chapter" style="font-family:var(--pixel);font-size:96px;opacity:0.2">03</span>
+    <h2 style="margin-top:8px">One request. <span class="italic">Four seconds.</span></h2>
+    <div class="four" style="margin-top: 36px">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-label">REQUEST</div>
+        <div class="step-body">Your program calls request_randomness. 0.002 SOL charged.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-label">COMMIT</div>
+        <div class="step-body">Six nodes hash a secret byte and publish the hash.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-label">REVEAL</div>
+        <div class="step-body">Each node publishes the original byte — re-hash proves honesty.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-label">FINALIZE</div>
+        <div class="step-body">Program XORs the bytes, signs the result, delivers to your callback.</div>
+      </div>
+    </div>
+  </div>
+  <footer class="footer"><span>DICELabs</span><span>~3.9 s end-to-end</span></footer>
+</section>
+
+<!-- SLIDE 05 · WHY DIFFERENT -->
+<section class="slide light">
+  <header class="header">
+    <span>vs · existing · oracles</span>
+    <span>05 / 12</span>
+  </header>
+  <div class="body">
+    <h2>Where DICE <span class="italic">diverges.</span></h2>
+    <table style="margin-top: 32px">
+      <thead>
+        <tr>
+          <th style="width: 24%">dimension</th>
+          <th style="width: 38%">typical software VRF</th>
+          <th style="width: 38%; color: var(--light-fg)">DICE · hardware</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="hi">source</td><td class="dim">HMAC + private key</td><td>on-chip RNG + signature</td></tr>
+        <tr><td class="hi">key custody</td><td class="dim">operator holds it</td><td>device never exports</td></tr>
+        <tr><td class="hi">collusion risk</td><td class="dim">operator alone</td><td>≥4 physical devices must agree</td></tr>
+        <tr><td class="hi">bias defense</td><td class="dim">trust oracle</td><td>commit-reveal on chain</td></tr>
+        <tr><td class="hi">pricing</td><td class="dim">subscription / variable</td><td>0.002 SOL · flat</td></tr>
+        <tr><td class="hi">token</td><td class="dim">native token required</td><td>none · SOL only</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <footer class="footer"><span>DICELabs</span><span>not exhaustive · honest comparison</span></footer>
+</section>
+
+<!-- SLIDE 06 · ARCHITECTURE -->
+<section class="slide">
+  <header class="header">
+    <span>architecture · overview</span>
+    <span>06 / 12</span>
+  </header>
+  <div class="body" style="display:grid;grid-template-columns:1fr 1.2fr;gap:48px;align-items:center;height:100%">
+    <div>
+      <span class="chapter" style="font-family:var(--pixel);font-size:96px;opacity:0.2">05</span>
+      <h3 style="margin-top:10px">ESP32 mesh →<br>stateless coord →<br>Solana program.</h3>
+      <p style="margin-top: 20px">
+        The coordinator is a relay. It can&apos;t sign, can&apos;t sample,
+        can&apos;t choose. Nodes speak mTLS directly to it; the program
+        on Solana verifies every reveal. If the coordinator disappears
+        tomorrow, operators continue to earn from a replacement spun up
+        in minutes.
+      </p>
+    </div>
+    <div style="opacity:0.85">
+      <svg viewBox="0 0 520 260" style="width:100%;color:var(--fg)">
+        <!-- mesh nodes on left -->
+        <g>
+          <circle cx="40" cy="60"  r="14" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="40" cy="130" r="14" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="40" cy="200" r="14" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="95" cy="95"  r="14" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="95" cy="165" r="14" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="95" cy="230" r="14" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+          <text x="67" y="20" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="currentColor" opacity="0.6">20 · ESP32 nodes</text>
+        </g>
+        <!-- coord box -->
+        <rect x="210" y="110" width="110" height="50" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+        <text x="265" y="135" text-anchor="middle" font-family="var(--pixel)" font-size="12" fill="currentColor">COORD</text>
+        <text x="265" y="170" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="currentColor" opacity="0.6">stateless · mTLS</text>
+        <!-- chain box -->
+        <rect x="420" y="95" width="85" height="80" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/>
+        <text x="463" y="130" text-anchor="middle" font-family="var(--pixel)" font-size="12" fill="currentColor">SOLANA</text>
+        <text x="463" y="148" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="currentColor" opacity="0.6">dice program</text>
+        <text x="463" y="162" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="currentColor" opacity="0.6">v7.7</text>
+        <!-- lines mesh→coord -->
+        <g stroke="currentColor" stroke-width="0.7" opacity="0.5">
+          <line x1="55" y1="60"  x2="210" y2="130"/>
+          <line x1="55" y1="130" x2="210" y2="135"/>
+          <line x1="55" y1="200" x2="210" y2="140"/>
+          <line x1="110" y1="95"  x2="210" y2="132"/>
+          <line x1="110" y1="165" x2="210" y2="137"/>
+          <line x1="110" y1="230" x2="210" y2="145"/>
+        </g>
+        <!-- arrow coord→chain -->
+        <line x1="320" y1="135" x2="415" y2="135" stroke="currentColor" stroke-width="1.2"/>
+        <polygon points="410,131 420,135 410,139" fill="currentColor"/>
+      </svg>
+    </div>
+  </div>
+  <footer class="footer"><span>DICELabs</span><span>FIG · 06 · system topology</span></footer>
+</section>
+
+<!-- SLIDE 07 · METRICS -->
+<section class="slide">
+  <header class="header">
+    <span>devnet · metrics</span>
+    <span>07 / 12</span>
+  </header>
+  <div class="body">
+    <h2>Numbers, <span class="italic">not slides.</span></h2>
+    <div class="four" style="margin-top: 40px">
+      <div class="metric">
+        <div class="n">3.9s</div>
+        <div class="lbl">avg round latency</div>
+      </div>
+      <div class="metric">
+        <div class="n">99.4%</div>
+        <div class="lbl">devnet success</div>
+      </div>
+      <div class="metric">
+        <div class="n">0.002</div>
+        <div class="lbl">SOL per request</div>
+      </div>
+      <div class="metric">
+        <div class="n">6</div>
+        <div class="lbl">nodes per round</div>
+      </div>
+    </div>
+    <p style="margin-top:32px">
+      Measured on v7.7 devnet over 50 back-to-back rounds with a
+      6-of-6 quorum. Streaming VRF primitive pushes under 1 s.
+    </p>
+  </div>
+  <footer class="footer"><span>DICELabs</span><span>bench · v7.7 · 2026</span></footer>
+</section>
+
+<!-- SLIDE 08 · PRICING -->
+<section class="slide light">
+  <header class="header">
+    <span>pricing · simple</span>
+    <span>08 / 12</span>
+  </header>
+  <div class="body">
+    <h2>Flat fee. <span class="italic">No subscription.</span></h2>
+    <div class="two-col" style="margin-top:40px">
+      <div>
+        <p style="font-family:var(--pixel); font-size:160px; line-height:0.85; color:var(--light-fg); margin:0">
+          0.002
+        </p>
+        <p style="font-family:var(--mono); font-size:12px; letter-spacing:0.15em; text-transform:uppercase; color:var(--light-muted); margin-top:12px">
+          SOL per request · paid by caller · split between 6 nodes and the program
+        </p>
+      </div>
+      <div>
+        <p style="font-family:var(--sans); font-size:18px; color:var(--light-fg); margin-top:20px; line-height:1.6">
+          No DICE token. No subscription. No priority surcharge.
+          <br><br>
+          <strong>70%</strong> of the per-round fee routes to the nodes that served it.
+          <br><br>
+          <strong>30%</strong> routes to the program treasury for coordinator + R&amp;D.
+          <br><br>
+          <strong>0%</strong> of request fees routes to a team wallet.
+        </p>
+      </div>
+    </div>
+  </div>
+  <footer class="footer"><span>DICELabs</span><span>fee sharing · v7.7</span></footer>
+</section>
+
+<!-- SLIDE 09 · USE CASES -->
+<section class="slide">
+  <header class="header">
+    <span>use · cases</span>
+    <span>09 / 12</span>
+  </header>
+  <div class="body">
+    <h2>What you can <span class="italic">build.</span></h2>
+    <div class="three" style="margin-top:36px">
+      <div class="metric">
+        <div style="font-family:var(--pixel); font-size:36px">A</div>
+        <div style="font-family:var(--sans); font-size:20px; margin-top:14px">Gaming</div>
+        <div style="font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.6">
+          Dice rolls, card shuffles, boss selection. Players verify the result came from real silicon.
+        </div>
+      </div>
+      <div class="metric">
+        <div style="font-family:var(--pixel); font-size:36px">B</div>
+        <div style="font-family:var(--sans); font-size:20px; margin-top:14px">DeFi &amp; raffles</div>
+        <div style="font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.6">
+          Weekly pools, airdrop lotteries, launchpad picks. One request, one winner, one signature.
+        </div>
+      </div>
+      <div class="metric">
+        <div style="font-family:var(--pixel); font-size:36px">C</div>
+        <div style="font-family:var(--sans); font-size:20px; margin-top:14px">NFT trait + reveal</div>
+        <div style="font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.6">
+          Mint-order assignment, rarity rolls, reveal metadata. Provably fair at every step.
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="footer"><span>DICELabs</span><span>integrations · live + planned</span></footer>
+</section>
+
+<!-- SLIDE 10 · ROADMAP -->
+<section class="slide">
+  <header class="header">
+    <span>roadmap</span>
+    <span>10 / 12</span>
+  </header>
+  <div class="body">
+    <h2>From devnet to <span class="italic">permissionless.</span></h2>
+    <svg viewBox="0 0 900 240" style="margin-top:30px; width:100%; color:var(--fg)">
+      <path d="M 60 160 C 180 80, 300 200, 420 120 S 660 100, 780 140" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" opacity="0.4" fill="none"/>
+      <path d="M 60 160 C 180 80, 300 200, 420 120" stroke="currentColor" stroke-width="2" fill="none"/>
+      <g font-family="var(--mono)" font-size="10" fill="currentColor">
+        <g><circle cx="60"  cy="160" r="8" fill="currentColor"/><text x="60"  y="140" text-anchor="middle" font-family="var(--pixel)" font-size="12">Q4 25</text><text x="60"  y="195" text-anchor="middle">devnet launch</text></g>
+        <g><circle cx="240" cy="110" r="8" fill="currentColor"/><text x="240" y="90"  text-anchor="middle" font-family="var(--pixel)" font-size="12">Q1 26</text><text x="240" y="145" text-anchor="middle">Anchor 1.0 + SDK</text></g>
+        <g><circle cx="420" cy="120" r="8" fill="currentColor"/><text x="420" y="100" text-anchor="middle" font-family="var(--pixel)" font-size="12">Q2 26</text><text x="420" y="155" text-anchor="middle">mainnet beta</text></g>
+        <g><circle cx="600" cy="100" r="8" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/><text x="600" y="80"  text-anchor="middle" font-family="var(--pixel)" font-size="12">Q3 26</text><text x="600" y="135" text-anchor="middle" opacity="0.65">operator rollout</text></g>
+        <g><circle cx="780" cy="140" r="8" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/><text x="780" y="120" text-anchor="middle" font-family="var(--pixel)" font-size="12">Q4 26</text><text x="780" y="175" text-anchor="middle" opacity="0.65">permissionless</text></g>
+      </g>
+    </svg>
+  </div>
+  <footer class="footer"><span>DICELabs</span><span>milestones · not promises</span></footer>
+</section>
+
+<!-- SLIDE 11 · THE ASK -->
+<section class="slide">
+  <header class="header">
+    <span>ask · now</span>
+    <span>11 / 12</span>
+  </header>
+  <div class="body">
+    <span class="chapter" style="font-family:var(--pixel);font-size:96px;opacity:0.2">10</span>
+    <h2 style="margin-top:12px">What we need <span class="italic">today.</span></h2>
+    <div class="three" style="margin-top:38px">
+      <div class="metric">
+        <div style="font-family:var(--pixel); font-size:44px">1.</div>
+        <div style="font-family:var(--sans); font-size:18px; margin-top:12px">First 10 integrators</div>
+        <div style="font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.6">
+          Games, raffle tools, NFT drops who will ship DICE in the next 90 days.
+        </div>
+      </div>
+      <div class="metric">
+        <div style="font-family:var(--pixel); font-size:44px">2.</div>
+        <div style="font-family:var(--sans); font-size:18px; margin-top:12px">100-node target</div>
+        <div style="font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.6">
+          Pre-orders + operator rollout partnerships. $89/node, 70% margin.
+        </div>
+      </div>
+      <div class="metric">
+        <div style="font-family:var(--pixel); font-size:44px">3.</div>
+        <div style="font-family:var(--sans); font-size:18px; margin-top:12px">Feedback</div>
+        <div style="font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.6">
+          Where the SDK rubs, what the docs miss, which primitives would unlock your product.
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="footer"><span>DICELabs</span><span>we listen · we ship</span></footer>
+</section>
+
+<!-- SLIDE 12 · CLOSE -->
+<section class="slide">
+  <header class="header">
+    <span>dice · contact</span>
+    <span>12 / 12</span>
+  </header>
+  <div class="body" style="display:flex;flex-direction:column;justify-content:center;height:100%">
+    <h1 style="font-size:120px">End.</h1>
+    <p style="margin-top:32px; font-size:16px; color:var(--fg); font-family:var(--sans); max-width: 60ch;">
+      Real hardware. Real randomness. Live on Solana devnet today.
+    </p>
+    <div style="margin-top: 56px; display:grid; grid-template-columns: repeat(3, auto); gap: 36px; font-family:var(--mono); font-size:13px;">
+      <div>
+        <div class="label">web</div>
+        <div style="margin-top:4px">dicelabs.network</div>
+      </div>
+      <div>
+        <div class="label">x</div>
+        <div style="margin-top:4px">@dicelabsnetwork</div>
+      </div>
+      <div>
+        <div class="label">github</div>
+        <div style="margin-top:4px">github.com/dicelabsnetwork</div>
+      </div>
+    </div>
+  </div>
+  <footer class="footer"><span>DICELabs · 2026</span><span>thank you</span></footer>
+</section>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="cube" viewBox="0 0 64 64">
+    <path d="M32 4 L60 19 L60 45 L32 60 L4 45 L4 19 Z" fill="currentColor"/>
+    <path d="M4 19 L32 34 L60 19" stroke="var(--bg)" stroke-width="2" fill="none"/>
+    <path d="M32 4 L32 34" stroke="var(--bg)" stroke-width="2" fill="none"/>
+    <path d="M18 11.5 L46 26.5 M46 11.5 L18 26.5" stroke="var(--bg)" stroke-width="1.25" opacity="0.9" fill="none"/>
+    <path d="M32 34 L32 60" stroke="var(--bg)" stroke-width="2" fill="none"/>
+    <path d="M18 26.5 L18 52.5 M46 26.5 L46 52.5" stroke="var(--bg)" stroke-width="1.25" opacity="0.9" fill="none"/>
+    <path d="M4 32 L32 47 M60 32 L32 47" stroke="var(--bg)" stroke-width="1.25" opacity="0.9" fill="none"/>
+    <path d="M46 11.5 L53 15 L53 22 L46 18.5 Z" fill="currentColor" stroke="var(--bg)" stroke-width="1.25"/>
+    <path d="M46 11.5 L46 18.5 M53 15 L46 18.5" stroke="var(--bg)" stroke-width="1.25" fill="none"/>
+  </symbol>
+</svg>
+
+</body>
+</html>
