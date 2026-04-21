@@ -1,6 +1,5 @@
 import { Header } from "@/components/shared/Header"
 import { Footer } from "@/components/shared/Footer"
-import { StatsTicker } from "@/components/landing/StatsTicker"
 import { Hero } from "@/components/landing/Hero"
 import { ProtocolFlow } from "@/components/landing/ProtocolFlow"
 import { Esp32Exploded } from "@/components/landing/Esp32Exploded"
@@ -16,7 +15,6 @@ export default function Home() {
   return (
     <main className="relative">
       <Header />
-      <StatsTicker />
       <Hero />
       <ProtocolFlow />
       <Esp32Exploded />

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono, Silkscreen } from "next/font/google"
 import { Providers } from "@/components/providers"
+import { PortalGate } from "@/components/shared/PortalGate"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -63,11 +64,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${silkscreen.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${silkscreen.variable} h-full antialiased dark`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <PortalGate />
+        </Providers>
       </body>
     </html>
   )
