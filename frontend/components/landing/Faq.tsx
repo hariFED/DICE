@@ -33,8 +33,8 @@ export function Faq() {
   const [open, setOpen] = useState<number | null>(0)
 
   return (
-    <section className="relative border-b border-border">
-      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-20 md:py-24">
+    <section className="relative">
+      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 pt-20 md:pt-24 pb-0">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
           <div className="lg:col-span-3">
             <span className="chapter-num">08</span>
