@@ -44,10 +44,14 @@ export function Manifesto() {
             <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl tracking-[-0.02em] leading-[1.05] text-foreground">
               Three things we <span className="italic font-light text-muted-foreground">won't trade.</span>
             </h2>
+            <p className="mt-5 font-mono text-sm text-muted-foreground max-w-md leading-relaxed">
+              Every design decision in DICE starts from these three
+              constraints. If a feature violates one, it doesn't ship.
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-border">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {PILLARS.map((p, i) => (
             <motion.div
               key={p.n}
@@ -55,18 +59,18 @@ export function Manifesto() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
               transition={{ duration: 0.5, delay: i * 0.12 }}
-              className={`group relative py-10 px-6 md:px-8 border-b md:border-b-0 md:border-r border-border last:border-r-0 hover:bg-muted/30 transition-colors`}
+              className="group relative bg-grid border border-border p-6 md:p-8 overflow-hidden"
             >
-              <p className="font-pixel text-[48px] leading-none text-foreground mb-6">{p.n}</p>
+              <span className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50">
+                0{i + 1} / 03
+              </span>
+              <p className="font-pixel text-[48px] leading-none text-foreground mt-6 mb-6">{p.n}</p>
               <h3 className="font-sans text-xl md:text-2xl tracking-[-0.01em] text-foreground mb-3">
                 {p.title}
               </h3>
               <p className="font-mono text-[13px] leading-relaxed text-muted-foreground">
                 {p.body}
               </p>
-              <span className="absolute top-6 right-6 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/40">
-                0{i + 1} / 03
-              </span>
             </motion.div>
           ))}
         </div>
