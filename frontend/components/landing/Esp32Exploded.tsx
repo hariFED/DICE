@@ -77,34 +77,32 @@ export function Esp32Exploded() {
       ref={sectionRef}
       className="relative border-b border-border overflow-hidden"
     >
-      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-20 md:py-32">
-        {/* Full blueprint container — header + diagram + stacks all inside */}
+      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-20 md:py-28">
+        {/* Section header — above the blueprint box */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+          <div className="lg:col-span-3">
+            <span className="chapter-num">03</span>
+            <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+              entropy · node
+            </p>
+          </div>
+          <div className="lg:col-span-6 lg:col-start-5">
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl tracking-[-0.02em] leading-[1.05] text-foreground">
+              One board. <span className="italic font-light text-muted-foreground">Six silicon primitives.</span>
+            </h2>
+            <p className="mt-5 font-mono text-sm text-muted-foreground max-w-md leading-relaxed">
+              The DICE-S3 node is built from a single ESP32-S3 module with
+              a hardware TRNG, WiFi radio, and secp256k1 signing — nothing
+              more. Each unit is tamper-evident and field-provisioned.
+            </p>
+          </div>
+        </div>
+
+        {/* Blueprint box — diagram only */}
         <div className="relative bg-grid border border-border overflow-hidden">
           {/* corner ticks */}
           <span className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50">FIG_003 · DICE-S3 · exploded</span>
           <span className="absolute top-3 right-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50">Scale 1:1 · dimetric 2:1</span>
-
-          {/* Section header — inside the blueprint box */}
-          <div className="relative z-10 px-6 sm:px-10 pt-12 pb-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              <div className="lg:col-span-3">
-                <span className="chapter-num">03</span>
-                <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                  entropy · node
-                </p>
-              </div>
-              <div className="lg:col-span-6 lg:col-start-5">
-                <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl tracking-[-0.02em] leading-[1.05] text-foreground">
-                  One board. <span className="italic font-light text-muted-foreground">Six silicon primitives.</span>
-                </h2>
-                <p className="mt-5 font-mono text-sm text-muted-foreground max-w-md leading-relaxed">
-                  The DICE-S3 node is built from a single ESP32-S3 module with
-                  a hardware TRNG, WiFi radio, and secp256k1 signing — nothing
-                  more. Each unit is tamper-evident and field-provisioned.
-                </p>
-              </div>
-            </div>
-          </div>
 
           <motion.svg
             viewBox="0 0 1000 800"
