@@ -6,9 +6,24 @@ import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { NAV_LINKS, SITE } from "@/lib/constants"
 import { cn } from "@/lib/utils"
-import { ThemeToggle } from "@/components/shared/ThemeToggle"
-import { BracketLink } from "@/components/shared/BracketButton"
 import { Logo } from "@/components/shared/Logo"
+
+const glass = [
+  "bg-white/[0.04] backdrop-blur-2xl",
+  "border border-white/[0.12]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.04),inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-1px_0_rgba(255,255,255,0.04)]",
+  "before:absolute before:inset-0 before:rounded-[inherit] before:bg-gradient-to-b before:from-white/[0.08] before:to-transparent before:to-50% before:pointer-events-none",
+  "after:absolute after:inset-x-4 after:-bottom-2 after:h-4 after:rounded-full after:bg-white/[0.02] after:blur-xl after:pointer-events-none",
+  "relative overflow-visible",
+].join(" ")
+
+const glassBtn = [
+  "bg-white/[0.08] backdrop-blur-md",
+  "border border-white/[0.15]",
+  "shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_2px_8px_rgba(0,0,0,0.2)]",
+  "hover:bg-white/[0.16] hover:border-white/[0.25] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_4px_16px_rgba(0,0,0,0.3)]",
+  "transition-all duration-200",
+].join(" ")
 
 export function Header() {
   const pathname = usePathname()
@@ -19,53 +34,68 @@ export function Header() {
       initial={{ y: -10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="sticky top-0 z-50 w-full bg-background/85 backdrop-blur border-b border-dashed border-border"
+      className="sticky top-0 z-50 w-full"
     >
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo — iso cube + wordmark + version chip */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <Logo size={26} />
-          <span className="hidden sm:inline font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70 border border-border rounded-sm px-1.5 py-0.5 leading-none">
-            v7.7 · devnet
-          </span>
-        </Link>
+      {/* Glass navbar container with margin and rounding */}
+      <div className={cn("mx-3 sm:mx-6 mt-3 rounded-[20px] px-4 sm:px-5 py-0.5", glass)}>
+        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <Logo size={24} showWordmark={false} className="text-white" />
+            <span className="font-pixel text-[13px] tracking-tight text-white/90 leading-none">
+              {SITE.name}
+            </span>
+            <span className="hidden sm:inline font-mono text-[9px] uppercase tracking-wider text-white/30 border border-white/[0.08] rounded-full px-2 py-0.5 leading-none">
+              v7.7
+            </span>
+          </Link>
 
-        {/* Desktop nav — bracketed items */}
-        <nav className="hidden md:flex items-center gap-1 font-mono text-xs uppercase tracking-wider">
-          {NAV_LINKS.map((link) => {
-            const isActive = pathname === link.href
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "relative px-3 py-1 transition-colors",
-                  isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <span className={cn("transition-opacity", isActive ? "opacity-100" : "opacity-0")}>›</span>
-                <span className="px-1">{link.label}</span>
-              </Link>
-            )
-          })}
-        </nav>
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1">
+            {NAV_LINKS.map((link) => {
+              const isActive = pathname === link.href
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "relative px-3.5 py-1.5 rounded-lg font-mono text-[11px] uppercase tracking-wider transition-all duration-200",
+                    isActive
+                      ? "text-white bg-white/[0.12] border border-white/[0.18] shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_2px_8px_rgba(0,0,0,0.2)]"
+                      : "text-white/50 hover:text-white/80 hover:bg-white/[0.08] border border-transparent"
+                  )}
+                >
+                  {link.label}
+                </Link>
+              )
+            })}
+          </nav>
 
-        {/* Right cluster */}
-        <div className="flex items-center gap-2">
-          <ThemeToggle className="hidden sm:inline-flex" />
-          <BracketLink href={SITE.launchAppUrl} variant="primary" className="hidden md:inline-flex">
-            Launch_App
-          </BracketLink>
+          {/* Right cluster */}
+          <div className="flex items-center gap-2">
+            <Link
+              href={SITE.launchAppUrl}
+              className={cn(
+                "hidden md:inline-flex items-center gap-2 rounded-lg px-4 py-1.5 font-mono text-[11px] uppercase tracking-wider text-white/90",
+                glassBtn
+              )}
+            >
+              Launch App
+            </Link>
 
-          {/* Mobile hamburger */}
-          <button
-            type="button"
-            className="md:hidden font-mono px-2 py-1 text-foreground"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? "[ ✕ ]" : "[ ≡ ]"}
-          </button>
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              className={cn(
+                "md:hidden rounded-lg px-2.5 py-1.5 font-mono text-xs text-white/80",
+                glassBtn
+              )}
+              onClick={() => setMobileOpen((o) => !o)}
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? "✕" : "≡"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -77,9 +107,12 @@ export function Header() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden overflow-hidden border-t border-dashed border-border bg-background"
+            className={cn(
+              "md:hidden overflow-hidden mx-3 sm:mx-6 mt-1.5 rounded-xl",
+              glass
+            )}
           >
-            <nav className="flex flex-col gap-0.5 px-4 py-3 font-mono text-sm">
+            <nav className="flex flex-col gap-0.5 px-3 py-3">
               {NAV_LINKS.map((link) => {
                 const isActive = pathname === link.href
                 return (
@@ -88,21 +121,26 @@ export function Header() {
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
-                      "px-2 py-2 transition-colors",
-                      isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                      "px-3 py-2.5 rounded-lg font-mono text-sm transition-all duration-200",
+                      isActive
+                        ? "text-white bg-white/[0.08]"
+                        : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
                     )}
                   >
-                    <span className="text-muted-foreground mr-2">{isActive ? "▸" : " "}</span>
                     {link.label}
                   </Link>
                 )
               })}
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <ThemeToggle />
-                <BracketLink href={SITE.launchAppUrl} variant="primary">
-                  Launch_App
-                </BracketLink>
-              </div>
+              <Link
+                href={SITE.launchAppUrl}
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  "mt-2 text-center rounded-lg px-4 py-2.5 font-mono text-sm text-white/90",
+                  glassBtn
+                )}
+              >
+                Launch App
+              </Link>
             </nav>
           </motion.div>
         )}

@@ -47,27 +47,6 @@ export function Hero() {
       <div className="absolute inset-0 bg-grid opacity-60 pointer-events-none" aria-hidden />
 
       <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-14 md:py-20">
-        {/* Top meta strip */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-          className="mb-12 md:mb-20 grid grid-cols-2 md:grid-cols-12 gap-4 items-baseline font-mono text-[11px] uppercase tracking-wider text-muted-foreground border-b border-dashed border-border pb-4"
-        >
-          <span className="col-span-1 md:col-span-2 font-pixel text-foreground text-xs">00 / HERO</span>
-          <span className="hidden md:flex md:col-span-3 items-center gap-1.5">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-ok)] animate-pulse" />
-            online · devnet
-          </span>
-          <span className="hidden md:block md:col-span-3">
-            <span className="text-muted-foreground/50">from</span>{" "}
-            <span className="text-foreground">{BRAND.parent}</span>
-          </span>
-          <span className="hidden md:block md:col-span-4 text-right text-muted-foreground/60 font-pixel">
-            {new Date().toISOString().slice(0, 16).replace("T", " ")} UTC
-          </span>
-        </motion.div>
-
         {/* Main — copy left, globe right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
           {/* LEFT — copy */}
