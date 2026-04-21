@@ -7,9 +7,7 @@ import { Manifesto } from "@/components/landing/Manifesto"
 import { Roadmap } from "@/components/landing/Roadmap"
 import { UseCases } from "@/components/landing/UseCases"
 import { DevQuickstart } from "@/components/landing/DevQuickstart"
-import { OperatorPitch } from "@/components/landing/OperatorPitch"
 import { Faq } from "@/components/landing/Faq"
-import { TrustedBy } from "@/components/landing/TrustedBy"
 
 export default function Home() {
   return (
@@ -22,9 +20,7 @@ export default function Home() {
       <Roadmap />
       <UseCases />
       <DevQuickstart />
-      <OperatorPitch />
       <Faq />
-      <TrustedBy />
       <Footer />
     </main>
   )

@@ -1,10 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import { motion } from "framer-motion"
 import { useStats } from "@/lib/hooks"
 import { DottedSphereGlobe } from "@/components/landing/DottedSphereGlobe"
-import { BracketLink } from "@/components/shared/BracketButton"
 import { BRAND } from "@/lib/constants"
 
 const fadeUp = {
@@ -142,23 +140,6 @@ export function Hero() {
               </div>
             </motion.div>
 
-            {/* CTAs */}
-            <motion.div
-              custom={4}
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              className="mt-10 flex flex-wrap items-center gap-3"
-            >
-              <BracketLink href="/explorer" variant="primary">Explore_Network</BracketLink>
-              <BracketLink href="/docs" variant="ghost">Read_Docs</BracketLink>
-              <Link
-                href="/preorder"
-                className="ml-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors border-b border-dashed border-border hover:border-foreground"
-              >
-                or run a node →
-              </Link>
-            </motion.div>
           </div>
 
           {/* RIGHT — globe */}
