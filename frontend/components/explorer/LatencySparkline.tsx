@@ -3,6 +3,11 @@
 /**
  * Latency sparkline — draw last N rounds' elapsed_ms as a tiny line
  * chart with fill. Markers for the min/max data points.
+ *
+ * When `points` is empty, render a neutral placeholder. We do NOT fall
+ * back to synthetic Math.random data — that triggered hydration mismatches
+ * (server and client compute different random values) and fed the user
+ * fake numbers when the coord was actually empty.
  */
 
 export function LatencySparkline({
@@ -14,7 +19,30 @@ export function LatencySparkline({
   width?: number
   height?: number
 }) {
-  const data = points.length > 0 ? points : syntheticFill(50)
+  // Empty state — no rounds yet (or coord unreachable). Render a deterministic
+  // placeholder, no synthetic data, no Math.random.
+  if (points.length === 0) {
+    return (
+      <div className="w-full">
+        <div className="flex items-baseline justify-between mb-3">
+          <p className="ascii-label text-[10px]">// latency · last 0 rounds</p>
+          <div className="flex items-center gap-4 font-mono text-[10px] text-muted-foreground">
+            <span>min <span className="text-foreground/40 tabular-nums">— ms</span></span>
+            <span>avg <span className="text-foreground/40 tabular-nums">— ms</span></span>
+            <span>max <span className="text-foreground/40 tabular-nums">— ms</span></span>
+          </div>
+        </div>
+        <div
+          className="w-full flex items-center justify-center font-mono text-[10px] text-muted-foreground/50"
+          style={{ aspectRatio: `${width} / ${height}` }}
+        >
+          [ awaiting rounds · network is live, no data yet ]
+        </div>
+      </div>
+    )
+  }
+
+  const data = points
   const min = Math.min(...data)
   const max = Math.max(...data)
   const span = Math.max(1, max - min)
@@ -73,16 +101,6 @@ export function LatencySparkline({
       </svg>
     </div>
   )
-}
-
-function syntheticFill(n: number): number[] {
-  const out: number[] = []
-  for (let i = 0; i < n; i++) {
-    const base = 3800 + Math.sin(i / 5) * 200
-    const noise = (Math.random() - 0.5) * 400
-    out.push(Math.max(2500, base + noise))
-  }
-  return out
 }
 
 export default LatencySparkline

@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useStats } from "@/lib/hooks"
 import { DottedSphereGlobe } from "@/components/landing/DottedSphereGlobe"
 import { BracketLink } from "@/components/shared/BracketButton"
 import { BRAND } from "@/lib/constants"
@@ -21,26 +20,18 @@ const fadeUp = {
 }
 
 /**
- * Landing hero — editorial two-column.
+ * Landing hero — device-first / passive-income pivot.
  *
  *   left  : chapter marker · wordmark · D.I.C.E. · headline · pillars · CTAs
- *   right : rotating dotted sphere · node strip · stat readouts
+ *   right : rotating dotted sphere · node strip
  *
- * Scroll-cued fade/rise on left column. Globe is client-only (cobe + WebGL).
+ * Marketing direction (2026-04-25): lead with the device, not the protocol.
+ * Mining-rig energy: "buy the box, plug in, earn while it lives." No specific
+ * numbers in the hero — those drift, invite arguments, and overpromise.
+ * Concrete latency / fee / success-rate metrics live in /explorer where they
+ * update against the real network.
  */
 export function Hero() {
-  const { data: stats } = useStats()
-
-  const latencyDisplay = stats?.avg_latency_ms != null
-    ? `${(stats.avg_latency_ms / 1000).toFixed(1)}s`
-    : "≈ 4s"
-  const rateDisplay = (() => {
-    if (!stats) return "—"
-    const r = stats.success_rate
-    if (typeof r !== "number") return "—"
-    return `${(r <= 1 ? r * 100 : r).toFixed(1)}%`
-  })()
-
   return (
     <section className="relative overflow-hidden border-b border-border">
       {/* faint blueprint grid bg */}
@@ -111,17 +102,27 @@ export function Hero() {
               className="font-sans text-[13vw] sm:text-[9vw] md:text-[6.5vw] lg:text-[5.2vw] xl:text-[4.6vw] font-medium tracking-[-0.03em] leading-[0.9] text-foreground"
               style={{ wordBreak: "keep-all" }}
             >
-              Hardware-
+              Mine VRF.
               <br />
-              <span className="italic font-light">backed</span>{" "}
-              randomness
-              <br />
-              <span className="text-muted-foreground">for Solana.</span>
+              <span className="italic font-light">While you</span>{" "}
+              sleep.
             </motion.h1>
+
+            {/* Subline */}
+            <motion.p
+              custom={2}
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              className="mt-8 max-w-[52ch] font-mono text-[14px] md:text-[15px] text-muted-foreground leading-[1.65]"
+            >
+              A real <span className="text-foreground">box on your shelf</span> mining verifiable randomness for Solana.
+              One-time purchase. No fans. No diminishing returns. No electricity tax.
+            </motion.p>
 
             {/* Pillars */}
             <motion.ul
-              custom={2}
+              custom={3}
               variants={fadeUp}
               initial="hidden"
               animate="visible"
@@ -129,55 +130,42 @@ export function Hero() {
             >
               <li className="flex gap-3">
                 <span className="font-pixel text-foreground w-6 shrink-0">01</span>
-                <span>Physical ESP32 devices producing <span className="text-foreground">true entropy</span> via commit-reveal.</span>
+                <span>
+                  <span className="text-foreground">Real hardware</span> on your shelf — an ESP32 device drawing
+                  true entropy from physical noise, not a software seed.
+                </span>
               </li>
               <li className="flex gap-3">
                 <span className="font-pixel text-foreground w-6 shrink-0">02</span>
-                <span>Sub-four-second VRF rounds on <span className="text-foreground">Solana mainnet</span>.</span>
+                <span>
+                  Your node <span className="text-foreground">earns from every randomness request</span> it helps
+                  fulfill — paid out on-chain to a wallet you control.
+                </span>
               </li>
               <li className="flex gap-3">
                 <span className="font-pixel text-foreground w-6 shrink-0">03</span>
-                <span><span className="text-foreground">0.002 SOL</span> per request — no token, no gatekeeping.</span>
+                <span>
+                  <span className="text-foreground">Plug in once.</span> No staking, no token gates, no firmware
+                  tinkering. Earn until the device dies.
+                </span>
               </li>
             </motion.ul>
 
-            {/* Dual stat readout */}
-            <motion.div
-              custom={3}
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              className="mt-10 grid grid-cols-2 gap-6 max-w-md"
-            >
-              <div className="border-t-2 border-foreground pt-2">
-                <p className="ascii-label text-[10px] mb-1">avg / round</p>
-                <p className="font-pixel text-4xl md:text-5xl text-foreground tabular-nums leading-none">
-                  {latencyDisplay}
-                </p>
-              </div>
-              <div className="border-t-2 border-foreground pt-2">
-                <p className="ascii-label text-[10px] mb-1">success</p>
-                <p className="font-pixel text-4xl md:text-5xl text-foreground tabular-nums leading-none">
-                  {rateDisplay}
-                </p>
-              </div>
-            </motion.div>
-
-            {/* CTAs */}
+            {/* CTAs — pre-order leads */}
             <motion.div
               custom={4}
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="mt-10 flex flex-wrap items-center gap-3"
+              className="mt-12 flex flex-wrap items-center gap-3"
             >
-              <BracketLink href="/explorer" variant="primary">Explore_Network</BracketLink>
-              <BracketLink href="/docs" variant="ghost">Read_Docs</BracketLink>
+              <BracketLink href="/preorder" variant="primary">Pre-order_Your_Node</BracketLink>
+              <BracketLink href="/docs" variant="ghost">How_It_Earns</BracketLink>
               <Link
-                href="/preorder"
+                href="/explorer"
                 className="ml-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors border-b border-dashed border-border hover:border-foreground"
               >
-                or run a node →
+                or see the network live →
               </Link>
             </motion.div>
           </div>
@@ -191,7 +179,7 @@ export function Hero() {
           >
             <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-4">
               <span>[ entropy · mesh ]</span>
-              <span className="font-pixel text-foreground">20 NODES</span>
+              <span className="font-pixel text-foreground">LIVE</span>
             </div>
 
             <div className="relative aspect-square w-full max-w-[560px] mx-auto corner-ticks">
