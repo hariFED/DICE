@@ -73,22 +73,28 @@ pub fn build_router(state: AppState, api_key: Option<String>) -> Router {
 
     // Public routes — no auth required (monitoring + browser-reachable).
     //
-    // `/api/v1/stats` is consumed by the public-facing frontend (landing page,
-    // explorer). It is deliberately unauthenticated — it exposes aggregate
-    // counts only, no PII, no secrets.
+    // `/api/v1/stats`, `/nodes`, `/rounds`, `/queue` are consumed by the
+    // public-facing frontend explorer via the Vercel BFF. They are read-only
+    // telemetry — no PII, no secrets (BFF-side `sanitize()` strips IPs/MACs/
+    // certs as a belt-and-braces second pass). Authenticating these would
+    // require shipping an API key to the browser bundle, which defeats the
+    // whole point of the BFF; instead we just keep the surface read-only and
+    // sanitized.
     let public = Router::new()
         .route("/health", get(health))
         .route("/metrics", get(metrics_handler))
         .route("/api/v1/stats", get(stats_handler))
-        .with_state(state.clone());
-
-    // Protected routes — require API key (if configured)
-    let protected = Router::new()
-        .route("/", get(dashboard))
         .route("/nodes", get(list_nodes))
         .route("/rounds", get(list_rounds))
         .route("/rounds/:id", get(get_round_handler))
         .route("/queue", get(queue_status))
+        .with_state(state.clone());
+
+    // Protected routes — require API key (if configured).
+    // Limited to mutating / privileged endpoints. `/simulate` can fire real
+    // on-chain TXs, the dashboard exposes the API key entry form.
+    let protected = Router::new()
+        .route("/", get(dashboard))
         .route("/simulate", post(simulate))
         .layer(middleware::from_fn_with_state(
             auth_state,

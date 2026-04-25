@@ -26,8 +26,11 @@ export async function GET(req: Request): Promise<Response> {
     const url = new URL(req.url);
     const limitRaw = Number(url.searchParams.get("limit") ?? 50);
     const limit = Math.max(1, Math.min(200, Number.isFinite(limitRaw) ? limitRaw : 50));
+    // Coord serves at /rounds (no /api/v1/ prefix). limit query unused
+    // upstream today — coord returns a fixed-size buffer — but kept here so
+    // we can plumb it through if/when coord adds pagination.
     const raw = await coordGet<CoordRound[] | { rounds: CoordRound[] }>(
-      `/api/v1/rounds?limit=${limit}`,
+      `/rounds?limit=${limit}`,
     );
     const list: CoordRound[] = Array.isArray(raw)
       ? raw

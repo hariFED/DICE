@@ -22,9 +22,9 @@ interface CoordNode {
  */
 export async function GET(): Promise<Response> {
   try {
-    const raw = await coordGet<CoordNode[] | { nodes: CoordNode[] }>(
-      "/api/v1/nodes",
-    );
+    // Coord serves telemetry at /nodes (public after v7.7 route reshuffle —
+    // see coordinator/src/api/routes.rs). NOT under /api/v1/.
+    const raw = await coordGet<CoordNode[] | { nodes: CoordNode[] }>("/nodes");
     const list: CoordNode[] = Array.isArray(raw)
       ? raw
       : Array.isArray(raw?.nodes)
