@@ -112,91 +112,187 @@ static void dns_redirect_task(void *arg)
 }
 
 /* ------------------------------------------------------------------ */
-/* Setup page HTML                                                      */
+/* Setup page HTML — DICE v7.7 dark-mono / blueprint-editorial design.  */
+/*                                                                      */
+/* Source: firmware/captive-portal-preview.html (open in a browser to   */
+/* design + iterate, then port any tweaks back here).                   */
+/*                                                                      */
 /* The JS POSTs to /save and handles the JSON response:                 */
-/*   - {"ok":true}  → show "Saved, rebooting..." (device restarts itself)*/
-/*   - {"ok":false,"error":"..."} → show error in red, keep inputs      */
+/*   - {"ok":true}                  -> "Provisioned. Rebooting..."      */
+/*   - {"ok":false,"error":"..."}   -> bracketed [ ERR ] alert          */
+/*                                                                      */
+/* All special chars use HTML entities (&middot; &times; &hellip;       */
+/* &ndash; &bull;) so this stays pure-ASCII C source.                   */
 /* ------------------------------------------------------------------ */
 
 static const char SETUP_HTML[] =
     "<!DOCTYPE html>"
-    "<html><head>"
+    "<html lang='en'><head>"
     "<meta charset='utf-8'>"
-    "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-    "<title>DICE Node Setup</title>"
+    "<meta name='viewport' content='width=device-width,initial-scale=1,viewport-fit=cover'>"
+    "<title>DICE Node &middot; Setup</title>"
     "<style>"
+    ":root{--bg:#0a0a0a;--fg:#fafafa;--muted:#a1a1aa;--border:rgba(255,255,255,.10);"
+    "--border-strong:rgba(255,255,255,.25);--ok:#4ade80;--warn:#facc15;--err:#f87171}"
     "*{box-sizing:border-box;margin:0;padding:0}"
-    "body{font-family:-apple-system,sans-serif;background:#0d0d0d;color:#e0e0e0;padding:1.5rem}"
-    "h1{color:#00ff88;font-size:1.4rem;margin-bottom:.5rem}"
-    ".sub{color:#555;font-size:.8rem;margin-bottom:1.5rem}"
-    ".card{background:#111;border:1px solid #1e1e1e;border-radius:8px;padding:1.25rem;margin-bottom:1rem}"
-    "label{display:block;color:#aaa;font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem}"
-    "input{width:100%%;padding:.6rem;background:#1a1a1a;border:1px solid #333;border-radius:4px;color:#fff;font-size:.9rem;margin-bottom:1rem;font-family:inherit}"
-    "input:focus{outline:none;border-color:#00ff88}"
-    "input:disabled{opacity:.5}"
-    "button{width:100%%;padding:.7rem;background:#00ff88;color:#000;border:none;border-radius:4px;font-size:1rem;font-weight:bold;cursor:pointer}"
-    "button:hover:not(:disabled){background:#00cc66}"
-    "button:disabled{background:#555;cursor:not-allowed}"
-    ".info{color:#555;font-size:.75rem;margin-top:.5rem}"
-    "#result{margin-top:1rem;font-size:.85rem;min-height:1.2rem}"
-    ".err{color:#ff4444;padding:.6rem;background:#2a0f0f;border:1px solid #ff4444;border-radius:4px;margin-top:.5rem}"
-    ".ok{color:#00ff88;padding:.6rem;background:#0f2a17;border:1px solid #00ff88;border-radius:4px;margin-top:.5rem}"
-    ".progress{color:#ffaa00;padding:.6rem;background:#2a1f0f;border:1px solid #ffaa00;border-radius:4px;margin-top:.5rem}"
-    "</style>"
-    "</head><body>"
-    "<h1>DICE Node Setup</h1>"
-    "<p class='sub'>Hardware-backed VRF Oracle — Device Configuration</p>"
-    "<div class='card'>"
-    "<label>WiFi Network Name (SSID)</label>"
-    "<input id='ssid' type='text' placeholder='Your WiFi network name' maxlength='32' autocomplete='off'>"
-    "<label>WiFi Password</label>"
-    "<input id='pass' type='password' placeholder='WiFi password' maxlength='64' autocomplete='off'>"
-    "<label>Solana Wallet Address</label>"
-    "<input id='wallet' type='text' placeholder='Your Solana wallet (32-44 base58 chars)' maxlength='44' autocomplete='off'>"
-    "<button id='btn' onclick='save()'>Save &amp; Connect</button>"
-    "<div id='result'></div>"
+    "html,body{background:var(--bg);color:var(--fg);"
+    "font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;"
+    "font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden;-webkit-text-size-adjust:100%}"
+    "body{padding:28px 16px 48px;"
+    "background-image:linear-gradient(to right,rgba(255,255,255,.035) 1px,transparent 1px),"
+    "linear-gradient(to bottom,rgba(255,255,255,.035) 1px,transparent 1px);"
+    "background-size:24px 24px}"
+    ".wrap{max-width:480px;margin:0 auto;position:relative}"
+    ".bar{display:flex;align-items:center;justify-content:space-between;font-size:10px;"
+    "letter-spacing:.16em;color:var(--muted);text-transform:uppercase;margin-bottom:14px}"
+    ".bar .live{display:inline-flex;align-items:center;gap:8px}"
+    ".bar .live::before{content:'';width:6px;height:6px;background:var(--ok);border-radius:50%;"
+    "box-shadow:0 0 8px var(--ok);animation:pulse 1.6s ease-in-out infinite}"
+    "@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}"
+    "h1{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:30px;"
+    "font-weight:500;letter-spacing:-0.015em;margin-bottom:6px}"
+    ".tagline{color:var(--muted);font-size:12.5px;letter-spacing:.02em;margin-bottom:22px}"
+    ".tagline strong{color:var(--fg);font-weight:500}"
+    ".rule{display:flex;align-items:center;gap:12px;font-size:10px;color:var(--muted);"
+    "margin:20px 0 14px;letter-spacing:.2em;text-transform:uppercase}"
+    ".rule::before,.rule::after{content:'';flex:1;border-top:1px dashed var(--border)}"
+    ".stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);"
+    "border:1px solid var(--border)}"
+    ".stat{background:var(--bg);padding:12px 14px}"
+    ".stat-label{font-size:9.5px;letter-spacing:.18em;color:var(--muted);"
+    "text-transform:uppercase;margin-bottom:4px}"
+    ".stat-label::before{content:'[ '}.stat-label::after{content:' ]'}"
+    ".stat-value{font-size:13px;color:var(--fg);font-feature-settings:'tnum' 1}"
+    ".card{border:1px solid var(--border);padding:22px 18px 20px;position:relative;background:var(--bg)}"
+    ".card::before,.card::after{content:'';position:absolute;width:10px;height:10px;"
+    "border:1px solid var(--fg);opacity:.45;pointer-events:none}"
+    ".card::before{top:-1px;left:-1px;border-right:none;border-bottom:none}"
+    ".card::after{bottom:-1px;right:-1px;border-left:none;border-top:none}"
+    ".field{margin-bottom:16px}"
+    "label{display:block;font-size:9.5px;letter-spacing:.2em;color:var(--muted);"
+    "text-transform:uppercase;margin-bottom:6px}"
+    ".input-row{display:flex;align-items:stretch;border:1px solid var(--border);"
+    "background:var(--bg);transition:border-color .12s,box-shadow .12s}"
+    ".input-row:hover{border-color:var(--border-strong)}"
+    ".input-row:focus-within{border-color:var(--fg);box-shadow:0 0 0 1px var(--fg)}"
+    ".input-row::before{content:'>';color:var(--muted);padding:0 10px 0 12px;"
+    "display:flex;align-items:center;font-weight:600}"
+    ".input-row input{flex:1;width:100%;border:0;background:transparent;color:var(--fg);"
+    "font:inherit;font-size:15px;padding:12px 12px 12px 0;outline:none;letter-spacing:.01em}"
+    ".input-row input::placeholder{color:var(--muted);opacity:.55}"
+    ".btn{display:block;width:100%;background:transparent;color:var(--fg);"
+    "border:1px solid var(--fg);padding:13px 16px;font:inherit;font-size:12px;"
+    "letter-spacing:.22em;text-transform:uppercase;cursor:pointer;margin-top:6px;"
+    "transition:background .12s,color .12s}"
+    ".btn::before{content:'[  '}.btn::after{content:'  ]'}"
+    ".btn:hover:not(:disabled){background:var(--fg);color:var(--bg)}"
+    ".btn:disabled{opacity:.35;cursor:not-allowed}"
+    ".result{margin-top:14px}"
+    ".alert{padding:10px 12px;border:1px solid;font-size:12px;letter-spacing:.02em;line-height:1.45}"
+    ".alert::before{font-weight:600;margin-right:8px;letter-spacing:.18em}"
+    ".alert.err{color:var(--err);border-color:var(--err)}"
+    ".alert.err::before{content:'[ ERR ]'}"
+    ".alert.ok{color:var(--ok);border-color:var(--ok)}"
+    ".alert.ok::before{content:'[ OK ]'}"
+    ".alert.run{color:var(--warn);border-color:var(--warn)}"
+    ".alert.run::before{content:'[ ... ]'}"
+    ".foot{text-align:center;margin-top:22px;font-size:9.5px;color:var(--muted);"
+    "letter-spacing:.22em;text-transform:uppercase;line-height:1.8}"
+    ".foot .sep{opacity:.4;margin:0 6px}"
+    "@media (max-width:380px){body{padding:18px 12px 32px}h1{font-size:24px}}"
+    "</style></head><body>"
+    "<div class='wrap'>"
+    "<div class='bar'><span class='live'>DEVICE LIVE</span>"
+    "<span>NODE &middot; INITIAL SETUP</span></div>"
+    "<h1>DICE Node</h1>"
+    "<p class='tagline'>Hardware-backed randomness. Provision your <strong>node</strong> to join the network.</p>"
+    "<div class='stats'>"
+    "<div class='stat'><div class='stat-label'>Device</div>"
+    "<div class='stat-value' id='devid'>DICE-&bull;&bull;&bull;&bull;</div></div>"
+    "<div class='stat'><div class='stat-label'>Board</div>"
+    "<div class='stat-value'>ESP32-S3-N16R8</div></div>"
+    "<div class='stat'><div class='stat-label'>Firmware</div>"
+    "<div class='stat-value'>v1.0.0</div></div>"
+    "<div class='stat'><div class='stat-label'>Network</div>"
+    "<div class='stat-value'>Solana &middot; Devnet</div></div>"
     "</div>"
+    "<div class='rule'>&times; &nbsp;CONFIG&nbsp; &times;</div>"
     "<div class='card'>"
-    "<label>Device Info</label>"
-    "<p class='info'>Device: <span id='devid'>loading...</span></p>"
-    "<p class='info'>Firmware: v1.0.0</p>"
-    "<p class='info'>Board: ESP32-S3-N16R8</p>"
+    "<form id='form' autocomplete='off' novalidate>"
+    "<div class='field'><label for='ssid'>WiFi Network</label>"
+    "<div class='input-row'><input id='ssid' type='text' placeholder='ssid' maxlength='32' required></div></div>"
+    "<div class='field'><label for='pass'>WiFi Password</label>"
+    "<div class='input-row'><input id='pass' type='password' placeholder='&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;' maxlength='64' required></div></div>"
+    "<div class='field'><label for='wallet'>Solana Payout Wallet</label>"
+    "<div class='input-row'><input id='wallet' type='text' placeholder='32&ndash;44 base58 chars' maxlength='44' spellcheck='false' autocapitalize='off' required></div></div>"
+    "<button class='btn' id='btn' type='submit'>Provision &amp; Connect</button>"
+    "<div class='result' id='result' aria-live='polite'></div>"
+    "</form></div>"
+    "<div class='foot'>DICE PROTOCOL <span class='sep'>&middot;</span> v7.7<br>"
+    "HARDWARE-BACKED VRF <span class='sep'>&middot;</span> ON-CHAIN AUDIT</div>"
     "</div>"
     "<script>"
+    "(function(){"
     "var btn=document.getElementById('btn');"
     "var result=document.getElementById('result');"
+    "var form=document.getElementById('form');"
+    "function show(cls,msg){result.innerHTML='<div class=\"alert '+cls+'\">'+msg+'</div>';}"
     "fetch('/info').then(function(r){return r.json();}).then(function(d){"
-    "document.getElementById('devid').textContent=d.device_id;"
-    "});"
-    "function show(cls,msg){result.innerHTML='<div class=\"'+cls+'\">'+msg+'</div>';}"
-    "function save(){"
+    "if(d&&d.device_id)document.getElementById('devid').textContent=d.device_id;"
+    "}).catch(function(){});"
+    "form.addEventListener('submit',function(e){"
+    "e.preventDefault();"
     "var s=document.getElementById('ssid').value.trim();"
     "var p=document.getElementById('pass').value;"
     "var w=document.getElementById('wallet').value.trim();"
-    "if(!s){show('err','WiFi network name is required');return;}"
-    "if(!p){show('err','WiFi password is required');return;}"
-    "if(!w){show('err','Solana wallet address is required');return;}"
-    "if(w.length<32||w.length>44){show('err','Solana wallet must be 32-44 characters');return;}"
+    "if(!s)return show('err','WiFi network required');"
+    "if(!p)return show('err','WiFi password required');"
+    "if(!w)return show('err','Solana wallet required');"
+    "if(w.length<32||w.length>44)return show('err','Wallet must be 32&ndash;44 base58 chars');"
     "btn.disabled=true;"
-    "show('progress','Testing WiFi connection to '+s+'... this can take up to 15 seconds');"
+    "show('run','Testing connection to '+s+'. Up to 15 sec&hellip;');"
     "fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},"
     "body:JSON.stringify({ssid:s,pass:p,wallet:w})})"
     ".then(function(r){return r.json();}).then(function(d){"
-    "if(d.ok){show('ok','Connected successfully! Saving and rebooting in 3 seconds...');}"
-    "else{show('err',d.error||'Unknown error — try again');btn.disabled=false;}"
-    "}).catch(function(e){"
-    "show('err','Network error talking to device. Reconnect to the DICE WiFi and try again.');"
+    "if(d.ok)show('ok','Provisioned. Rebooting in 3 sec&hellip;');"
+    "else{show('err',d.error||'Unknown error');btn.disabled=false;}"
+    "}).catch(function(){"
+    "show('err','Network dropped. Reconnect to DICE WiFi and retry.');"
     "btn.disabled=false;"
     "});"
-    "}"
+    "});"
+    "})();"
     "</script>"
     "</body></html>";
+
+/* ------------------------------------------------------------------ */
+/* Friendly device names — Greek mythology + cosmic + Greek alphabet.   */
+/*                                                                      */
+/* Public-domain, globally recognizable, zero IP risk. Each device      */
+/* deterministically maps to one of these via FNV-1a(MAC) % 64. The     */
+/* trailing 2-hex MAC byte disambiguates collisions (e.g. two boards    */
+/* hashing to APOLLO would still differ as DICE-APOLLO-A4 vs            */
+/* DICE-APOLLO-7B). Set once at boot in wifi_init_apsta().              */
+/* ------------------------------------------------------------------ */
+
+static const char * const DICE_NAMES[] = {
+    "APOLLO",   "ATHENA",    "ATLAS",     "HERMES",    "HERA",      "ZEUS",      "ARES",      "POSEIDON",
+    "HADES",    "ARTEMIS",   "APHRODITE", "DEMETER",   "DIONYSUS",  "HESTIA",    "IRIS",      "NEMESIS",
+    "MORPHEUS", "ORPHEUS",   "EROS",      "PERSEUS",   "THESEUS",   "ICARUS",    "JASON",     "ATALANTA",
+    "CASSANDRA","ANDROMEDA", "ARIADNE",   "ECHO",      "PSYCHE",    "NIKE",      "GAIA",      "HELIOS",
+    "SELENE",   "EOS",       "BOREAS",    "ZEPHYR",    "NOTUS",     "ORION",     "LYRA",      "VEGA",
+    "DRACO",    "PEGASUS",   "PHOENIX",   "AQUILA",    "CYGNUS",    "CASSIOPEIA","NOVA",      "NEBULA",
+    "ALPHA",    "BETA",      "GAMMA",     "DELTA",     "EPSILON",   "ZETA",      "THETA",     "KAPPA",
+    "LAMBDA",   "SIGMA",     "OMEGA",     "OMICRON",   "TITAN",     "OBERON",    "TRITON",    "RHEA",
+};
+#define DICE_NAME_COUNT (sizeof(DICE_NAMES) / sizeof(DICE_NAMES[0]))
 
 /* ------------------------------------------------------------------ */
 /* Shared state                                                         */
 /* ------------------------------------------------------------------ */
 
-static char s_device_id[20] = {0};
+/* Buffer sized for "DICE-CASSIOPEIA-A4" (longest possible) + slack. */
+static char s_device_id[24] = {0};
 
 /* ------------------------------------------------------------------ */
 /* HTTP handlers                                                        */
@@ -455,10 +551,24 @@ static void portal_wifi_event_handler(void *arg,
 
 static void wifi_init_apsta(void)
 {
-    /* Derive device name from MAC for AP SSID. */
+    /* Derive device name from MAC for AP SSID + portal display.
+     *
+     * Format: DICE-{NAME}-{XX} where:
+     *   - NAME comes from DICE_NAMES[FNV-1a(MAC) % count]
+     *   - XX is the last MAC byte in hex, disambiguates rare name collisions
+     *
+     * FNV-1a 32-bit chosen for tiny code (~12 bytes) and good MAC distribution.
+     */
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    snprintf(s_device_id, sizeof(s_device_id), "DICE-%02X%02X", mac[4], mac[5]);
+
+    uint32_t h = 2166136261u; /* FNV-1a offset basis */
+    for (int i = 0; i < 6; i++) {
+        h ^= mac[i];
+        h *= 16777619u;       /* FNV-1a prime */
+    }
+    const char *name = DICE_NAMES[h % DICE_NAME_COUNT];
+    snprintf(s_device_id, sizeof(s_device_id), "DICE-%s-%02X", name, mac[5]);
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());

@@ -2,11 +2,13 @@
 members = [
     "coordinator",
     "programs/dice",
-    "programs/coin-toss",
-    "programs/dice-roll",
-    "programs/lucky-wheel",
-    "programs/prediction-market",
-    "programs/pulse",
+    # Example dApps — reference integrations that CPI into `dice`.
+    # Moved out of `programs/` so the core program stays isolated.
+    "dapp-examples/coin-toss",
+    "dapp-examples/dice-roll",
+    "dapp-examples/lucky-wheel",
+    "dapp-examples/prediction-market",
+    "dapp-examples/pulse",
     "sdk/dice-vrf",
     "sdk/dice-vrf-macros",
     "tests/harness/mock_firmware_node",

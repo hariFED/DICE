@@ -49,7 +49,7 @@ reference.
 
 Passive subscriber variant: the streaming VRF pattern lets dApps read a
 `RandomnessFeed` PDA as a read-only account input without any
-commit-reveal roundtrip. See `programs/pulse/` and
+commit-reveal roundtrip. See `dapp-examples/pulse/` and
 `sdk/dice-vrf/examples/subscribe_to_feed.rs`. The coordinator's feed
 crank pushes new values into the feed whenever its bound channel
 finalizes a new round.

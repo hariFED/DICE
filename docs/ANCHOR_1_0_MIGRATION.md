@@ -6,7 +6,7 @@
 >
 > **Recommended Solana toolchain:** Solana CLI **3.1.10**, on-chain runtime **3.x** [Source: https://www.anchor-lang.com/docs/updates/release-notes/1-0-0].
 >
-> **Audience:** This was written for the DICE coordinator + on-chain crates (`programs/dice`, `programs/coin-toss`, `programs/pulse`, plus the `coordinator` host process that builds and submits instructions).
+> **Audience:** This was written for the DICE coordinator + on-chain crates (`programs/dice`, `dapp-examples/coin-toss`, `dapp-examples/pulse`, plus the `coordinator` host process that builds and submits instructions).
 
 ---
 

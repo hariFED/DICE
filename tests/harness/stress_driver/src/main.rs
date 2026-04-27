@@ -3,7 +3,7 @@
 //! One binary that runs N sequential `request_randomness_auto` rounds
 //! on a single DiceChannel and records latency, success rate, and any
 //! round that wedged or timed out. Used for categories A, J of
-//! `test_v7.md`.
+//! `archive/v7-test-dashboards/test_v7.md`.
 //!
 //! No dApp involvement — this just exercises the DICE v2 channel path
 //! so we can measure coordinator throughput under real devnet hardware.
