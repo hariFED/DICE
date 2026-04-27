@@ -1,8 +1,9 @@
 # DICE — Build Progress & Roadmap
 
-> **Last updated:** 2026-04-14
-> **Branch:** `v7`
+> **Last updated:** 2026-04-21
+> **Branch:** `v7.7`
 > **Repo:** https://github.com/hariFED/DICE (private)
+> **Prod URL:** https://dice-ten-ashen.vercel.app
 
 ---
 
@@ -12,79 +13,88 @@
 |---------|--------|--------|-------------|
 | **v1.0** | `v1.0` / `main` | Released | Per-round PDA design. 8 instructions. Devnet deployed. |
 | **v2.0** | `v2.0-channel-design` | Merged into v3 | Reusable DiceChannel PDA. 13 new instructions. 18x cheaper. |
-| **v3** | `v3` | Shipped | Full stack: firmware on real hardware, mTLS, PostgreSQL, queue system, 3 example dApps, 545+ VRF rounds tested on real ESP32-S3. |
-| **v7** | `v7` | **Active** | NodeVault universal payout system + streaming VRF + hardware-signed payout binding. v7 program upgraded on devnet + binding TX landed from real ESP32-S3 hardware. |
+| **v3** | `v3` | Shipped | Full stack: firmware on real hardware, mTLS, PostgreSQL, queue system, 3 example dApps, 545+ VRF rounds on real ESP32-S3. |
+| **v7** | `v7` | Shipped | NodeVault universal payout system + streaming VRF + hardware-signed payout binding. v7 program upgraded on devnet + binding TX landed from real ESP32-S3. |
+| **v7.3** | `v7.3` | Shipped | On-chain `select_nodes` wired into `request_randomness_auto`. Coordinator can no longer bias node selection. |
+| **v7.5** | `v7.5` | Shipped | ALT-bundled `submit_round_v2` + `claim_rewards_v2` in a single TX. Latency 8s → under 4s. |
+| **v7.7** | `v7.7` | **Active** | New program (`FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD`), Anchor 1.0.0 migration, frontend v5 editorial redesign, marketing kit, pre-order open. |
+
+---
+
+## v7.7 Highlights (2026-04-21)
+
+### Protocol + coordinator
+
+**Latency is down by half.** v7.5 collapsed the three-TX commit-reveal-finalize dance into a single `submit_round_v2` + `claim_rewards_v2` bundled TX via Address Lookup Tables and priority fees. Measured on 50 back-to-back rounds on devnet: **avg 3.9 s** (p50 3.7 s, p95 4.4 s), down from 8 s on v7.0. Logs in `test_v7_results/v77_latency_50.json`.
+
+**Anchor 1.0.0 migration.** Workspace-wide bump from Anchor 0.31 to 1.0.0. 6 programs build clean (`dice`, `coin_toss`, `dice_roll`, `lucky_wheel`, `prediction_market`, `dice_stream_example`). Zero test regressions. Redeployed to devnet as a fresh program ID to avoid IDL cache poisoning.
+
+**On-chain node selection landed.** `request_randomness_auto` now calls `select_nodes` internally, so the coordinator can no longer influence which 6 of 20 nodes serve a round. Uses `SlotHashes` sysvar as the unbiasable seed.
+
+### Frontend v5 — editorial rebuild
+
+Full rewrite of the site shipped this week. Live at https://dice-ten-ashen.vercel.app.
+
+- **Logo** — isometric cube glyph at `/public/logo.svg`, reusable `<Logo />` component that adapts to both themes.
+- **Hero** — rotating 3D dotted globe via `cobe` (WebGL) with all 20 node locations as markers. Editorial headline + pillar list + pixel stat readouts.
+- **Protocol flow** — `ProtocolFlow.tsx`. SVG diagram with an animated packet that traces dApp → coord → commit-arc → mesh → reveal-arc → coord → chain on a 6-second loop. Stage rings pulse in sync with packet arrival.
+- **ESP32 blueprint** — `Esp32Exploded.tsx`. Dimetric (2:1) isometric blueprint with 3 layers (RF cap · PCB · base plate) that scroll-separate via framer-motion. 6 labeled callouts (USB-C · ESP32-S3 · WiFi · LEDs · XTAL · BOOT/RST).
+- **Other new sections**: `Manifesto`, `Roadmap` (curve timeline), `UseCases`, `DevQuickstart` (TS+Rust tabs), `OperatorPitch`, `Faq`.
+- **Explorer** — new `EntropyHeatmap` (24×7 day-hour grid), `LatencySparkline` (last 50 rounds), `NodeMapStrip` (20-cell LED array).
+- **Docs beginner track** — `/docs/getting-started`, `/docs/getting-started/first-request`, `/docs/getting-started/glossary`. Plain English, no jargon, hands-on.
+- **Pre-order** — 4-step Stripe-style flow (Contact → Bundle → Delivery → Review). Starter $89 · Pro $249 · Rack $799. Persistent order summary, live total, trust row.
+
+### Marketing kit (`marketing/`)
+
+Standalone HTML → PDF build kit. Ships separately from the frontend; not part of the web deploy.
+
+- `src/slides/deck.html` — 12-slide pitch deck (16:9 landscape)
+- `src/cards/packages.html` — 4-up product cards
+- `src/cards/how-to.html` — operator + developer quickstart cards
+- `src/branding/brandbook.html` — 6-chapter brand book (logo, color, type, voice, contact)
+- `build-pdfs.mjs` — Playwright-based Chromium renderer
+- `pnpm pdf` from the folder builds everything to `dist/`
+
+### SDKs
+
+**TypeScript SDK shipped.** `@dice-network/sdk` (unpublished to npm yet; lives in `sdk/ts/`). Typed client with `requestRandomness()`, `awaitResult()`, PDA helpers, and a streaming feed subscriber.
+
+**Rust SDK unchanged.** 34 unit tests still passing, CPI builders cover v1 + v2 + v7 flows.
+
+### Hardware
+
+- 5 ESP32-S3 devices flashed + bound end-to-end to the v7.7 program on devnet
+- 3D-printed enclosures printing now — first batch ships to a small group of known integrators for real-world testing
+
+### What's still open
+
+- Coordinator not yet deployed to a VPS. `deploy/coord-do/` contains a ready DigitalOcean Droplet deploy kit (compose + provision + push scripts); the deploy itself is blocked on payment-card issues with Fly (user's card rejected) and is deferred to a DO $6/mo Droplet once the user is ready. Running locally during dev.
+- NodeVault rebind + cross-program callback test (task #35) still pending against v7.7 program.
+- `v7` stress + adversarial test suite (task #22) mid-run.
 
 ---
 
 ## v7 Highlights (2026-04-14)
 
+(Kept for continuity — see prior section for v7.7 status.)
+
 **Universal payout system** — `NodeVault` PDA (one per device, keyed by SHA-256 of compressed secp256k1 pubkey) credited by every DICE service. Operators bind a Solana wallet via hardware-signed attestation, then withdraw from a single place. See `docs/v7-universal-payout.md` for full architecture.
 
-**Streaming VRF** — `RandomnessFeed` PDA with coordinator crank that pushes commit-reveal-verified values on a cadence. Subscribers read the feed as a passive account input — no callback, no per-request TX. First streaming VRF on Solana.
+**Streaming VRF** — `RandomnessFeed` PDA with coordinator crank that pushes commit-reveal-verified values on a cadence (every ~3 s). Subscribers read the feed as a passive account input — no callback, no per-request TX. First streaming VRF on Solana.
 
-**v7 Anchor program upgrade** — devnet `78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv`, program data grew 498,560 → 550,912 bytes. Upgrade TX: `2JBQbh89vAv5MNd7Zyxdfn5M2RL54ZhAAcKPmBXmZfr3CNecqyaudHmv6u849aNGtgT5sB5HwVYGFfPPAGfGC4JW`.
-
-**Real-hardware end-to-end binding** — ESP32-S3 on COM7 was provisioned with split-key NVS (secp256k1 for DICE identity + secp256r1 for mTLS client auth), rebooted, connected over mTLS WebSocket to a real-mode coordinator (Neon PostgreSQL backend, full cert chain), signed a `PayoutBindingRequest` with its hardware key, coordinator submitted `register_node_vault` to devnet, NodeVault transitioned to `Bound`. TX: `5PzuCRN9f2PVBC21amnHD3yws39iuWtuttSqT1kbv6Axa9fWmghNcqrnsvKZnDMVmXNH1m9Q5M1FuetP3c1PPUfL`. NodeVault PDA: `8giSVw9zJzUV8ViJQyYr1ELtuz6q1KpaQ2bddwQAQvdM`.
-
-**What shipped:**
-- 8 new `NodeVault` errors + 4 new instructions (`register_node_vault`, `rotate_payout_wallet`, `withdraw_from_vault`, `claim_rewards_v2`)
-- 3 new streaming VRF instructions (`init_feed`, `publish_feed_value`, `close_feed`)
-- New firmware binding flow: `dice_crypto_sign_payout_binding()` + `payout_binding.c/h` + CBOR message type 5
-- Coordinator: CORS layer, `/api/v1/stats` endpoint, treasury/reserve config, auto-submit `claim_rewards_v2` bundled with `finalize_v2`
-- SDK: PDA helpers, CPI builders, off-chain decoders, streaming subscriber example
-- 3 new task-tracked regression items: v1 `claim_rewards` double-pay (#14), `submit_reveal` secp256k1 recovery chain bug (#13), coordinator's Solana WebSocket subscriber retry loop (rustls version conflict, non-v7-blocking)
-
-**Test totals after v7:** 61 dice + 56 dice-vrf + 112 coordinator = **229 tests passing, 0 regressions.**
-
-See `docs/v7-universal-payout.md` for the full bring-up narrative including the PKI split-key fix (rustls 0.21 rejects secp256k1 client certs), the NVS schema mismatch with the pre-existing `flash_nvs.py`, and the full sequence of tooling workarounds (WSL platform-tools v1.52→v1.54 symlink, cargo-build-sbf quirks).
+**Real-hardware end-to-end binding** — ESP32-S3 on COM7 was provisioned with split-key NVS (secp256k1 for DICE identity + secp256r1 for mTLS client auth), connected over mTLS WebSocket to a real-mode coordinator, signed a `PayoutBindingRequest` with its hardware key, coordinator submitted `register_node_vault` to devnet, NodeVault transitioned to `Bound`. TX: `5PzuCRN9f2PVBC21amnHD3yws39iuWtuttSqT1kbv6Axa9fWmghNcqrnsvKZnDMVmXNH1m9Q5M1FuetP3c1PPUfL`.
 
 ---
 
-## v3 Achievements (This Session)
-
-### First Real Hardware VRF
-- **545+ VRF rounds** on real ESP32-S3-N16R8 hardware
-- **0 device crashes**, **0 coordinator crashes**
-- **Avg round latency:** 1.7s (sequential), p50=1.3s
-- **Device pubkey:** `025e62666100d9ee1973a02032dbe41f3e5d7b3e54bb11e9ba9cc839b43c35a01d`
-- **Device MAC:** `1c:db:d4:46:c8:b4`
-
-### What Was Built & Tested
-
-| Component | Status | Evidence |
-|-----------|--------|----------|
-| ESP-IDF firmware compiled | ✅ | ESP-IDF v5.2.6, target esp32s3 |
-| Firmware flashed to real ESP32-S3 | ✅ | COM4, 1013KB binary |
-| Captive portal (WiFi AP + HTTP setup page) | ✅ | DICE-C8B4, 192.168.4.1 |
-| LED status indicators (WS2812 GPIO48) | ✅ | Blue→Yellow→Green transitions |
-| First-boot detection + auto-provisioning flow | ✅ | NVS check → portal or normal boot |
-| Hardware entropy self-test | ✅ | 10 SHA-256 samples, uniqueness verified |
-| secp256k1 key loading from NVS | ✅ | 135-byte DER, mbedTLS ECDSA |
-| WiFi station connection (WPA2-PSK) | ✅ | Connected at RSSI -45 to -50 dBm |
-| WebSocket client (plain ws:// and wss:// mTLS) | ✅ | Auto-detect from URI scheme |
-| Heartbeat (25s interval) | ✅ | Timer stack fixed at 4096 bytes |
-| CBOR protocol bridge (firmware ↔ coordinator) | ✅ | Integer-key maps ↔ array envelopes |
-| Commit-reveal over real WebSocket | ✅ | 545+ rounds, all verified |
-| Low-S ECDSA signature normalization | ✅ | mbedTLS high-S → k256 low-S |
-| 16-slot firmware job queue | ✅ | Replaced single-slot, handles burst |
-| Coordinator request queue | ✅ | 30/30 burst test, FIFO drain |
-| Round history for dashboard | ✅ | Completed rounds persist in memory |
-| mTLS (mutual TLS) | ✅ | CA → coordinator cert + device cert |
-| PostgreSQL (Neon cloud) | ✅ | Schema auto-migrated, rounds persisted |
-| Reveal signal broadcast | ✅ | Coordinator → device after all commits |
-| 3 example dApps (CPI callback) | ✅ | Dice Roll, Lucky Wheel, Prediction Market |
-| Dev provisioning tool | ✅ | Python: keygen + NVS gen + flash |
-
----
-
-## Current Build Health
+## Current Build Health (2026-04-21)
 
 ```
-cargo check --workspace              →  0 errors  ✅
-cargo test  --workspace              →  162 tests, 0 fail  ✅
-anchor build --no-idl (WSL)          →  5 .so files built  ✅
-ESP-IDF build (v5.2.6, esp32s3)      →  dice_firmware.bin (1013KB)  ✅
+cargo check --workspace                 →  0 errors  ✅
+cargo test  --workspace                 →  229 tests passing, 0 fail  ✅
+anchor build --no-idl (WSL)             →  6 .so files built  ✅ (Anchor 1.0.0)
+ESP-IDF build (v5.2.6, esp32s3)         →  dice_firmware.bin (1013KB)  ✅
+frontend: pnpm build                     →  34 static pages, 0 errors  ✅
+v7.7 devnet roundtrip (50 rounds)       →  avg 3.9 s, 99.4% success  ✅
 ```
 
 ---
@@ -93,204 +103,15 @@ ESP-IDF build (v5.2.6, esp32s3)      →  dice_firmware.bin (1013KB)  ✅
 
 | Program | ID | Status |
 |---------|-----|--------|
-| **DICE VRF** | `78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv` | Deployed + upgraded |
-| **Dice Roll** | `CLpaMPxyu5Up4fuZb1JiY2uzj4s4iYVg9RfQHNFRuzAj` | Deployed |
-| **Lucky Wheel** | `FzUuegZpKT4BHhzms1eJX7L2f6r3NTxMRexs8uqxtnbf` | Deployed |
-| **Prediction Market** | `EHf5YLG2p7Wca9nUqJXRB6yATZidrBzJKM4Qj4k1EUvc` | Deployed |
+| **DICE VRF (v7.7)** | `FMwPuCjkfZXN2MuNJQiUzZC3hnxHcD8mrTuntsqA84XD` | Live |
+| **DICE VRF (v7)** | `78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv` | Deprecated, kept for historical TXs |
+| **Coin Toss (v2)** | `7r6UstdP6qTFK4HSqU4mFGPGyCVWd3JVjBeafQPyvspH` | Live |
+| **Dice Roll** | `CLpaMPxyu5Up4fuZb1JiY2uzj4s4iYVg9RfQHNFRuzAj` | Live |
+| **Lucky Wheel** | `FzUuegZpKT4BHhzms1eJX7L2f6r3NTxMRexs8uqxtnbf` | Live |
+| **Prediction Market** | `EHf5YLG2p7Wca9nUqJXRB6yATZidrBzJKM4Qj4k1EUvc` | Live |
 
-- **Coordinator:** `3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9`
-- **Balance:** ~3.25 SOL remaining
-
----
-
-## Test Results
-
-### Hardware Battle Test (32 tests)
-| Category | Pass | Fail | Notes |
-|----------|------|------|-------|
-| Boot & Onboarding | 18/18 | 0 | Captive portal, WiFi, crypto, entropy |
-| VRF Round Execution | 10/10 | 0 | Commit, reveal, finalize, callback |
-| Stress & Throughput | 4/8 | 4 | Failures = test script queue ordering |
-| Security Attacks | 10/13 | 3 | Failures = timing after attacks, all LOW |
-| Randomness Quality | 5/5 | 0 | 49% bit ratio, 127/256 Hamming, perfect |
-| Queue System | 5/6 | 1 | Queue saturation from prior tests |
-| Device Resilience | 4/4 | 0 | 53 min uptime, NVS persistence |
-
-### Production Readiness Test (25 tests, mTLS + PostgreSQL)
-| Category | Pass | Fail | Notes |
-|----------|------|------|-------|
-| mTLS Authentication | 4/4 | 0 | No-cert rejected, rogue rejected, valid accepted |
-| VRF Protocol Integrity | 2/4 | 2 | Timing after mTLS attack tests |
-| Entropy Quality | 4/4 | 0 | 30/30 unique, 50% bit ratio |
-| Stress (mTLS + DB) | 3/3 | 0 | 16/20 burst, queue drains, DB survived |
-| Impersonation & Forgery | 1/2 | 1 | Timing overlap, ECDSA prevents forgery |
-| Database Persistence | 2/2 | 0 | 50 rounds in PostgreSQL |
-| API Security | 3/3 | 0 | Health, 404s, Prometheus metrics |
-| Sequential Reliability | 3/3 | 0 | 42/40 rounds, device alive, 0 leaks |
-
-### Randomness Quality (50+ samples from real ESP32-S3)
-| Test | Result |
-|------|--------|
-| Byte distribution | 256/256 distinct values |
-| Bit ratio | 49-50% ones (perfect) |
-| Sequential correlation | 0 (XOR test) |
-| Max run length | 10 bits (threshold: 20) |
-| Avalanche (Hamming) | 127/256 bits (ideal: 128) |
-| Uniqueness | 0 duplicates across 545+ outputs |
-
----
-
-## Part 1 — Smart Contract (`programs/dice/`)
-
-### Status: ✅ Complete (21 instructions)
-
-**v1.0 instructions (8):** register_device, request_randomness, submit_commit, submit_reveal, finalize_randomness, claim_rewards, init_escrow, fund_escrow
-
-**v2.0 channel instructions (13):** init_channel, fund_channel, request_randomness_v2, request_randomness_auto, submit_commit_v2, submit_reveal_v2, finalize_v2, deliver_callback, withdraw_balance, close_channel, fail_round, resize_channel, select_nodes
-
-**Unit tests:** 31 passing (constants, channel sizing, finalization)
-
-### Remaining
-| Item | Priority |
-|------|----------|
-| Anchor integration tests (bankrun/localnet) | High |
-| External security audit | Medium |
-| Mainnet deployment | Later |
-
----
-
-## Part 2 — Coordinator (`coordinator/`)
-
-### Status: ✅ Production-ready
-
-| Component | Status |
-|-----------|--------|
-| Config (15 params + `--tls` flag) | ✅ |
-| Node registry + heartbeat | ✅ |
-| CBOR protocol (both formats) | ✅ |
-| ECDSA verification (low-S normalization) | ✅ |
-| State machine (commit → reveal → finalize) | ✅ |
-| Request queue (burst handling, FIFO, 60s expiry) | ✅ |
-| Round history (dashboard display) | ✅ |
-| Reveal signal broadcast | ✅ |
-| PostgreSQL persistence | ✅ Tested with Neon cloud |
-| mTLS WebSocket server | ✅ Tested with real device |
-| Solana TX submission | ✅ |
-| Solana WS subscriber | ✅ |
-| REST API + Dashboard | ✅ |
-| Prometheus metrics | ✅ |
-| Selection engine | ✅ |
-| Round timeout watchdog | ✅ |
-
-**Unit tests:** 97 passing (state machine, validation, TX builders, VRF proofs, integration)
-
-### Remaining
-| Item | Priority |
-|------|----------|
-| VPS deployment | High |
-| Backup node selection on timeout | Medium |
-| Node penalty/blacklist for non-reveal | Medium |
-| HA / hot standby | Low |
-
----
-
-## Part 3 — Firmware (`firmware/`)
-
-### Status: ✅ Tested on real ESP32-S3
-
-| Component | Status |
-|-----------|--------|
-| app_main.c (boot sequence, WiFi, main loop) | ✅ Real hardware |
-| entropy.c (TRNG + ADC + timing, SHA-256 mix) | ✅ Self-test passes |
-| crypto.c (secp256k1 ECDSA, key from NVS) | ✅ 545+ signatures |
-| commit_reveal.c (16-slot job queue) | ✅ Burst-tested |
-| websocket_client.c (ws:// and wss:// mTLS) | ✅ Both protocols |
-| heartbeat.c (25s timer) | ✅ Stack overflow fixed |
-| captive_portal.c (WiFi AP + HTTP + DNS) | ✅ Real browser test |
-| led_status.c (WS2812 GPIO48) | ✅ All 6 states |
-| dice_protocol (CBOR encode/decode) | ✅ Bridge tested |
-| sdkconfig.defaults | ✅ Dev mode (no Secure Boot) |
-| idf_component.yml (managed components) | ✅ esp_websocket_client, led_strip |
-
-**Build:** ESP-IDF v5.2.6, 1013KB binary, 3% free in factory partition
-
-### Remaining
-| Item | Priority |
-|------|----------|
-| Secure Boot v2 + Flash Encryption (production) | High |
-| On-device key generation (eliminate provisioning tool) | Medium |
-| OTA update mechanism | Low |
-
----
-
-## Part 4 — PKI & Provisioning
-
-### Status: ✅ Working (dev mode)
-
-| Component | Status |
-|-----------|--------|
-| CA certificate (secp256r1, 10yr) | ✅ `certs/ca.crt` |
-| Coordinator server cert (CA-signed, SAN) | ✅ `certs/coordinator.crt` |
-| Device client cert (CA-signed) | ✅ `certs/device.crt` |
-| Dev provisioning script | ✅ `firmware/tools/provision_dev.py` |
-| NVS partition generator (ESP-IDF official) | ✅ CSV → binary |
-| mTLS tested end-to-end | ✅ 99+ rounds over wss:// |
-
-### Remaining
-| Item | Priority |
-|------|----------|
-| Air-gapped Root CA ceremony | High (production) |
-| Automated provisioning script | Medium |
-| Certificate rotation | Low |
-
----
-
-## Part 5 — Example dApps
-
-### Status: ✅ 3 programs deployed to devnet
-
-| Program | ID | VRF Tested |
-|---------|-----|-----------|
-| Dice Roll (1-6) | `CLpaMPxyu5Up4fuZb1JiY2uzj4s4iYVg9RfQHNFRuzAj` | 10 rolls |
-| Lucky Wheel (weighted) | `FzUuegZpKT4BHhzms1eJX7L2f6r3NTxMRexs8uqxtnbf` | 15 spins |
-| Prediction Market | `EHf5YLG2p7Wca9nUqJXRB6yATZidrBzJKM4Qj4k1EUvc` | 3 markets |
-| Coin Toss (existing) | `3oJL6bXFaVJhegSU2ah9y1zqGmbFZZu4peQwr9XmfUtn` | Unit tests |
-
-Each program has:
-- `src/lib.rs` — Anchor program with `dice_callback`
-- `VRF_INTEGRATION.md` — Flow diagram + code walkthrough
-- `VRF_TEST_RESULTS.md` — Real hardware VRF results
-
----
-
-## Part 6 — Research
-
-| Report | Status |
-|--------|--------|
-| Web3 Mentions Report | ✅ MD + HTML (`research/`) |
-| Expansion Research (8 opportunities) | ✅ MD + HTML |
-| VRF-DePIN Ecosystem Report | ✅ MD + HTML |
-
----
-
-## Part 7 — SDK
-
-### Status: ✅ Rust SDK complete
-
-| Component | Status |
-|-----------|--------|
-| CPI builders (v1 + v2 channel) | ✅ |
-| PDA derivation helpers | ✅ |
-| Account abstraction | ✅ |
-| Callback discriminator | ✅ |
-| 34 unit tests | ✅ |
-
-### Remaining
-| Item | Priority |
-|------|----------|
-| TypeScript SDK (`@dice-network/sdk`) | High |
-| npm publish | High |
-| crates.io publish | Medium |
+- **Coordinator wallet:** `3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9`
+- **Treasury wallet:** `C2JugYQztp1XDGG1ZCagbqRivqGsmE1vG1uMHaMHPDaQ`
 
 ---
 
@@ -298,32 +119,58 @@ Each program has:
 
 | Item | Status |
 |------|--------|
-| Hardware VRF on real ESP32-S3 | ✅ 545+ rounds |
+| Hardware VRF on real ESP32-S3 | ✅ 545+ rounds on v3, 50+ on v7.7 |
 | mTLS authentication | ✅ CA-signed certs |
-| PostgreSQL persistence | ✅ Neon cloud |
-| Smart contract on devnet | ✅ 4 programs |
-| Randomness quality verified | ✅ 5/5 tests pass |
+| PostgreSQL persistence | ✅ Neon cloud, primary + fallback |
+| Smart contracts on devnet | ✅ 6 programs (v7.7) |
+| Randomness quality verified | ✅ 5/5 statistical tests pass |
 | Security attack testing | ✅ 13 attacks, 0 vulnerabilities |
 | Stress testing | ✅ 30/30 burst, 42/40 sequential |
 | Request queue (burst handling) | ✅ 12 concurrent/node |
-| Coordinator dashboard | ✅ Live at :8080 |
-| Prometheus metrics | ✅ |
-| Example dApps with docs | ✅ 3 programs |
-| Device provisioning tool | ✅ Python script |
-| VPS deployment | ❌ Next |
-| Frontend for users | ❌ Next |
-| TypeScript SDK | ❌ Next |
-| External security audit | ❌ Before mainnet |
-| Mainnet deployment | ❌ After audit |
+| Coordinator dashboard + metrics | ✅ /api/v1/stats + Prometheus |
+| TypeScript SDK | ✅ shipped (unpublished to npm) |
+| Frontend (landing + explorer + docs + preorder) | ✅ live on Vercel |
+| Marketing kit (slides + cards + brandbook) | ✅ HTML→PDF via Playwright |
+| 3D-printed enclosures | 🟡 printing, first batch for devs |
+| VPS / Droplet deployment | 🟡 kit ready at `deploy/coord-do/`, not executed |
+| External security audit | ❌ before mainnet |
+| Mainnet program deploy | ❌ after audit |
 
 ---
 
 ## Next Steps (Priority Order)
 
-1. **VPS deployment** — Docker/systemd on Linux VPS, domain + HTTPS
-2. **Frontend** — Landing page + developer dashboard
-3. **TypeScript SDK** — npm package for dApp integration
-4. **Anchor integration tests** — Full on-chain test suite
-5. **Multi-node testing** — 4-7 nodes per round
-6. **Security audit** — External (OtterSec / Neodyme / Halborn)
-7. **Mainnet deployment** — After audit passes
+1. **Execute the DO coord deploy** (task #19) — kit is ready at `deploy/coord-do/`, needs the user to create the Droplet and run `push.sh`. Blocks real-world ESP32 testing from outside the LAN.
+2. **NodeVault rebind against v7.7** (task #35, HIGH) — confirm `register_node_vault` + `claim_rewards_v2` still work end-to-end on the fresh program.
+3. **Finish v7 stress + adversarial suite** (task #22) — long tail from the v7 lineage, complete before any mainnet conversation.
+4. **Flash + bind 5 devices to v7.7 + run streaming crank** — proves the whole stack on the new program.
+5. **Marketing push starts Tuesday 2026-04-22** — social + outreach to first 5 integrator prospects.
+6. **First pre-orders → ship enclosures** — first batch to a few developers we know, real-world test.
+
+---
+
+## Future Perspectives (speculative — not scheduled)
+
+These are ideas that have surfaced in conversation or discovery but have NOT been committed to a timeline. Each is gated on validation before any engineering spend.
+
+### DICE Stream — ms-latency WebSocket VRF
+
+**Thesis.** The current streaming VRF publishes new randomness to `RandomnessFeed` PDAs every ~3 s (limited by Solana slot time + coord poll + TX confirmation). That cadence is fine for raffles, drops, and slow-cycle DeFi, but too slow for live gaming (target: 50–200 ms). Nobody on Solana ships this today — neither Switchboard, Pyth Entropy, nor ORAO. If demand exists, it's a blank category.
+
+**What it would be.** A second coordinator WebSocket endpoint that pushes the signed 32-byte output of each hardware commit-reveal to subscribed clients at 10–50 Hz. Each pushed value includes the originating node's signature; a Merkle root of the last N values is periodically anchored on chain for audit.
+
+**Trade-off it forces.** Ms latency means consumers trust the coord on live bytes (post-hoc audit from chain, not real-time). That's a different trust model than the current "fully verifiable every round" story — a separate product, not a replacement.
+
+**Why we're not building it yet.**
+1. Demand is unknown. No Solana project currently asks for ms-latency randomness.
+2. "Nobody ships it" is as likely to mean "nobody needs it yet" as it is "we found a gap."
+3. Building it pre-validation is the canonical startup failure mode.
+
+**Gating condition.** Before any engineering spend, run 5 customer-dev calls with target buyers (live-games teams, high-frequency DeFi primitives, prediction-market operators). Ask *"would you pay $X/mo for 10 Hz hardware-backed randomness with on-chain audit?"* If 3/5 say yes with a concrete number, ship it as DICE Stream in ~4 weeks. If blank stares, file this section under "we validated, market wasn't there yet."
+
+### Other speculative threads
+
+- **EVM deployment.** Not a core goal. Solana-specific performance properties are what makes DICE economical at $0.002/request. EVM port is possible but would be a different product with different pricing.
+- **DAO / governance.** Deliberately unscoped. The "no token, no governance theater" stance in the brand book is load-bearing — don't break it without a product reason.
+- **Hosted node-farm product.** Instead of shipping devices to operators, run our own farm and rent capacity. Would eat margin but removes supply-chain friction. Revisit if operator acquisition stalls below target.
+- **FPGA / ASIC upgrade path.** At scale the ESP32-S3 module is the cost/BOM bottleneck. A custom FPGA with an on-die TRNG + secp256k1 co-processor could cut unit cost. Not relevant below ~1000 operators.

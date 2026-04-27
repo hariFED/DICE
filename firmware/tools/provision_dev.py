@@ -291,8 +291,8 @@ def build_nvs_partition(entries_data, partition_size=0x6000):
 def main():
     parser = argparse.ArgumentParser(description="DICE Development Provisioning Tool")
     parser.add_argument("--port", default="COM4", help="Serial port (default: COM4)")
-    parser.add_argument("--coordinator-uri", default="ws://192.168.1.100:9001",
-                        help="Coordinator WebSocket URI (default: ws://192.168.1.100:9001)")
+    parser.add_argument("--coordinator-uri", default="wss://coordination.dicelabs.net:8443",
+                        help="Coordinator WebSocket URI (default: wss://coordination.dicelabs.net:8443)")
     parser.add_argument("--no-flash", action="store_true",
                         help="Generate files only, don't flash to device")
     parser.add_argument("--output-dir", default=None,

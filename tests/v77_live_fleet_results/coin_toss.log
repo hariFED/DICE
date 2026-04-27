@@ -1,0 +1,58 @@
+Payer (player + channel authority + coordinator): 3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9
+Payer balance: 3.49843658 SOL
+
+Derived PDAs:
+  coin-toss house:   4yhwiHsdtDekZNJKw2CoboubxQqcB5oHtBgdbPcbDMqT
+  coin-toss vault:   9GFobMmNYeZseEe52WT1g6vKAYcWwG8ZzjqEGHt2y6y8
+  dice channel:      2UgfYgrsn2b9bJnoZjukQH64RnzRrFHmqHhCHVi1XzqC (index=201)
+  coin-toss game:    AWonsYJPtuCL6iu8uxzPjDwHEWm7FmH1dkFCsxjHxYJf (game_id=1777119244)
+
+[1/7] coin-toss already initialized ✓
+[2/7] dice channel already exists ✓
+Snapshotted 0 node vault balances before round (for delta verification)
+[3/7] Funding channel with 10000000 lamports
+      fund_channel TX: FyRjpndnXbF3bk2qG8FQ5j8TMDJBWiR5z1HtoUMGUWriE2QsWnuVu1eXcHUCQPZidoYd9tM85yodQQUVTa9XiE9
+[4/7] place_bet: choice=heads, wager=100000, game_id=1777119244
+      place_bet TX: 5LwrkG2gzzExg85xpGb8dJPzkk9ynmdfiMKLsmAQb9WBbVaNhgNCj9idLjKSkjWB73fs7hf2zR5GMGZuXXsD5Aaj
+[5/7] request_randomness_auto (node_count=4)
+      request_randomness_auto TX: URowjcrDJaYqDdxcxCGhmW1mjcnQ9odSaphD7n1bChSqwN6ejwCa85aKH7ygyQsMm6S3a3VwxhYUY7fSQPvXWkq
+
+[6/7] Waiting for coordinator to dispatch → commit-reveal → finalize (up to 180s)
+      The coordinator auto-detects the on-chain request, dispatches
+      JobAssignment over mTLS WebSocket to selected devices, receives
+      4 commits + 4 reveals, then bundles finalize_v2 + claim_rewards_v2.
+      channel: status=1 (Pending), commits=0/4, reveals=0/4
+      channel: status=4 (Finalized), commits=4/4, reveals=4/4
+      Finalized! Commits=4/4, reveals=4/4
+
+Channel finalized with 4 contributing devices:
+  [0] 03b62a48eb6537d1
+  [1] 03f8cc24b6a207c0
+  [2] 03a6fe33a1065a67
+  [3] 02f0ad1bff46679c
+  randomness preview: bb69fe4870e49df4
+warn: vault C72JGn8CAnTSQ6SLrzJjUQR63Rdh7srbVNqZyBV95nkA missing from pre-round baseline
+warn: vault o2qhsBkXTBbCJ4dzCtyA1MxAu3yG3sZvAYcP7CEsCEG missing from pre-round baseline
+warn: vault HGJf9hYAwjLdRq6nYKHyCynzM6gYR4mFsZyc2PVaFVav missing from pre-round baseline
+warn: vault 4iH8YL9ddw21C5QdvxbCE2gvZhC236c4w2VESRJo4MdG missing from pre-round baseline
+
+[7/7] deliver_callback — firing CPI into coin_toss::dice_callback
+      deliver_callback TX: 5SojPAGNifqFMn4oPR5GdF2rCoa7qVQb4f7s7doEjVuF83htGQQJNpL2mNNgw5QWG2JKP33kfAxX1ZJN7fVQmCcw
+
+Verifying results...
+  game.settled:    true ✓
+  game.result:     1 (tails)
+  game.randomness: bb69fe4870e49df4... ✓
+  player choice:   heads -> LOST
+
+NodeVault credits:
+  vault[0] C72JGn8C  pre=0 post=17299040 delta=17299040 expected=350000 ✗
+  vault[1] o2qhsBkX  pre=0 post=16599040 delta=16599040 expected=350000 ✗
+  vault[2] HGJf9hYA  pre=0 post=15899040 delta=15899040 expected=350000 ✗
+  vault[3] 4iH8YL9d  pre=0 post=18349040 delta=18349040 expected=350000 ✗
+
+treasury: pre=307575000 post=307975000 delta=400000 expected=400000 ✓
+reserve:  pre=3498436580 post=3486976350 delta=0 expected=200000 ✓ (soft-pass: reserve == payer)
+
+════════════════════════════════════════════════════════════════
+❌ FULL v7 END-TO-END TEST FAILED — check ✗ markers above

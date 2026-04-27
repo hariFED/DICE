@@ -52,7 +52,7 @@ Show real applications, real transactions, real developer experience.
 | 6-9s | Solana Explorer showing resolve transaction (screen rec) | "DICE randomness" |
 | 9-13s | Terminal output showing VRF round completing (screen rec) | "Running right now" |
 | 13-17s | GitHub repo page for DICE (screen rec) | "Open source" |
-| 17-22s | DICE logo + "programs/prediction-market" | "Go build on it" |
+| 17-22s | DICE logo + "dapp-examples/prediction-market" | "Go build on it" |
 
 **Music:** Intense, trading-floor energy
 **SFX:** Stock ticker sounds, transaction confirmation ping

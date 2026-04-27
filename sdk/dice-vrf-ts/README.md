@@ -96,7 +96,7 @@ if (!snap || snap.sequence === 0n) {
 ```
 
 To create the feed, call `buildInitFeedIx` against an existing channel.
-See `programs/pulse` in the DICE repo for a full example dApp that
+See `dapp-examples/pulse` in the DICE repo for a full example dApp that
 consumes a feed from on-chain.
 
 ## What's in the SDK

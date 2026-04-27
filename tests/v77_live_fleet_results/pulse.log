@@ -1,0 +1,20 @@
+Payer (player + channel/feed authority + coordinator): 3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9
+Payer balance: 3.48697635 SOL
+
+Derived PDAs:
+  dice channel:    BPaE7kbZqgtoDSfMXQk6B6VRviV4RRPaXEh4JkHcT22X (index=202)
+  dice feed:       GVnASxFTRb4yhjCgXFbDqDBV649zRQ4XRC8M65vwSqo4 (index=1)
+  pulse house:     8ZZTkTfXn9irq4gWg8xyqsMKCNxzK4dHyMvEXVshabEz
+  pulse play:      J2bJvy1xHXn7fszBMZPXFFJHf4a666RzBNghQ21n9AcA (nonce=1777119299)
+
+[1/9] init_channel
+      TX: 4QwR6dAV315xTWraAcC3xbctYQLfGNFqDG3BX5gb23dQjPyxEQavxQLFWeTiimwxsy3DF5HeTKr8aARtWAyvfRjd
+[2/9] fund_channel +10000000 lamports
+      TX: 63qehF4k4pojYobVWrg99kawfQHuetiR4sq5dvZRCYJErnjuZLhKv8VQaTvkQzo5kEfvUK9tekvchimjDjUWiCgN
+[3/9] init_feed (cadence=1 slots)
+      TX: zYxpMeoexqtoE83Ag96iJxtH8qj3KePJxbVzdVDSJTC4bwG9xnFm8S9n1tECN9QkPoTpw1sFNRc9qV2ftnT5RVi
+      feed.current_sequence before round: 0
+[4/9] request_randomness_auto (n=4)
+      TX: 25bTRQhS8NmtvivXJahA8BizYemxPEHwKpkJgnboppALrPEh786wUqRZ56nEXYnGVjbUU4BbzQMdW4d84tZ9pHMf
+[5/9] waiting for channel to reach Finalized status
+Error: timeout waiting for channel Finalized
