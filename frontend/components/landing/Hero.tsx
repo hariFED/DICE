@@ -1,7 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { useStats } from "@/lib/hooks"
 import { DottedSphereGlobe } from "@/components/landing/DottedSphereGlobe"
 import { BRAND } from "@/lib/constants"
 
@@ -27,18 +26,6 @@ const fadeUp = {
  * Scroll-cued fade/rise on left column. Globe is client-only (cobe + WebGL).
  */
 export function Hero() {
-  const { data: stats } = useStats()
-
-  const latencyDisplay = stats?.avg_latency_ms != null
-    ? `${(stats.avg_latency_ms / 1000).toFixed(1)}s`
-    : "≈ 4s"
-  const rateDisplay = (() => {
-    if (!stats) return "—"
-    const r = stats.success_rate
-    if (typeof r !== "number") return "—"
-    return `${(r <= 1 ? r * 100 : r).toFixed(1)}%`
-  })()
-
   return (
     <section className="relative overflow-hidden border-b border-border">
       {/* faint blueprint grid bg */}
@@ -118,27 +105,6 @@ export function Hero() {
               </li>
             </motion.ul>
 
-            {/* Dual stat readout */}
-            <motion.div
-              custom={3}
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              className="mt-10 grid grid-cols-2 gap-6 max-w-md"
-            >
-              <div className="border-t-2 border-foreground pt-2">
-                <p className="ascii-label text-[10px] mb-1">avg / round</p>
-                <p className="font-pixel text-4xl md:text-5xl text-foreground tabular-nums leading-none">
-                  {latencyDisplay}
-                </p>
-              </div>
-              <div className="border-t-2 border-foreground pt-2">
-                <p className="ascii-label text-[10px] mb-1">success</p>
-                <p className="font-pixel text-4xl md:text-5xl text-foreground tabular-nums leading-none">
-                  {rateDisplay}
-                </p>
-              </div>
-            </motion.div>
 
           </div>
 

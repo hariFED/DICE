@@ -25,7 +25,7 @@ export default function DocsLayout({
       <Header />
       <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Docs sub-header — terminal-style with prompt + search */}
-        <div className="sticky top-14 z-40 -mx-4 flex items-center gap-3 border-b border-dashed border-border bg-background/85 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="sticky top-14 z-40 -mx-4 flex items-center gap-3 bg-background/85 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <DocsMobileNav />
           <span className="hidden sm:inline font-mono text-xs text-muted-foreground">
             <span className="text-muted-foreground/60">$</span> man dice <span className="text-foreground">v7.7</span>
