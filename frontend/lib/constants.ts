@@ -26,8 +26,8 @@ export const REFRESH_INTERVAL = 5000 // 5s polling for live data
 
 export const NAV_LINKS = [
   { label: "Home", href: "/" },
+  { label: "Explorer", href: "/explorer" },
   { label: "Docs", href: "/docs" },
-  { label: "Pre-order", href: "/preorder" },
 ] as const
 
 // discord is intentionally absent — no server exists yet. Shipping a "#" link
