@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { DottedSphereGlobe } from "@/components/landing/DottedSphereGlobe"
+import { NetworkGlobe } from "@/components/landing/NetworkGlobe"
 import { BRAND } from "@/lib/constants"
 
 const fadeUp = {
@@ -20,14 +20,12 @@ const fadeUp = {
 /**
  * Landing hero — editorial two-column.
  *
- *   left  : chapter marker · wordmark · D.I.C.E. · headline · pillars · CTAs
- *   right : rotating dotted sphere · node strip · stat readouts
- *
- * Scroll-cued fade/rise on left column. Globe is client-only (cobe + WebGL).
+ *   left  : chapter marker · wordmark · D.I.C.E. · headline · pillars
+ *   right : rotating network globe with arcs + data transfer
  */
 export function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-border">
+    <section className="relative overflow-clip border-b border-border">
       {/* faint blueprint grid bg */}
       <div className="absolute inset-0 bg-grid opacity-60 pointer-events-none" aria-hidden />
 
@@ -104,8 +102,6 @@ export function Hero() {
                 <span><span className="text-foreground">0.002 SOL</span> per request — no token, no gatekeeping.</span>
               </li>
             </motion.ul>
-
-
           </div>
 
           {/* RIGHT — globe */}
@@ -120,13 +116,13 @@ export function Hero() {
               <span className="font-pixel text-foreground">20 NODES</span>
             </div>
 
-            <div className="relative aspect-square w-full max-w-[560px] mx-auto corner-ticks">
-              <DottedSphereGlobe size={560} className="w-full h-auto" />
+            <div className="relative aspect-square w-full mx-auto" style={{ maxWidth: "640px" }}>
+              <NetworkGlobe className="absolute inset-[-10%] w-[120%] h-[120%]" />
 
               {/* Axis labels */}
-              <span className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">N · 90°</span>
-              <span className="absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">S · 90°</span>
-              <span className="absolute top-1/2 right-3 -translate-y-1/2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">180° E</span>
+              <span className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60 z-10">N · 90°</span>
+              <span className="absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60 z-10">S · 90°</span>
+              <span className="absolute top-1/2 right-3 -translate-y-1/2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60 z-10">180° E</span>
             </div>
 
             <div className="mt-4 flex items-baseline justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
