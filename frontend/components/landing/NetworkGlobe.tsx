@@ -1,19 +1,14 @@
 "use client"
 
-import { useRef, useMemo, useState, useEffect } from "react"
+import { useRef, useMemo, useState, useEffect, useCallback } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import * as THREE from "three"
-import { geoContains } from "d3-geo"
-import { feature } from "topojson-client"
-import type { Topology, GeometryCollection } from "topojson-specification"
-import type { FeatureCollection, Feature, MultiPolygon, Polygon } from "geojson"
-import landTopo from "world-atlas/land-110m.json"
+import { useSphereDots } from "@/lib/use-sphere-dots"
+import { useGlobeReady } from "@/lib/globe-ready-context"
 
 // ─── Constants ───────────────────────────────────────────────
 
 const GLOBE_R = 1.0
-const SPHERE_DOT_COUNT = 12000
-
 const NODES = [
   { name: "SF",  lat: 37.77, lon: -122.42 },  // 0
   { name: "NYC", lat: 40.71, lon: -74.01 },   // 1
@@ -97,51 +92,6 @@ function latLonToVec3(lat: number, lon: number, r = GLOBE_R): THREE.Vector3 {
     r * Math.cos(phi),
     r * Math.sin(phi) * Math.sin(theta),
   )
-}
-
-function xyzToLatLon(x: number, y: number, z: number): [number, number] {
-  const lat = Math.asin(Math.max(-1, Math.min(1, y))) * (180 / Math.PI)
-  let lon = Math.atan2(z, -x) * (180 / Math.PI) - 180
-  if (lon < -180) lon += 360
-  if (lon > 180) lon -= 360
-  return [lat, lon]
-}
-
-/**
- * Fibonacci-sphere dot distribution covering the entire surface.
- * Each dot carries a `land` flag (1 = continent, 0 = ocean).
- * Ocean dots render dim + small to give the sphere its shape;
- * land dots render bright + large to show continents.
- */
-function computeSphereDots(): {
-  positions: Float32Array
-  landFlags: Float32Array
-} {
-  const topo = landTopo as unknown as Topology
-  const landFC = feature(topo, topo.objects.land as GeometryCollection) as
-    | FeatureCollection<MultiPolygon | Polygon>
-    | Feature<MultiPolygon | Polygon>
-
-  const positions: number[] = []
-  const landFlags: number[] = []
-  const golden = Math.PI * (3 - Math.sqrt(5))
-
-  for (let i = 0; i < SPHERE_DOT_COUNT; i++) {
-    const y = 1 - (i / (SPHERE_DOT_COUNT - 1)) * 2
-    const r = Math.sqrt(1 - y * y)
-    const theta = golden * i
-    const x = Math.cos(theta) * r
-    const z = Math.sin(theta) * r
-
-    positions.push(x * GLOBE_R, y * GLOBE_R, z * GLOBE_R)
-    const [lat, lon] = xyzToLatLon(x, y, z)
-    landFlags.push(geoContains(landFC, [lon, lat]) ? 1.0 : 0.0)
-  }
-
-  return {
-    positions: new Float32Array(positions),
-    landFlags: new Float32Array(landFlags),
-  }
 }
 
 function createArcCurve(
@@ -550,16 +500,12 @@ function GlassOverlay() {
 
 // ─── Main Scene ──────────────────────────────────────────────
 
-function GlobeScene() {
+function GlobeScene({
+  dotData,
+}: {
+  dotData: { positions: Float32Array; landFlags: Float32Array }
+}) {
   const groupRef = useRef<THREE.Group>(null)
-  const [dotData, setDotData] = useState<{
-    positions: Float32Array
-    landFlags: Float32Array
-  } | null>(null)
-
-  useEffect(() => {
-    setDotData(computeSphereDots())
-  }, [])
 
   const arcCurves = useMemo(
     () =>
@@ -580,12 +526,10 @@ function GlobeScene() {
   return (
     <group ref={groupRef} rotation={[0.25, 0, 0]}>
       {/* 1. Sphere dots — always visible, shader handles backface dimming */}
-      {dotData && (
-        <SphereDots
-          positions={dotData.positions}
-          landFlags={dotData.landFlags}
-        />
-      )}
+      <SphereDots
+        positions={dotData.positions}
+        landFlags={dotData.landFlags}
+      />
 
       {/* 2. Depth-only sphere — invisible, creates Z-barrier to hide
              backside arcs / markers / packets */}
@@ -606,22 +550,38 @@ function GlobeScene() {
 
 export function NetworkGlobe({ className }: { className?: string }) {
   const [mounted, setMounted] = useState(false)
+  const { dotData } = useSphereDots()
+  const { setGlobeReady } = useGlobeReady()
+  const hasSignaled = useRef(false)
+
   useEffect(() => setMounted(true), [])
 
-  if (!mounted) return <div className={className} />
+  const handleCreated = useCallback(
+    ({ gl }: { gl: THREE.WebGLRenderer }) => {
+      gl.setClearColor(0x000000, 0)
+      // Wait one frame for shaders to compile, then signal ready
+      requestAnimationFrame(() => {
+        if (!hasSignaled.current) {
+          hasSignaled.current = true
+          setGlobeReady()
+        }
+      })
+    },
+    [setGlobeReady],
+  )
+
+  if (!mounted || !dotData) return <div className={className} />
 
   return (
     <div className={className}>
       <Canvas
         camera={{ position: [0, 0, 3.0], fov: 45 }}
         gl={{ antialias: true, alpha: true }}
-        onCreated={({ gl }) => {
-          gl.setClearColor(0x000000, 0)
-        }}
+        onCreated={handleCreated}
         style={{ background: "none" }}
         dpr={[1, 2]}
       >
-        <GlobeScene />
+        <GlobeScene dotData={dotData} />
       </Canvas>
     </div>
   )
