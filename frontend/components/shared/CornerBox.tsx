@@ -34,7 +34,7 @@ export function CornerBox({
   return (
     <div
       className={cn(
-        "group/corner relative border border-dashed border-muted-foreground/50 transition-colors hover:border-foreground",
+        "group/corner relative border border-dashed border-muted-foreground/50 transition-colors hover:border-foreground overflow-hidden",
         className,
       )}
     >

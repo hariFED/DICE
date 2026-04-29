@@ -100,7 +100,7 @@ export function Header() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden overflow-hidden mt-3 rounded-2xl liquid-glass"
+            className="md:hidden overflow-hidden mt-3 rounded-2xl bg-black/90 backdrop-blur-xl border border-white/10"
           >
             <nav className="flex flex-col gap-0.5 px-3 py-3">
               {NAV_LINKS.map((link) => {
