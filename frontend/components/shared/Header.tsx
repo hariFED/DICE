@@ -37,7 +37,7 @@ export function Header() {
       initial={{ y: -10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="fixed top-4 left-0 right-0 z-50 px-8 lg:px-16"
+      className="fixed top-6 left-0 right-0 z-50 px-8 lg:px-16"
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         {/* ── Left: Logo in liquid-glass circle ─────────────────── */}
