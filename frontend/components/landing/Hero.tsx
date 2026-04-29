@@ -29,7 +29,7 @@ export function Hero() {
       {/* faint blueprint grid bg */}
       <div className="absolute inset-0 bg-grid opacity-60 pointer-events-none" aria-hidden />
 
-      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-14 md:py-20">
+      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-14 md:pt-30 pb-14">
         {/* Main — copy left, globe right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
           {/* LEFT — copy */}
