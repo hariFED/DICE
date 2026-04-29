@@ -78,7 +78,16 @@ export function Hero() {
               <span className="italic font-light">backed</span>{" "}
               randomness
               <br />
-              <span className="text-muted-foreground">for Solana.</span>
+              <span className="text-muted-foreground">for </span>
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to right, #9945FF, #14F195)",
+                }}
+              >
+                Solana.
+              </span>
             </motion.h1>
 
             {/* Pillars */}

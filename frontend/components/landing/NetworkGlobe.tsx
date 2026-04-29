@@ -15,50 +15,76 @@ const GLOBE_R = 1.0
 const SPHERE_DOT_COUNT = 12000
 
 const NODES = [
-  { name: "SF",  lat: 37.77, lon: -122.42 },
-  { name: "NYC", lat: 40.71, lon: -74.01 },
-  { name: "LDN", lat: 51.51, lon: -0.13 },
-  { name: "PAR", lat: 48.86, lon: 2.35 },
-  { name: "BER", lat: 52.52, lon: 13.41 },
-  { name: "TYO", lat: 35.68, lon: 139.65 },
-  { name: "SGP", lat: 1.35, lon: 103.82 },
-  { name: "HKG", lat: 22.32, lon: 114.17 },
-  { name: "SYD", lat: -33.87, lon: 151.21 },
-  { name: "MSK", lat: 55.76, lon: 37.62 },
-  { name: "DXB", lat: 25.20, lon: 55.27 },
-  { name: "BOM", lat: 19.08, lon: 72.88 },
-  { name: "SAO", lat: -23.55, lon: -46.63 },
-  { name: "BUE", lat: -34.60, lon: -58.38 },
-  { name: "DEL", lat: 28.61, lon: 77.21 },
-  { name: "SEA", lat: 47.61, lon: -122.33 },
-  { name: "TOR", lat: 43.65, lon: -79.38 },
-  { name: "STO", lat: 59.33, lon: 18.07 },
-  { name: "LAX", lat: 34.05, lon: -118.24 },
-  { name: "JHB", lat: -26.20, lon: 28.04 },
+  { name: "SF",  lat: 37.77, lon: -122.42 },  // 0
+  { name: "NYC", lat: 40.71, lon: -74.01 },   // 1
+  { name: "LDN", lat: 51.51, lon: -0.13 },    // 2
+  { name: "PAR", lat: 48.86, lon: 2.35 },     // 3
+  { name: "BER", lat: 52.52, lon: 13.41 },    // 4
+  { name: "TYO", lat: 35.68, lon: 139.65 },   // 5
+  { name: "SGP", lat: 1.35, lon: 103.82 },    // 6
+  { name: "HKG", lat: 22.32, lon: 114.17 },   // 7
+  { name: "SYD", lat: -33.87, lon: 151.21 },  // 8
+  { name: "MSK", lat: 55.76, lon: 37.62 },    // 9
+  { name: "DXB", lat: 25.20, lon: 55.27 },    // 10
+  { name: "BOM", lat: 19.08, lon: 72.88 },    // 11
+  { name: "SAO", lat: -23.55, lon: -46.63 },  // 12
+  { name: "BUE", lat: -34.60, lon: -58.38 },  // 13
+  { name: "DEL", lat: 28.61, lon: 77.21 },    // 14
+  { name: "SEA", lat: 47.61, lon: -122.33 },  // 15
+  { name: "TOR", lat: 43.65, lon: -79.38 },   // 16
+  { name: "STO", lat: 59.33, lon: 18.07 },    // 17
+  { name: "LAX", lat: 34.05, lon: -118.24 },  // 18
+  { name: "JHB", lat: -26.20, lon: 28.04 },   // 19
+  { name: "CHI", lat: 41.88, lon: -87.63 },   // 20
+  { name: "MIA", lat: 25.76, lon: -80.19 },   // 21
+  { name: "LIS", lat: 38.72, lon: -9.14 },    // 22
+  { name: "OSL", lat: 59.91, lon: 10.75 },    // 23
+  { name: "HEL", lat: 60.17, lon: 24.94 },    // 24
+  { name: "WAR", lat: 52.23, lon: 21.01 },    // 25
+  { name: "IST", lat: 41.01, lon: 28.98 },    // 26
+  { name: "CAI", lat: 30.04, lon: 31.24 },    // 27
+  { name: "NBO", lat: -1.29, lon: 36.82 },    // 28
+  { name: "LOS", lat: 6.52, lon: 3.38 },      // 29
+  { name: "BKK", lat: 13.76, lon: 100.50 },   // 30
+  { name: "SEL", lat: 37.57, lon: 126.98 },   // 31
+  { name: "MEX", lat: 19.43, lon: -99.13 },   // 32
+  { name: "LIM", lat: -12.05, lon: -77.04 },  // 33
+  { name: "SCL", lat: -33.45, lon: -70.67 },  // 34
+  { name: "AKL", lat: -36.85, lon: 174.76 },  // 35
+  { name: "PER", lat: -31.95, lon: 115.86 },  // 36
+  { name: "MNL", lat: 14.60, lon: 120.98 },   // 37
+  { name: "DEN", lat: 39.74, lon: -104.99 },  // 38
+  { name: "ATL", lat: 33.75, lon: -84.39 },   // 39
 ]
 
 const CONNECTIONS: [number, number][] = [
-  [0, 1],   // SF – NYC
-  [0, 18],  // SF – LAX
-  [0, 15],  // SF – SEA
-  [0, 5],   // SF – TYO
-  [1, 2],   // NYC – LDN
-  [1, 16],  // NYC – TOR
-  [2, 3],   // LDN – PAR
-  [2, 4],   // LDN – BER
-  [2, 17],  // LDN – STO
-  [3, 4],   // PAR – BER
-  [4, 9],   // BER – MSK
-  [5, 6],   // TYO – SGP
-  [5, 7],   // TYO – HKG
-  [6, 7],   // SGP – HKG
-  [6, 8],   // SGP – SYD
-  [10, 11], // DXB – BOM
-  [10, 14], // DXB – DEL
-  [11, 14], // BOM – DEL
-  [12, 13], // SAO – BUE
-  [19, 10], // JHB – DXB
-  [9, 17],  // MSK – STO
+  // North America
+  [0, 1],   [0, 15],  [0, 5],
+  [1, 16],  [1, 21],
+  [18, 32], [20, 39],
+  // Transatlantic
+  [1, 2],   [22, 21],
+  // Europe
+  [2, 3],   [2, 17],
+  [3, 4],   [4, 25],
+  [23, 24], [25, 26],
+  // Europe → East
+  [26, 10], [4, 9],
+  // Africa & Middle East
+  [10, 27], [27, 28],
+  [28, 19], [29, 28],
+  // South Asia
+  [10, 11], [11, 14],
+  [14, 30],
+  // East & Southeast Asia
+  [30, 6],  [5, 31],
+  [5, 7],   [6, 37],
+  // South America
+  [21, 12], [12, 34],  [32, 33],
+  // Oceania
+  [8, 35],  [36, 6],
+  // Long-haul cross links
+  [6, 8],   [31, 0],  [19, 29],
 ]
 
 // ─── Utilities ───────────────────────────────────────────────
@@ -278,65 +304,144 @@ function DiceMarkers() {
   )
 }
 
-function Arcs({ curves }: { curves: THREE.QuadraticBezierCurve3[] }) {
-  const arcGeos = useMemo(
-    () => curves.map((c) => new THREE.TubeGeometry(c, 48, 0.003, 4, false)),
-    [curves],
-  )
+const TRAIL_LENGTH = 1.1
+const TRAIL_SEGS = 80
+const TRAIL_RADIAL = 8
+const HEAD_RADIUS = 0.008
+const TAIL_RADIUS = 0.0008
 
-  return (
-    <group renderOrder={1}>
-      {arcGeos.map((geo, i) => (
-        <mesh key={i} geometry={geo} renderOrder={1}>
-          <meshBasicMaterial
-            color="#ffffff"
-            transparent
-            opacity={0.25}
-            depthTest
-          />
-        </mesh>
-      ))}
-    </group>
-  )
+/**
+ * Build a tapered tube along a curve — thick at t=1 (head), thin at t=0 (tail).
+ * Stores a `aT` attribute (0–1 along tube) for the shader.
+ */
+function buildTaperedTube(curve: THREE.QuadraticBezierCurve3) {
+  const verts: number[] = []
+  const normals: number[] = []
+  const uvs: number[] = []
+  const tValues: number[] = []
+  const indices: number[] = []
+
+  const frames = curve.computeFrenetFrames(TRAIL_SEGS, false)
+
+  for (let i = 0; i <= TRAIL_SEGS; i++) {
+    const t = i / TRAIL_SEGS
+    const pt = curve.getPoint(t)
+    // Smooth taper: thick at head (t=1), needle-thin at tail (t=0)
+    const taper = t * t // quadratic taper
+    const radius = TAIL_RADIUS + (HEAD_RADIUS - TAIL_RADIUS) * taper
+
+    const N = frames.normals[i]
+    const B = frames.binormals[i]
+
+    for (let j = 0; j <= TRAIL_RADIAL; j++) {
+      const angle = (j / TRAIL_RADIAL) * Math.PI * 2
+      const sin = Math.sin(angle)
+      const cos = Math.cos(angle)
+
+      const nx = cos * N.x + sin * B.x
+      const ny = cos * N.y + sin * B.y
+      const nz = cos * N.z + sin * B.z
+
+      verts.push(pt.x + radius * nx, pt.y + radius * ny, pt.z + radius * nz)
+      normals.push(nx, ny, nz)
+      uvs.push(t, j / TRAIL_RADIAL)
+      tValues.push(t)
+    }
+  }
+
+  for (let i = 0; i < TRAIL_SEGS; i++) {
+    for (let j = 0; j < TRAIL_RADIAL; j++) {
+      const a = i * (TRAIL_RADIAL + 1) + j
+      const b = a + 1
+      const c = a + TRAIL_RADIAL + 1
+      const d = c + 1
+      indices.push(a, c, b, b, c, d)
+    }
+  }
+
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3))
+  geo.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3))
+  geo.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2))
+  geo.setAttribute("aT", new THREE.Float32BufferAttribute(tValues, 1))
+  geo.setIndex(indices)
+  return geo
 }
 
-function DataPackets({ curves }: { curves: THREE.QuadraticBezierCurve3[] }) {
-  const packets = useRef(
-    curves.map(() => ({
-      t: Math.random(),
-      speed: 0.1 + Math.random() * 0.2,
-    })),
-  )
-  const headRefs = useRef<(THREE.Mesh | null)[]>([])
-  const glowRefs = useRef<(THREE.Mesh | null)[]>([])
+const TRAIL_VERTEX = /* glsl */ `
+  attribute float aT;
+  varying float vT;
+  void main() {
+    vT = aT;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`
+
+const TRAIL_FRAGMENT = /* glsl */ `
+  uniform float uHead;
+  uniform float uTailLen;
+  uniform vec3 uColorHead;
+  uniform vec3 uColorTail;
+  varying float vT;
+
+  void main() {
+    // Distance behind the head, wrapping around 0↔1
+    float d = uHead - vT;
+    if (d < 0.0) d += 1.0;
+
+    // Outside the trail → invisible
+    if (d > uTailLen) discard;
+
+    // Fade: 1.0 at head → 0.0 at tail
+    float fade = 1.0 - (d / uTailLen);
+    // Smooth hermite for organic falloff
+    fade = fade * fade * (3.0 - 2.0 * fade);
+
+    // White head → Solana purple tail
+    vec3 color = mix(uColorTail, uColorHead, fade);
+
+    // Softer glow — solid-ish at head, smoothly vanishes
+    float alpha = fade * 0.55;
+
+    gl_FragColor = vec4(color, alpha);
+  }
+`
+
+function CometTrails({ curves }: { curves: THREE.QuadraticBezierCurve3[] }) {
+  const trailData = useMemo(() => {
+    return curves.map((curve) => {
+      const geo = buildTaperedTube(curve)
+
+      const mat = new THREE.ShaderMaterial({
+        vertexShader: TRAIL_VERTEX,
+        fragmentShader: TRAIL_FRAGMENT,
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        side: THREE.DoubleSide,
+        uniforms: {
+          uHead: { value: Math.random() },
+          uTailLen: { value: TRAIL_LENGTH },
+          uColorHead: { value: new THREE.Color("#ffffff") },
+          uColorTail: { value: new THREE.Color("#9945FF") },
+        },
+      })
+
+      return { geo, mat, speed: 0.06 + Math.random() * 0.12 }
+    })
+  }, [curves])
 
   useFrame((_, delta) => {
-    packets.current.forEach((p, i) => {
-      p.t = (p.t + p.speed * delta) % 1
-      const pos = curves[i].getPoint(p.t)
-      headRefs.current[i]?.position.copy(pos)
-      glowRefs.current[i]?.position.copy(pos)
+    trailData.forEach((trail) => {
+      const u = trail.mat.uniforms.uHead
+      u.value = (u.value + trail.speed * delta) % 1
     })
   })
 
   return (
     <group renderOrder={2}>
-      {curves.map((_, i) => (
-        <group key={i}>
-          <mesh ref={(el) => (headRefs.current[i] = el)} renderOrder={2}>
-            <sphereGeometry args={[0.008, 8, 8]} />
-            <meshBasicMaterial color="#ffffff" depthTest />
-          </mesh>
-          <mesh ref={(el) => (glowRefs.current[i] = el)} renderOrder={2}>
-            <sphereGeometry args={[0.022, 8, 8]} />
-            <meshBasicMaterial
-              color="#ffffff"
-              transparent
-              opacity={0.12}
-              depthTest
-            />
-          </mesh>
-        </group>
+      {trailData.map(({ geo, mat }, i) => (
+        <mesh key={i} geometry={geo} material={mat} renderOrder={2} />
       ))}
     </group>
   )
@@ -488,8 +593,7 @@ function GlobeScene() {
 
       {/* 3. Network visualization — depth-tested against the barrier */}
       <DiceMarkers />
-      <Arcs curves={arcCurves} />
-      <DataPackets curves={arcCurves} />
+      <CometTrails curves={arcCurves} />
 
       {/* 4. Glass overlay — Apple-style sheen on the globe surface */}
       <GlassOverlay />
