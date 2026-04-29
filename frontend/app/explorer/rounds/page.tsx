@@ -53,12 +53,12 @@ export default function RoundsPage() {
 
   return (
     <div className="pb-12 space-y-6">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
+      <div className="space-y-4">
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Rounds</h1>
-        <div className="flex gap-2 text-xs font-mono">
-          <Link href="/explorer" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1 uppercase tracking-wider"><span className="mr-1"> </span>overview</Link>
-          <Link href="/explorer/rounds" className="border border-foreground bg-foreground text-background px-3 py-1 uppercase tracking-wider"><span className="mr-1">▸</span>rounds</Link>
-          <Link href="/explorer/nodes" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1 uppercase tracking-wider"><span className="mr-1"> </span>nodes</Link>
+        <div className="flex gap-2 text-xs font-mono overflow-x-auto">
+          <Link href="/explorer" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1.5 uppercase tracking-wider whitespace-nowrap"><span className="mr-1"> </span>overview</Link>
+          <Link href="/explorer/rounds" className="border border-foreground bg-foreground text-background px-3 py-1.5 uppercase tracking-wider whitespace-nowrap"><span className="mr-1">▸</span>rounds</Link>
+          <Link href="/explorer/nodes" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1.5 uppercase tracking-wider whitespace-nowrap"><span className="mr-1"> </span>nodes</Link>
         </div>
       </div>
 
@@ -90,9 +90,12 @@ export default function RoundsPage() {
         <table className="w-full text-sm font-mono">
           <thead>
             <tr className="border-b border-border bg-muted/30">
-              {["request_id", "status", "nodes", "commits/reveals", "elapsed", "randomness"].map((h) => (
-                <th key={h} className="text-left px-3 py-2 ascii-label text-[10px]">{h}</th>
-              ))}
+              {["request_id", "status", "nodes", "commits/reveals", "elapsed", "randomness"].map((h) => {
+                const hideMobile = ["nodes", "commits/reveals", "randomness"].includes(h)
+                return (
+                  <th key={h} className={cn("text-left px-3 py-2 ascii-label text-[10px]", hideMobile && "hidden md:table-cell")}>{h}</th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>
@@ -121,12 +124,12 @@ export default function RoundsPage() {
                       status={round.status as "finalized" | "failed" | "collecting_commits" | "collecting_reveals"}
                     />
                   </td>
-                  <td className="px-3 py-2.5 text-muted-foreground">{round.node_count}</td>
-                  <td className="px-3 py-2.5 text-muted-foreground tabular-nums">
+                  <td className="px-3 py-2.5 text-muted-foreground hidden md:table-cell">{round.node_count}</td>
+                  <td className="px-3 py-2.5 text-muted-foreground tabular-nums hidden md:table-cell">
                     {round.commits_received}/{round.node_count} · {round.reveals_received}/{round.node_count}
                   </td>
                   <td className="px-3 py-2.5 text-foreground tabular-nums">{formatElapsed(round.elapsed_ms)}</td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-3 py-2.5 hidden md:table-cell">
                     {round.randomness ? (
                       <div className="flex items-center gap-1.5">
                         <span className="text-muted-foreground">{truncateId(round.randomness)}</span>

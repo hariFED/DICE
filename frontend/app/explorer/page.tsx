@@ -71,7 +71,7 @@ export default function ExplorerPage() {
     <div className="pb-12 space-y-10">
       {/* Page header — editorial */}
       <div className="border-b border-border pb-6">
-        <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div className="space-y-4">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
               network · live · telemetry
@@ -80,7 +80,7 @@ export default function ExplorerPage() {
               Explorer <span className="italic font-light text-muted-foreground">· devnet</span>
             </h1>
           </div>
-          <div className="flex gap-2 text-xs font-mono">
+          <div className="flex gap-2 text-xs font-mono overflow-x-auto">
             <TabLink href="/explorer" label="overview" active />
             <TabLink href="/explorer/rounds" label="rounds" />
             <TabLink href="/explorer/nodes" label="nodes" />
@@ -89,7 +89,7 @@ export default function ExplorerPage() {
       </div>
 
       {/* Hero stats — big numerals */}
-      <div className="grid grid-cols-2 md:grid-cols-5 border border-border divide-x divide-border">
+      <div className="grid grid-cols-2 md:grid-cols-5 border border-border divide-x divide-border [&>*:last-child]:col-span-2 md:[&>*:last-child]:col-span-1">
         <HeroStat label="nodes · online" value={nodesOnline.toString()} live loading={nodesLoading} />
         <HeroStat label="rounds · completed" value={roundsCompleted.toString()} loading={roundsLoading} />
         <HeroStat label="success · rate" value={successRate === "—" ? "—" : `${successRate}%`} loading={roundsLoading} />
@@ -125,9 +125,12 @@ export default function ExplorerPage() {
           <table className="w-full text-sm font-mono">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                {["request_id", "status", "nodes", "commits/reveals", "elapsed", "randomness"].map((h) => (
-                  <th key={h} className="text-left px-3 py-2 ascii-label text-[10px]">{h}</th>
-                ))}
+                {["request_id", "status", "nodes", "commits/reveals", "elapsed", "randomness"].map((h) => {
+                  const hideMobile = ["nodes", "commits/reveals", "randomness"].includes(h)
+                  return (
+                    <th key={h} className={cn("text-left px-3 py-2 ascii-label text-[10px]", hideMobile && "hidden md:table-cell")}>{h}</th>
+                  )
+                })}
               </tr>
             </thead>
             <tbody>
@@ -156,12 +159,12 @@ export default function ExplorerPage() {
                         status={round.status as "finalized" | "failed" | "collecting_commits" | "collecting_reveals"}
                       />
                     </td>
-                    <td className="px-3 py-2.5 text-muted-foreground">{round.node_count}</td>
-                    <td className="px-3 py-2.5 text-muted-foreground tabular-nums">
+                    <td className="px-3 py-2.5 text-muted-foreground hidden md:table-cell">{round.node_count}</td>
+                    <td className="px-3 py-2.5 text-muted-foreground tabular-nums hidden md:table-cell">
                       {round.commits_received}/{round.node_count} · {round.reveals_received}/{round.node_count}
                     </td>
                     <td className="px-3 py-2.5 text-foreground tabular-nums">{formatElapsed(round.elapsed_ms)}</td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-3 py-2.5 hidden md:table-cell">
                       {round.randomness ? (
                         <div className="flex items-center gap-1.5">
                           <span className="text-muted-foreground">{truncateId(round.randomness)}</span>

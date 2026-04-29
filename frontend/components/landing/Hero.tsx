@@ -55,7 +55,7 @@ export function Hero() {
       {/* faint blueprint grid bg */}
       <div className="absolute inset-0 bg-grid opacity-60 pointer-events-none" aria-hidden />
 
-      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-14 md:pt-30 pb-14">
+      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 pt-20 md:pt-30 pb-14">
         {/* Main — copy left, globe right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
           {/* LEFT — copy */}
@@ -138,13 +138,13 @@ export function Hero() {
               </li>
             </motion.ul>
 
-            {/* CTAs */}
+            {/* CTAs — desktop only (mobile CTAs appear below globe) */}
             <motion.div
               custom={3}
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="mt-10 flex flex-wrap items-center gap-3"
+              className="mt-10 hidden lg:flex flex-wrap items-center gap-3"
             >
               <a
                 href="/explorer"
@@ -192,6 +192,34 @@ export function Hero() {
               <span className="truncate">sf · nyc · ldn · par · ber · tyo · sgp · hkg · syd · dxb · bom · sao · bue · del</span>
               <span className="font-pixel text-foreground ml-3 shrink-0">GLOBAL</span>
             </div>
+          </motion.div>
+
+          {/* CTAs — mobile only (below globe) */}
+          <motion.div
+            custom={3}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="flex lg:hidden flex-wrap items-center gap-3 col-span-1"
+          >
+            <a
+              href="/explorer"
+              className="liquid-glass-strong rounded-full px-5 py-2.5 font-mono text-[12px] uppercase tracking-wider text-foreground inline-flex items-center gap-2 hover:bg-white/5 transition-colors"
+            >
+              [ › Pre-order_your_node ]
+            </a>
+            <a
+              href="/docs"
+              className="liquid-glass rounded-full px-5 py-2.5 font-mono text-[12px] uppercase tracking-wider text-foreground inline-flex items-center gap-2 hover:bg-white/5 transition-colors"
+            >
+              [ › How_it_earns ]
+            </a>
+            <a
+              href="/explorer"
+              className="font-mono text-[12px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors ml-2"
+            >
+              or see the network live →
+            </a>
           </motion.div>
         </div>
       </div>
