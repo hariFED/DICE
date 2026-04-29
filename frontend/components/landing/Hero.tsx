@@ -102,6 +102,34 @@ export function Hero() {
                 <span><span className="text-foreground">0.002 SOL</span> per request — no token, no gatekeeping.</span>
               </li>
             </motion.ul>
+
+            {/* CTAs */}
+            <motion.div
+              custom={3}
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              className="mt-10 flex flex-wrap items-center gap-3"
+            >
+              <a
+                href="/explorer"
+                className="liquid-glass-strong rounded-full px-5 py-2.5 font-mono text-[12px] uppercase tracking-wider text-foreground inline-flex items-center gap-2 hover:bg-white/5 transition-colors"
+              >
+                [ › Pre-order_your_node ]
+              </a>
+              <a
+                href="/docs"
+                className="liquid-glass rounded-full px-5 py-2.5 font-mono text-[12px] uppercase tracking-wider text-foreground inline-flex items-center gap-2 hover:bg-white/5 transition-colors"
+              >
+                [ › How_it_earns ]
+              </a>
+              <a
+                href="/explorer"
+                className="font-mono text-[12px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors ml-2"
+              >
+                or see the network live →
+              </a>
+            </motion.div>
           </div>
 
           {/* RIGHT — globe */}
