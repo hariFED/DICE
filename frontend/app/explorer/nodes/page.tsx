@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { useNodes } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import { CornerBox } from "@/components/shared/CornerBox"
 import { AsciiBar } from "@/components/shared/AsciiBar"
+import { TableRowSkeleton } from "@/components/shared/Skeleton"
 
 const CITY_MAP: Record<string, string> = {
   "node-01": "San Francisco",
@@ -52,7 +52,7 @@ type SortKey = "node_id" | "latency_ms" | "uptime_secs" | "jobs_completed"
 type SortDir = "asc" | "desc"
 
 export default function NodesPage() {
-  const { data: nodesData } = useNodes()
+  const { data: nodesData, isLoading } = useNodes()
   const [sortKey, setSortKey] = useState<SortKey>("node_id")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
 
@@ -136,15 +136,16 @@ export default function NodesPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <TableRowSkeleton key={i} cols={6} />
+              ))
+            ) : sorted.length === 0 ? (
               <tr><td colSpan={6} className="text-center text-muted-foreground py-10">— no nodes connected —</td></tr>
             ) : (
               sorted.map((node, i) => (
-                <motion.tr
+                <tr
                   key={node.node_id}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.02 }}
                   className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                 >
                   <td className="px-3 py-2.5 text-foreground">{truncateId(node.node_id)}</td>
@@ -157,7 +158,7 @@ export default function NodesPage() {
                   <td className="px-3 py-2.5 text-foreground tabular-nums">{node.latency_ms}ms</td>
                   <td className="px-3 py-2.5 text-muted-foreground">{formatUptime(node.uptime_secs)}</td>
                   <td className="px-3 py-2.5 text-foreground tabular-nums">{node.jobs_completed}</td>
-                </motion.tr>
+                </tr>
               ))
             )}
           </tbody>

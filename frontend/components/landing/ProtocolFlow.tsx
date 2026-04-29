@@ -1,6 +1,7 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { useRef } from "react"
+import { motion, useInView } from "framer-motion"
 
 /**
  * Protocol flow diagram — "how a round works" in pure visual form.
@@ -52,8 +53,11 @@ const PACKET_FRAMES = {
 const STAGE_ARRIVAL_S = [0, 0.12, 0.38, 0.65, 0.82].map((t) => t * LOOP_S)
 
 export function ProtocolFlow() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const isInView = useInView(sectionRef, { margin: "-100px", once: false })
+
   return (
-    <section className="relative border-b border-border overflow-hidden">
+    <section ref={sectionRef} className="relative border-b border-border overflow-hidden">
       <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-20 md:py-28">
         {/* Section header */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
@@ -117,8 +121,8 @@ export function ProtocolFlow() {
                 r="5"
                 fill="currentColor"
                 initial={{ opacity: 0.3 }}
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 2, delay: i * 0.15, repeat: Infinity }}
+                animate={isInView ? { opacity: [0.3, 1, 0.3] } : { opacity: 0.3 }}
+                transition={{ duration: 2, delay: i * 0.15, repeat: isInView ? Infinity : 0 }}
               />
             ))}
 
@@ -134,11 +138,11 @@ export function ProtocolFlow() {
                   stroke="currentColor"
                   strokeWidth="1.2"
                   initial={{ scale: 1, opacity: 0 }}
-                  animate={{ scale: [1, 1.9, 1], opacity: [0.9, 0, 0] }}
+                  animate={isInView ? { scale: [1, 1.9, 1], opacity: [0.9, 0, 0] } : { scale: 1, opacity: 0 }}
                   transition={{
                     duration: 0.9,
                     delay: STAGE_ARRIVAL_S[i],
-                    repeat: Infinity,
+                    repeat: isInView ? Infinity : 0,
                     repeatDelay: LOOP_S - 0.9,
                     ease: "easeOut",
                   }}
@@ -223,15 +227,15 @@ export function ProtocolFlow() {
               r="6"
               fill="currentColor"
               initial={{ cx: 60, cy: 160, opacity: 0 }}
-              animate={{
-                cx: PACKET_FRAMES.cx,
-                cy: PACKET_FRAMES.cy,
-                opacity: [0, 1, 1, 1, 1, 1, 1, 0],
-              }}
+              animate={
+                isInView
+                  ? { cx: PACKET_FRAMES.cx, cy: PACKET_FRAMES.cy, opacity: [0, 1, 1, 1, 1, 1, 1, 0] }
+                  : { cx: 60, cy: 160, opacity: 0 }
+              }
               transition={{
                 duration: LOOP_S,
                 times: PACKET_FRAMES.times,
-                repeat: Infinity,
+                repeat: isInView ? Infinity : 0,
                 ease: "linear",
               }}
             />
@@ -240,14 +244,15 @@ export function ProtocolFlow() {
               fill="currentColor"
               opacity="0.4"
               initial={{ cx: 60, cy: 160 }}
-              animate={{
-                cx: PACKET_FRAMES.cx,
-                cy: PACKET_FRAMES.cy,
-              }}
+              animate={
+                isInView
+                  ? { cx: PACKET_FRAMES.cx, cy: PACKET_FRAMES.cy }
+                  : { cx: 60, cy: 160 }
+              }
               transition={{
                 duration: LOOP_S,
                 times: PACKET_FRAMES.times,
-                repeat: Infinity,
+                repeat: isInView ? Infinity : 0,
                 ease: "linear",
                 delay: 0.15,
               }}

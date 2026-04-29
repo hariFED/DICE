@@ -2,13 +2,13 @@
 
 import { useState, useMemo } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { CopyButton } from "@/components/shared/CopyButton"
 import { useRounds } from "@/lib/hooks"
 import type { Round } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { CornerBox } from "@/components/shared/CornerBox"
+import { TableRowSkeleton } from "@/components/shared/Skeleton"
 
 const FILTERS = [
   { key: "all", label: "all" },
@@ -41,7 +41,7 @@ function matchesFilter(round: Round, filter: FilterKey): boolean {
 }
 
 export default function RoundsPage() {
-  const { data: roundsData } = useRounds()
+  const { data: roundsData, isLoading } = useRounds()
   const [filter, setFilter] = useState<FilterKey>("all")
 
   const rounds = roundsData?.rounds ?? []
@@ -96,17 +96,18 @@ export default function RoundsPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 10 }).map((_, i) => (
+                <TableRowSkeleton key={i} cols={6} />
+              ))
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center text-muted-foreground py-10">— no rounds found —</td>
               </tr>
             ) : (
-              filtered.map((round, i) => (
-                <motion.tr
-                  key={`${round.request_id}-${round.timestamp}-${i}`}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.015 }}
+              filtered.map((round) => (
+                <tr
+                  key={round.request_id}
                   className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                 >
                   <td className="px-3 py-2.5">
@@ -135,7 +136,7 @@ export default function RoundsPage() {
                       <span className="text-muted-foreground/50">—</span>
                     )}
                   </td>
-                </motion.tr>
+                </tr>
               ))
             )}
           </tbody>

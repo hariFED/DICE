@@ -2,7 +2,6 @@
 
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { CopyButton } from "@/components/shared/CopyButton"
 import { useRounds } from "@/lib/hooks"
@@ -92,10 +91,7 @@ export default function RoundDetailPage() {
           <div className="absolute top-3 left-[5%] right-[5%] h-px bg-border" />
           {timeline.map((step, i) => (
             <div key={step.label} className="relative z-10 flex flex-col items-center flex-1">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: i * 0.08 }}
+              <div
                 className={cn(
                   "w-6 h-6 flex items-center justify-center border text-xs leading-none",
                   step.state === "completed" && "bg-foreground text-background border-foreground",
@@ -104,7 +100,7 @@ export default function RoundDetailPage() {
                 )}
               >
                 {step.state === "completed" ? "✓" : step.state === "active" ? "◌" : "·"}
-              </motion.div>
+              </div>
               <p className={cn(
                 "mt-3 text-xs tracking-wider uppercase",
                 step.state === "completed" && "text-foreground",
