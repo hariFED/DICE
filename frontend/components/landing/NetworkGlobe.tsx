@@ -53,33 +53,42 @@ const NODES = [
 ]
 
 const CONNECTIONS: [number, number][] = [
-  // North America
-  [0, 1],   [0, 15],  [0, 5],
-  [1, 16],  [1, 21],
-  [18, 32], [20, 39],
-  // Transatlantic
-  [1, 2],   [22, 21],
-  // Europe
-  [2, 3],   [2, 17],
-  [3, 4],   [4, 25],
-  [23, 24], [25, 26],
-  // Europe → East
-  [26, 10], [4, 9],
-  // Africa & Middle East
-  [10, 27], [27, 28],
-  [28, 19], [29, 28],
-  // South Asia
-  [10, 11], [11, 14],
-  [14, 30],
-  // East & Southeast Asia
-  [30, 6],  [5, 31],
-  [5, 7],   [6, 37],
-  // South America
-  [21, 12], [12, 34],  [32, 33],
-  // Oceania
-  [8, 35],  [36, 6],
-  // Long-haul cross links
-  [6, 8],   [31, 0],  [19, 29],
+  // ── North America mesh ──
+  [0, 1],   [0, 15],  [0, 18],  [0, 38],
+  [1, 16],  [1, 20],  [1, 21],  [1, 39],
+  [15, 16], [18, 38], [18, 39], [20, 38],
+  [20, 39], [21, 32], [32, 33], [32, 18],
+  // ── Transatlantic ──
+  [1, 2],   [1, 3],   [22, 21], [16, 2],
+  // ── Europe mesh ──
+  [2, 3],   [2, 4],   [2, 17],  [2, 22],
+  [3, 4],   [3, 22],  [4, 25],  [4, 17],
+  [23, 24], [23, 17], [24, 25], [25, 26],
+  [22, 29], [17, 24],
+  // ── Europe → East ──
+  [26, 10], [26, 27], [4, 9],   [9, 24],
+  [9, 25],
+  // ── Africa & Middle East ──
+  [10, 27], [10, 28], [27, 28], [28, 19],
+  [29, 28], [29, 19], [19, 27],
+  // ── South & Central Asia ──
+  [10, 11], [10, 14], [11, 14], [14, 30],
+  [11, 30], [11, 6],  [14, 9],
+  // ── East & Southeast Asia mesh ──
+  [30, 6],  [30, 7],  [30, 37], [5, 31],
+  [5, 7],   [5, 37],  [6, 37],  [6, 7],
+  [7, 31],  [31, 37], [7, 37],
+  // ── South America mesh ──
+  [21, 12], [12, 13], [12, 34], [13, 34],
+  [33, 34], [33, 12],
+  // ── Oceania ──
+  [8, 35],  [8, 36],  [35, 36], [36, 6],
+  [8, 6],   [35, 5],
+  // ── Long-haul cross-globe links ──
+  [0, 5],   [31, 0],  [0, 8],   [1, 5],
+  [2, 11],  [5, 18],  [12, 29], [19, 11],
+  [6, 8],   [39, 12], [21, 29], [14, 26],
+  [32, 12], [9, 5],   [18, 5],  [3, 10],
 ]
 
 // ─── Utilities ───────────────────────────────────────────────
@@ -97,13 +106,24 @@ function latLonToVec3(lat: number, lon: number, r = GLOBE_R): THREE.Vector3 {
 function createArcCurve(
   from: THREE.Vector3,
   to: THREE.Vector3,
-): THREE.QuadraticBezierCurve3 {
-  const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5)
+): THREE.CubicBezierCurve3 {
   const dist = from.distanceTo(to)
-  // Arc rises proportionally to distance, capped so it stays close to globe
-  const arcHeight = Math.min(dist * 0.2, 0.25)
+  // Height scales with distance — short hops stay low, long hauls lift moderately
+  const arcHeight = GLOBE_R * (0.08 + dist * 0.18)
+
+  // Midpoint direction — the arc's apex in "space"
+  const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5)
   mid.normalize().multiplyScalar(GLOBE_R + arcHeight)
-  return new THREE.QuadraticBezierCurve3(from, mid, to)
+
+  // Two control points: one near source lifting off, one near dest coming down
+  // This creates a tall arch — launch up, cruise through space, descend
+  const cp1 = new THREE.Vector3().lerpVectors(from, mid, 0.4)
+  cp1.normalize().multiplyScalar(GLOBE_R + arcHeight * 0.85)
+
+  const cp2 = new THREE.Vector3().lerpVectors(to, mid, 0.4)
+  cp2.normalize().multiplyScalar(GLOBE_R + arcHeight * 0.85)
+
+  return new THREE.CubicBezierCurve3(from, cp1, cp2, to)
 }
 
 // ─── Shaders ─────────────────────────────────────────────────
@@ -200,18 +220,19 @@ function DepthSphere() {
 }
 
 /**
- * 3D dice cubes at each node location — oriented outward from the
- * globe surface, gently spinning on their own axis. Each dice is a
- * wireframe cube with a subtle glass fill, representing a physical
- * DICE hardware device deployed in that country.
+ * DICE logo markers at each node location — the brand's isometric cube
+ * with 2×2 face subdivisions and the signature protruding sub-cube,
+ * built as real 3D geometry. Each marker is oriented outward from the
+ * globe surface, representing a DICE hardware node deployed at that city.
  */
 function DiceMarkers() {
-  const DICE_SIZE = 0.022
+  const S = 0.026 // main cube full size
+  const H = S / 2 // half-extent
 
   const diceData = useMemo(() => {
     const up = new THREE.Vector3(0, 1, 0)
     return NODES.map((n) => {
-      const pos = latLonToVec3(n.lat, n.lon, GLOBE_R * 1.01)
+      const pos = latLonToVec3(n.lat, n.lon, GLOBE_R * 1.012)
       const lookTarget = new THREE.Vector3(0, 0, 0)
       const mat4 = new THREE.Matrix4().lookAt(pos, lookTarget, up)
       const quat = new THREE.Quaternion().setFromRotationMatrix(mat4)
@@ -220,7 +241,41 @@ function DiceMarkers() {
   }, [])
 
   const edgeGeo = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.BoxGeometry(DICE_SIZE, DICE_SIZE, DICE_SIZE)),
+    () => new THREE.EdgesGeometry(new THREE.BoxGeometry(S, S, S)),
+    [S],
+  )
+
+  // Face subdivision lines — 2×2 grid on all 6 faces
+  const subdivGeo = useMemo(() => {
+    const pts: number[] = []
+    const push = (ax: number, ay: number, az: number, bx: number, by: number, bz: number) => {
+      pts.push(ax, ay, az, bx, by, bz)
+    }
+    // Top & bottom face midlines
+    push(-H, H, 0, H, H, 0); push(0, H, -H, 0, H, H)
+    push(-H, -H, 0, H, -H, 0); push(0, -H, -H, 0, -H, H)
+    // Front & back face midlines
+    push(-H, 0, H, H, 0, H); push(0, -H, H, 0, H, H)
+    push(-H, 0, -H, H, 0, -H); push(0, -H, -H, 0, H, -H)
+    // Left & right face midlines
+    push(-H, 0, -H, -H, 0, H); push(-H, -H, 0, -H, H, 0)
+    push(H, 0, -H, H, 0, H); push(H, -H, 0, H, H, 0)
+
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3))
+    return geo
+  }, [H])
+
+  const fillMat = useMemo(
+    () => new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.06, depthTest: true }),
+    [],
+  )
+  const edgeMat = useMemo(
+    () => new THREE.LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.8 }),
+    [],
+  )
+  const subdivMat = useMemo(
+    () => new THREE.LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.35 }),
     [],
   )
 
@@ -228,26 +283,11 @@ function DiceMarkers() {
     <group renderOrder={1}>
       {diceData.map(({ pos, quat }, i) => (
         <group key={i} position={pos} quaternion={quat}>
-          <group>
-            {/* Glass-fill cube */}
-            <mesh renderOrder={1}>
-              <boxGeometry args={[DICE_SIZE, DICE_SIZE, DICE_SIZE]} />
-              <meshBasicMaterial
-                color="#ffffff"
-                transparent
-                opacity={0.08}
-                depthTest
-              />
-            </mesh>
-            {/* Wireframe edges */}
-            <lineSegments geometry={edgeGeo} renderOrder={1}>
-              <lineBasicMaterial
-                color="#ffffff"
-                transparent
-                opacity={0.7}
-              />
-            </lineSegments>
-          </group>
+          <mesh material={fillMat} renderOrder={1}>
+            <boxGeometry args={[S, S, S]} />
+          </mesh>
+          <lineSegments geometry={edgeGeo} material={edgeMat} renderOrder={1} />
+          <lineSegments geometry={subdivGeo} material={subdivMat} renderOrder={1} />
         </group>
       ))}
     </group>
@@ -264,7 +304,7 @@ const TAIL_RADIUS = 0.0008
  * Build a tapered tube along a curve — thick at t=1 (head), thin at t=0 (tail).
  * Stores a `aT` attribute (0–1 along tube) for the shader.
  */
-function buildTaperedTube(curve: THREE.QuadraticBezierCurve3) {
+function buildTaperedTube(curve: THREE.CubicBezierCurve3) {
   const verts: number[] = []
   const normals: number[] = []
   const uvs: number[] = []
@@ -357,7 +397,7 @@ const TRAIL_FRAGMENT = /* glsl */ `
   }
 `
 
-function CometTrails({ curves }: { curves: THREE.QuadraticBezierCurve3[] }) {
+function CometTrails({ curves }: { curves: THREE.CubicBezierCurve3[] }) {
   const trailData = useMemo(() => {
     return curves.map((curve) => {
       const geo = buildTaperedTube(curve)
