@@ -1,6 +1,5 @@
 "use client"
 
-import { motion } from "framer-motion"
 import Link from "next/link"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { CopyButton } from "@/components/shared/CopyButton"
@@ -8,6 +7,7 @@ import { useNodes, useRounds, useQueue } from "@/lib/hooks"
 import { EntropyHeatmap } from "@/components/explorer/EntropyHeatmap"
 import { LatencySparkline } from "@/components/explorer/LatencySparkline"
 import { NodeMapStrip } from "@/components/explorer/NodeMapStrip"
+import { Skeleton, TableRowSkeleton } from "@/components/shared/Skeleton"
 import { cn } from "@/lib/utils"
 
 function truncateId(id: string) {
@@ -36,9 +36,10 @@ function TabLink({ href, label, active }: { href: string; label: string; active?
 }
 
 export default function ExplorerPage() {
-  const { data: nodesData } = useNodes()
-  const { data: roundsData } = useRounds()
-  const { data: queueData } = useQueue()
+  const { data: nodesData, isLoading: nodesLoading } = useNodes()
+  const { data: roundsData, isLoading: roundsLoading } = useRounds()
+  const { data: queueData, isLoading: queueLoading } = useQueue()
+  const isLoading = nodesLoading || roundsLoading || queueLoading
 
   const nodes = nodesData?.nodes ?? []
   const rounds = roundsData?.rounds ?? []
@@ -89,11 +90,11 @@ export default function ExplorerPage() {
 
       {/* Hero stats — big numerals */}
       <div className="grid grid-cols-2 md:grid-cols-5 border border-border divide-x divide-border">
-        <HeroStat label="nodes · online" value={nodesOnline.toString()} live />
-        <HeroStat label="rounds · completed" value={roundsCompleted.toString()} />
-        <HeroStat label="success · rate" value={successRate === "—" ? "—" : `${successRate}%`} />
-        <HeroStat label="avg · latency" value={avgLatency === "—" ? "—" : `${(Number(avgLatency) / 1000).toFixed(1)}s`} />
-        <HeroStat label="queue · depth" value={queueDepth.toString()} />
+        <HeroStat label="nodes · online" value={nodesOnline.toString()} live loading={nodesLoading} />
+        <HeroStat label="rounds · completed" value={roundsCompleted.toString()} loading={roundsLoading} />
+        <HeroStat label="success · rate" value={successRate === "—" ? "—" : `${successRate}%`} loading={roundsLoading} />
+        <HeroStat label="avg · latency" value={avgLatency === "—" ? "—" : `${(Number(avgLatency) / 1000).toFixed(1)}s`} loading={roundsLoading} />
+        <HeroStat label="queue · depth" value={queueDepth.toString()} loading={queueLoading} />
       </div>
 
       {/* Viz grid — heatmap + sparkline */}
@@ -130,17 +131,18 @@ export default function ExplorerPage() {
               </tr>
             </thead>
             <tbody>
-              {recentRounds.length === 0 ? (
+              {isLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <TableRowSkeleton key={i} cols={6} />
+                ))
+              ) : recentRounds.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center text-muted-foreground py-10">— no rounds yet —</td>
                 </tr>
               ) : (
                 recentRounds.map((round, i) => (
-                  <motion.tr
-                    key={`${round.request_id}-${round.timestamp}-${i}`}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.02 }}
+                  <tr
+                    key={round.request_id}
                     className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                   >
                     <td className="px-3 py-2.5">
@@ -169,7 +171,7 @@ export default function ExplorerPage() {
                         <span className="text-muted-foreground/50">—</span>
                       )}
                     </td>
-                  </motion.tr>
+                  </tr>
                 ))
               )}
             </tbody>
@@ -180,16 +182,20 @@ export default function ExplorerPage() {
   )
 }
 
-function HeroStat({ label, value, live }: { label: string; value: string; live?: boolean }) {
+function HeroStat({ label, value, live, loading }: { label: string; value: string; live?: boolean; loading?: boolean }) {
   return (
     <div className="p-5 md:p-6">
       <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
         {live && <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-ok)] animate-pulse" />}
         {label}
       </p>
-      <p className="font-pixel text-[32px] md:text-[40px] text-foreground tabular-nums leading-none">
-        {value}
-      </p>
+      {loading ? (
+        <Skeleton className="h-10 w-16 mt-1" />
+      ) : (
+        <p className="font-pixel text-[32px] md:text-[40px] text-foreground tabular-nums leading-none">
+          {value}
+        </p>
+      )}
     </div>
   )
 }
