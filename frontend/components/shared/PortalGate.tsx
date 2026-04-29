@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Logo } from "./Logo"
 import { BracketButton } from "./BracketButton"
 import { BRAND } from "@/lib/constants"
+import { useGlobeReady } from "@/lib/globe-ready-context"
 
 const STORAGE_KEY = "dice_portal_seen"
 
@@ -21,6 +22,10 @@ export function PortalGate() {
   const [show, setShow] = useState<boolean | null>(null)
   const [exiting, setExiting] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const waitRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const { globeReady } = useGlobeReady()
+  const globeReadyRef = useRef(globeReady)
+  globeReadyRef.current = globeReady
 
   // Determine visibility on mount — runs before paint to avoid flash
   useLayoutEffect(() => {
@@ -42,20 +47,39 @@ export function PortalGate() {
     }
   }, [show, exiting])
 
-  // Cleanup timer
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
+  // Cleanup timers
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    if (waitRef.current) clearInterval(waitRef.current)
+  }, [])
 
-  const handleEnter = useCallback(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, "1")
-    } catch {}
+  const doExit = useCallback(() => {
     setExiting(true)
-    // Reliable fallback — remove overlay after animation completes
     timerRef.current = setTimeout(() => {
       window.scrollTo({ top: 0, behavior: "instant" })
       setShow(false)
     }, 900)
   }, [])
+
+  const handleEnter = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, "1")
+    } catch {}
+
+    if (globeReadyRef.current) {
+      doExit()
+    } else {
+      // Globe not ready yet (rare) — poll briefly, with 3s hard timeout
+      let elapsed = 0
+      waitRef.current = setInterval(() => {
+        elapsed += 100
+        if (globeReadyRef.current || elapsed >= 3000) {
+          if (waitRef.current) clearInterval(waitRef.current)
+          doExit()
+        }
+      }, 100)
+    }
+  }, [doExit])
 
   // Not determined yet or returning visitor — render nothing
   if (show !== true) return null

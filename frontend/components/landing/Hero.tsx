@@ -1,8 +1,34 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { NetworkGlobe } from "@/components/landing/NetworkGlobe"
+import dynamic from "next/dynamic"
 import { BRAND } from "@/lib/constants"
+
+const NetworkGlobe = dynamic(
+  () =>
+    import("@/components/landing/NetworkGlobe").then((mod) => ({
+      default: mod.NetworkGlobe,
+    })),
+  {
+    ssr: false,
+    loading: () => <GlobePlaceholder />,
+  },
+)
+
+/** CSS-only shimmer placeholder shown while the globe chunk loads. */
+function GlobePlaceholder() {
+  return (
+    <div className="absolute inset-[-10%] w-[120%] h-[120%] flex items-center justify-center">
+      <div
+        className="w-[70%] aspect-square rounded-full opacity-40 animate-pulse"
+        style={{
+          background:
+            "radial-gradient(circle at 40% 40%, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 50%, transparent 70%)",
+        }}
+      />
+    </div>
+  )
+}
 
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
