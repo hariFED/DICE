@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE Script 6 — The Platform</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #e8e8e8; font-family: 'Georgia', serif; line-height: 1.9; padding: 3rem 1.5rem; max-width: 720px; margin: 0 auto; }
+  .meta { border-bottom: 1px solid #222; padding-bottom: 2rem; margin-bottom: 3rem; }
+  .meta h1 { font-size: 2rem; font-weight: 400; color: #fff; margin-bottom: 0.5rem; }
+  .meta .subtitle { color: #666; font-size: 0.95rem; font-style: italic; }
+  .meta .details { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.8rem; color: #555; text-transform: uppercase; letter-spacing: 0.1em; }
+  .meta .inspiration { margin-top: 1.2rem; color: #444; font-size: 0.8rem; font-style: italic; border-left: 2px solid #222; padding-left: 0.8rem; }
+  .line { margin-bottom: 0.4rem; padding: 0.3rem 0.8rem; border-radius: 3px; transition: background 0.2s; cursor: pointer; font-size: 1.15rem; }
+  .line:hover { background: #1a1a1a; }
+  .line.active { background: #1a1a0a; border-left: 3px solid #f0c040; padding-left: calc(0.8rem - 3px); }
+  .spoken { color: #f5f5f5; font-size: 1.2rem; }
+  .direction { color: #4a9eff; font-size: 0.85rem; font-family: 'Consolas', monospace; font-style: italic; padding: 0.6rem 0.8rem; margin: 1rem 0; border-left: 2px solid #1a3a5a; background: #0d1520; }
+  .delivery { color: #ff6b6b; font-size: 0.8rem; font-family: 'Consolas', monospace; padding: 0.4rem 0.8rem; margin: 0.3rem 0 1.2rem 0; opacity: 0.8; }
+  .pause { text-align: center; color: #333; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; padding: 1rem 0; }
+  .pause::before, .pause::after { content: '———'; color: #222; margin: 0 1rem; }
+  .section { margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1a1a1a; }
+  .section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #444; font-weight: 400; font-family: 'Consolas', monospace; }
+  .section .time { float: right; color: #333; font-size: 0.7rem; }
+  .mg { background: #0a1a0a; border: 1px solid #1a3a1a; border-radius: 4px; padding: 1rem; margin: 1.5rem 0; font-size: 0.85rem; color: #5a9a5a; font-family: 'Consolas', monospace; }
+  .mg::before { content: '▶ MOTION GRAPHIC'; display: block; font-size: 0.65rem; letter-spacing: 0.15em; color: #3a6a3a; margin-bottom: 0.5rem; }
+  .broll { background: #1a0a1a; border: 1px solid #3a1a3a; border-radius: 4px; padding: 1rem; margin: 1.5rem 0; font-size: 0.85rem; color: #9a5a9a; font-family: 'Consolas', monospace; }
+  .broll::before { content: '▶ B-ROLL / CUTAWAY'; display: block; font-size: 0.65rem; letter-spacing: 0.15em; color: #6a3a6a; margin-bottom: 0.5rem; }
+  .controls { position: fixed; bottom: 2rem; right: 2rem; display: flex; gap: 0.5rem; }
+  .controls button { background: #1a1a1a; color: #888; border: 1px solid #333; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-family: monospace; }
+  .controls button:hover { background: #222; color: #fff; }
+  .controls button.active-btn { background: #f0c040; color: #000; border-color: #f0c040; }
+  body.teleprompter .direction, body.teleprompter .delivery, body.teleprompter .mg, body.teleprompter .broll, body.teleprompter .meta .details, body.teleprompter .meta .inspiration, body.teleprompter .section h2, body.teleprompter .controls { display: none; }
+  body.teleprompter { font-size: 1.8rem; line-height: 2.2; max-width: 600px; }
+  body.teleprompter .spoken { font-size: 2rem; }
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <h1>Script 6 — The Platform</h1>
+  <div class="subtitle">Style: professional product launch. Opens with human story, reveals VRF as the first act, then zooms out to show the bigger platform play. This is the "we're not a feature, we're infrastructure" video. Investors and judges watch this one twice.</div>
+  <div class="details">
+    <span>Runtime: ~100s</span>
+    <span>Energy: grounded confidence, escalating scope</span>
+    <span>Arc: our story → the first product → "but that's just the beginning" → the platform</span>
+  </div>
+  <div class="inspiration">
+    Inspired by: Stripe Atlas launch (start small, reveal the empire), Helium's evolution pitch (LoRa → 5G → WiFi, same device), Solana's "why this chain" framing
+  </div>
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>Who we are — fast <span class="time">0:00</span></h2>
+</div>
+
+<div class="direction">FACE — already in frame. Grounded. Not smiling yet. You know what you're about to say and you've earned the right to say it.</div>
+
+<div class="line spoken">"I'm Hari. My cofounder Nikhil and I</div>
+<div class="line spoken">build lottery games on Solana."</div>
+
+<div class="line spoken">"The kind where someone puts in real money...</div>
+<div class="line spoken">and one random number decides who walks out with it."</div>
+
+<div class="delivery">Four lines. Names, what you do, what's at stake. Done in under 8 seconds. Don't linger.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The problem — 10 seconds, not a speech <span class="time">0:08</span></h2>
+</div>
+
+<div class="line spoken">"That random number?</div>
+<div class="line spoken">On every VRF on Solana right now...</div>
+<div class="line spoken">it comes from a cloud server.</div>
+<div class="line spoken">One company. One machine."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"We thought we could do better."</div>
+
+<div class="delivery">No long exposition. No "we built an industry on a promise." This script is PROFESSIONAL — state the problem, move to the solution. The audience is here for what you built, not what's broken.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>DICE — the first product <span class="time">0:18</span></h2>
+</div>
+
+<div class="direction">Pick up the ESP32. Hold it casually, at chest height.</div>
+
+<div class="line spoken">"This is DICE."</div>
+
+<div class="line spoken">"An eight dollar microcontroller</div>
+<div class="line spoken">with a cryptographic key burned into the chip."</div>
+
+<div class="broll">
+Close-up of the ESP32-S3 in your hand. Macro shot of the chip surface. The "8 dollars" price point should feel tangible — this is small, cheap, real.
+</div>
+
+<div class="line spoken">"It generates randomness from physical entropy —</div>
+<div class="line spoken">electrical noise inside the hardware —</div>
+<div class="line spoken">and signs it with a key that can never be extracted."</div>
+
+<div class="direction">Set it down next to the other 3 devices. Camera widens to show all 4, green LEDs.</div>
+
+<div class="line spoken">"Four of these run a commit-reveal protocol.</div>
+<div class="line spoken">Each one locks in a secret value.</div>
+<div class="line spoken">Nobody sees anyone else's.</div>
+<div class="line spoken">They reveal simultaneously.</div>
+<div class="line spoken">The output is a number nobody could've gamed."</div>
+
+<div class="mg">
+Simple animation: 4 nodes → 4 sealed values → simultaneous reveal → merge → one golden output number. 4 seconds. Clean.
+</div>
+
+<div class="line spoken">"One Solana transaction. Three and a half seconds.</div>
+<div class="line spoken">Ten lines of code to integrate.</div>
+<div class="line spoken">First streaming VRF on Solana —</div>
+<div class="line spoken">subscribe once, randomness flows continuously."</div>
+
+<div class="delivery">Stack the receipts fast. One TX. 3.5s. 10 LOC. Streaming. Four punches, no pauses between them. The speed communicates confidence.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The turn — "but here's what most people miss" <span class="time">0:42</span></h2>
+</div>
+
+<div class="direction">This is the moment the video stops being a VRF pitch and becomes a platform story. Energy shifts. You lean forward slightly. The audience thinks they've seen the product — you're about to show them they've only seen the first layer.</div>
+
+<div class="pause">beat — let the VRF section breathe for 1 second</div>
+
+<div class="line spoken">"But here's the thing most people miss."</div>
+
+<div class="pause">half-beat</div>
+
+<div class="line spoken">"VRF... is just what this chip does first."</div>
+
+<div class="delivery">THIS is the pivot line. "Just what this chip does FIRST." The word "first" changes everything. Suddenly the audience recalculates — wait, there's more? The device is a platform?</div>
+
+<div class="direction">Pick up the ESP32 again. But now you're looking at it differently — not as a VRF device, but as a platform.</div>
+
+<div class="line spoken">"This chip has Bluetooth.</div>
+<div class="line spoken">It has forty open GPIO pins.</div>
+<div class="line spoken">It has hardware crypto that signs anything.</div>
+<div class="line spoken">It sleeps on ten microamps of power.</div>
+<div class="line spoken">And it costs less than your coffee."</div>
+
+<div class="delivery">"costs less than your coffee" — throw it away casually. Don't sell it. The understatement does the selling.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The platform reveal <span class="time">0:55</span></h2>
+</div>
+
+<div class="line spoken">"Same device. Same key. Same Solana program.</div>
+<div class="line spoken">But now imagine what else it can do."</div>
+
+<div class="mg">
+The single ESP32 in the center of the screen. One by one, service labels appear around it in a circle, each one lighting up as you say it:
+
+→ "VRF" (already glowing — this is what you launched)
+→ "Location Proof" (lights up)
+→ "Sensor Attestation" (lights up)
+→ "Hardware Signing" (lights up)
+
+The visual message: one device, expanding capabilities. Like a skill tree unlocking.
+</div>
+
+<div class="line spoken">"Proof of location.</div>
+<div class="line spoken">BLE and LoRa triangulation —</div>
+<div class="line spoken">GPS-independent, hardware-signed,</div>
+<div class="line spoken">posted on-chain.</div>
+<div class="line spoken">Supply chain tracking. Insurance verification.</div>
+<div class="line spoken">Proving a DePIN node is actually where it claims to be."</div>
+
+<div class="delivery">Don't list use cases like a slide deck. Say them like you're brainstorming out loud — "supply chain... insurance... DePIN verification..." — each one is a door you're opening and the audience is peeking through.</div>
+
+<div class="line spoken">"Sensor attestation.</div>
+<div class="line spoken">Plug a two dollar temperature sensor into this board</div>
+<div class="line spoken">and suddenly you have hardware-signed weather data</div>
+<div class="line spoken">that a cloud server literally cannot produce."</div>
+
+<div class="delivery">"literally cannot produce" — lean on "literally." It's not an exaggeration. A cloud VM does not have a temperature sensor. The hardware advantage isn't marketing here — it's physics.</div>
+
+<div class="line spoken">"Hardware signing.</div>
+<div class="line spoken">A five dollar distributed HSM.</div>
+<div class="line spoken">DAOs paying fifty thousand for a hardware security module...</div>
+<div class="line spoken">could use a network of these instead."</div>
+
+<div class="delivery">The $5 vs $50K contrast is the number that makes investors sit up. Don't rush past it. Let the math register.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The Solana DePIN moment <span class="time">1:18</span></h2>
+</div>
+
+<div class="mg">
+Clean data slide, Apple keynote style:
+"Solana DePIN" at top.
+Three numbers fade in one at a time:
+"$3.25B market cap"
+"5.7M+ devices deployed"
+"No other chain comes close."
+Hold 3 seconds.
+</div>
+
+<div class="line spoken">"Solana owns DePIN.</div>
+<div class="line spoken">Three and a quarter billion in market cap.</div>
+<div class="line spoken">Five point seven million devices worldwide.</div>
+<div class="line spoken">No other chain is even close."</div>
+
+<div class="line spoken">"But most of those devices do one thing.</div>
+<div class="line spoken">Helium does connectivity. Hivemapper does maps.</div>
+<div class="line spoken">Render does compute."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"DICE does cryptographic services.</div>
+<div class="line spoken">Starting with randomness.</div>
+<div class="line spoken">Expanding to location, sensors, signing.</div>
+<div class="line spoken">One node. Multiple services. Same eight dollars."</div>
+
+<div class="delivery">"One node. Multiple services. Same eight dollars." — this is the thesis of the entire platform compressed into one line. It's the Helium evolution story (LoRa → 5G → WiFi, same hotspot) applied to crypto services. If an investor remembers one sentence from this video, it should be this one.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The close <span class="time">1:35</span></h2>
+</div>
+
+<div class="direction">No device in hand. No motion graphics. Just you. The platform vision has been painted — now ground it in something personal.</div>
+
+<div class="line spoken">"Nikhil and I started this because our games</div>
+<div class="line spoken">deserved better randomness."</div>
+
+<div class="pause">half-beat</div>
+
+<div class="line spoken">"Turns out... Solana deserves</div>
+<div class="line spoken">better infrastructure."</div>
+
+<div class="delivery">The callback to the personal story. "Our games → Solana." Small to big. The scope has expanded in 90 seconds from "our lottery app" to "Solana's DePIN infrastructure layer." But it doesn't feel like scope creep because every step was earned — VRF is live, the chip is real, the expansion is logical.</div>
+
+<div class="pause">hold 2 seconds — cut</div>
+
+<div class="mg">
+Black. 1 second.
+
+White screen. DICE logo, clean and centered.
+Below it, four words in a row, spaced evenly:
+"Randomness. Location. Sensors. Signing."
+The word "Randomness" is white (shipped). The other three are grey (coming).
+
+URL below.
+"DePIN for cryptographic services."
+
+Hold 4 seconds. Fade.
+</div>
+
+<div class="delivery">The end card does quiet storytelling: "Randomness" in white = this is live, this is real. The three grey words = this is where we're going. Investors see a roadmap without you having to put up a timeline slide. Judges see ambition grounded in execution.</div>
+
+<!-- ============================================ -->
+<div class="controls">
+  <button onclick="document.body.classList.toggle('teleprompter');this.classList.toggle('active-btn')">Teleprompter</button>
+  <button onclick="this.classList.toggle('active-btn');document.querySelectorAll('.line').forEach(el=>el.onclick=()=>el.classList.toggle('active'))">Mark Lines</button>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "E1",
+    "name": "unauthorized request_randomness_auto (wrong signer)",
+    "expected_error": "AccountNotInitialized / ConstraintSeeds",
+    "outcome": "pass",
+    "observed": "RPC error: {\"code\":-32002,\"data\":{\"accounts\":null,\"err\":{\"InstructionError\":[0,{\"Custom\":3012}]},\"fee\":5000,\"innerInstructions\":null,\"loadedAccountsDataSize\":551335,\"loadedAddresses\":null,\"logs\":[\"Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]\",\"Program log: Instruction: RequestRandomnessAuto\",\"Program log: AnchorError caused by account: channel. Error Code: AccountNotInitialized. Error Number: 3012. Error Message: The program expected this account to be already initialized.\",\"P",
+    "tx_sig": null
+  },
+  {
+    "id": "E3",
+    "name": "submit_commit_v2 with wrong device_id for pubkey",
+    "expected_error": "InvalidDeviceId (6013)",
+    "outcome": "FAIL — got unexpected error",
+    "observed": "RPC error: {\"code\":-32002,\"data\":{\"accounts\":null,\"err\":{\"InstructionError\":[0,{\"Custom\":6009}]},\"fee\":5000,\"innerInstructions\":null,\"loadedAccountsDataSize\":552875,\"loadedAddresses\":null,\"logs\":[\"Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]\",\"Program log: Instruction: SubmitCommitV2\",\"Program log: AnchorError thrown in programs/dice/src/instructions/submit_commit_v2.rs:40. Error Code: RoundAlreadyFinalized. Error Number: 6009. Error Message: Round has already been finalized.\"",
+    "tx_sig": null
+  },
+  {
+    "id": "E18",
+    "name": "init_feed with publish_interval_slots = 0",
+    "expected_error": "FeedInvalidInterval",
+    "outcome": "pass",
+    "observed": "RPC error: {\"code\":-32002,\"data\":{\"accounts\":null,\"err\":{\"InstructionError\":[0,{\"Custom\":6018}]},\"fee\":5000,\"innerInstructions\":null,\"loadedAccountsDataSize\":552953,\"loadedAddresses\":null,\"logs\":[\"Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]\",\"Program log: Instruction: InitFeed\",\"Program 11111111111111111111111111111111 invoke [2]\",\"Program 11111111111111111111111111111111 success\",\"Program log: AnchorError thrown in programs/dice/src/instructions/init_feed.rs:50. Error Code: ",
+    "tx_sig": null
+  },
+  {
+    "id": "E19",
+    "name": "init_feed bound to another authority's channel",
+    "expected_error": "has_one = authority constraint violation (ConstraintHasOne)",
+    "outcome": "FAIL — got unexpected error",
+    "observed": "RPC error: {\"code\":-32002,\"data\":{\"accounts\":null,\"err\":{\"InstructionError\":[0,{\"Custom\":2001}]},\"fee\":5000,\"innerInstructions\":null,\"loadedAccountsDataSize\":552953,\"loadedAddresses\":null,\"logs\":[\"Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]\",\"Program log: Instruction: InitFeed\",\"Program 11111111111111111111111111111111 invoke [2]\",\"Program 11111111111111111111111111111111 success\",\"Program log: AnchorError caused by account: bound_channel. Error Code: ConstraintHasOne. Error ",
+    "tx_sig": null
+  },
+  {
+    "id": "E21",
+    "name": "v1 claim_rewards is deprecated (returns V1ClaimRewardsDeprecated)",
+    "expected_error": "V1ClaimRewardsDeprecated",
+    "outcome": "pass (unit test covered)",
+    "observed": "handler returns err!(DiceError::V1ClaimRewardsDeprecated) unconditionally — verified by dice lib test suite",
+    "tx_sig": null
+  },
+  {
+    "id": "G2",
+    "name": "init_channel with max_nodes=3 (< MIN=4)",
+    "expected_error": "InvalidNodeCount",
+    "outcome": "pass",
+    "observed": "RPC error: {\"code\":-32002,\"data\":{\"accounts\":null,\"err\":{\"InstructionError\":[0,{\"Custom\":6008}]},\"fee\":5000,\"innerInstructions\":null,\"loadedAccountsDataSize\":551335,\"loadedAddresses\":null,\"logs\":[\"Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]\",\"Program log: Instruction: InitChannel\",\"Program 11111111111111111111111111111111 invoke [2]\",\"Program 11111111111111111111111111111111 success\",\"Program log: AnchorError thrown in programs/dice/src/instructions/init_channel.rs:32. Error ",
+    "tx_sig": null
+  },
+  {
+    "id": "G3",
+    "name": "request_randomness_auto with node_count=1",
+    "expected_error": "InvalidNodeCount",
+    "outcome": "pass",
+    "observed": "RPC error: {\"code\":-32002,\"data\":{\"accounts\":null,\"err\":{\"InstructionError\":[0,{\"Custom\":6008}]},\"fee\":5000,\"innerInstructions\":null,\"loadedAccountsDataSize\":552953,\"loadedAddresses\":null,\"logs\":[\"Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]\",\"Program log: Instruction: RequestRandomnessAuto\",\"Program log: AnchorError thrown in programs/dice/src/instructions/request_randomness_auto.rs:41. Error Code: InvalidNodeCount. Error Number: 6008. Error Message: Invalid node count: must ",
+    "tx_sig": null
+  },
+  {
+    "id": "G4",
+    "name": "request_randomness_auto with node_count=50 (> channel.max_nodes)",
+    "expected_error": "InvalidNodeCount",
+    "outcome": "pass",
+    "observed": "RPC error: {\"code\":-32002,\"data\":{\"accounts\":null,\"err\":{\"InstructionError\":[0,{\"Custom\":6008}]},\"fee\":5000,\"innerInstructions\":null,\"loadedAccountsDataSize\":552953,\"loadedAddresses\":null,\"logs\":[\"Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]\",\"Program log: Instruction: RequestRandomnessAuto\",\"Program log: AnchorError thrown in programs/dice/src/instructions/request_randomness_auto.rs:41. Error Code: InvalidNodeCount. Error Number: 6008. Error Message: Invalid node count: must ",
+    "tx_sig": null
+  }
+]

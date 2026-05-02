@@ -115,26 +115,113 @@ fn cbor_encode<T: Serialize>(tag: &str, payload: &T) -> Result<Vec<u8>> {
     Ok(out)
 }
 
-/// Decode a `[tag, payload]` CBOR envelope.
+/// Decode a CBOR message in either format:
+///   1. Array envelope: `["tag", {payload}]` (legacy/SDK)
+///   2. Integer-key map: `{0: type, 1: field, ...}` (firmware format, used by v7.7+ coordinator)
 fn cbor_decode(bytes: &[u8]) -> Result<(String, ciborium::Value)> {
     let value: ciborium::Value =
         ciborium::de::from_reader(bytes).context("CBOR decode")?;
-    let arr = match value {
-        ciborium::Value::Array(a) if a.len() == 2 => a,
-        _ => anyhow::bail!("expected CBOR array[2]"),
-    };
-    let tag = match &arr[0] {
-        ciborium::Value::Text(t) => t.clone(),
-        _ => anyhow::bail!("first element must be text tag"),
-    };
-    Ok((tag, arr.into_iter().nth(1).unwrap()))
+    match value {
+        // Format 1: array envelope ["tag", {payload}]
+        ciborium::Value::Array(a) if a.len() == 2 => {
+            let tag = match &a[0] {
+                ciborium::Value::Text(t) => t.clone(),
+                _ => anyhow::bail!("first element must be text tag"),
+            };
+            Ok((tag, a.into_iter().nth(1).unwrap()))
+        }
+        // Format 2: integer-key map {0: type_uint, 1: ..., 2: ..., ...}
+        ciborium::Value::Map(ref pairs) => {
+            // Extract message type from key 0
+            let msg_type = pairs.iter()
+                .find_map(|(k, v)| {
+                    if let ciborium::Value::Integer(ki) = k {
+                        let key: u64 = (*ki).try_into().ok()?;
+                        if key == 0 {
+                            if let ciborium::Value::Integer(vi) = v {
+                                return Some((*vi).try_into().unwrap_or(0u64));
+                            }
+                        }
+                    }
+                    None
+                })
+                .ok_or_else(|| anyhow::anyhow!("missing type field (key 0) in integer-key map"))?;
+
+            let tag = match msg_type {
+                1 => "job_assignment",
+                4 => "round_result",
+                _ => anyhow::bail!("unknown integer-key message type: {}", msg_type),
+            };
+
+            // Convert integer-key map to a text-key map for deserialization
+            Ok((tag.to_string(), value))
+        }
+        _ => anyhow::bail!("expected CBOR array[2] or map"),
+    }
 }
 
 /// Deserialise the CBOR payload Value into a concrete type.
+/// Handles both text-key maps (array envelope format) and integer-key maps (firmware format).
 fn cbor_decode_payload<T: for<'de> Deserialize<'de>>(val: ciborium::Value) -> Result<T> {
     let mut buf = Vec::new();
     ciborium::ser::into_writer(&val, &mut buf).context("re-encode payload")?;
     ciborium::de::from_reader(buf.as_slice()).context("deserialise payload")
+}
+
+/// Extract a JobAssignment from an integer-key CBOR map.
+/// Layout: {0:1, 1:request_id, 2:round_seq, 3:deadline_ts}
+fn decode_job_assignment_intkey(val: &ciborium::Value) -> Result<JobAssignment> {
+    let pairs = match val {
+        ciborium::Value::Map(p) => p,
+        _ => anyhow::bail!("expected map for integer-key JobAssignment"),
+    };
+    let mut request_id = None;
+    let mut round_seq = None;
+    let mut deadline_ts = None;
+    for (k, v) in pairs {
+        if let ciborium::Value::Integer(ki) = k {
+            let key: u64 = (*ki).try_into().unwrap_or(999);
+            match key {
+                1 => if let ciborium::Value::Bytes(b) = v { request_id = Some(b.clone()); },
+                2 => if let ciborium::Value::Integer(i) = v { round_seq = Some((*i).try_into().unwrap_or(0u64)); },
+                3 => if let ciborium::Value::Integer(i) = v { deadline_ts = Some((*i).try_into().unwrap_or(0u64)); },
+                _ => {}
+            }
+        }
+    }
+    Ok(JobAssignment {
+        request_id: request_id.ok_or_else(|| anyhow::anyhow!("missing request_id"))?,
+        round_seq: round_seq.ok_or_else(|| anyhow::anyhow!("missing round_seq"))?,
+        deadline_ts: deadline_ts.ok_or_else(|| anyhow::anyhow!("missing deadline_ts"))?,
+    })
+}
+
+/// Extract a RoundResult from an integer-key CBOR map.
+/// Layout: {0:4, 1:request_id, 2:status, 3:randomness}
+fn decode_round_result_intkey(val: &ciborium::Value) -> Result<RoundResult> {
+    let pairs = match val {
+        ciborium::Value::Map(p) => p,
+        _ => anyhow::bail!("expected map for integer-key RoundResult"),
+    };
+    let mut request_id = None;
+    let mut status = None;
+    let mut randomness = None;
+    for (k, v) in pairs {
+        if let ciborium::Value::Integer(ki) = k {
+            let key: u64 = (*ki).try_into().unwrap_or(999);
+            match key {
+                1 => if let ciborium::Value::Bytes(b) = v { request_id = Some(b.clone()); },
+                2 => if let ciborium::Value::Text(t) = v { status = Some(t.clone()); },
+                3 => if let ciborium::Value::Bytes(b) = v { randomness = Some(b.clone()); },
+                _ => {}
+            }
+        }
+    }
+    Ok(RoundResult {
+        request_id: request_id.ok_or_else(|| anyhow::anyhow!("missing request_id"))?,
+        status: status.ok_or_else(|| anyhow::anyhow!("missing status"))?,
+        randomness: randomness.ok_or_else(|| anyhow::anyhow!("missing randomness"))?,
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -279,7 +366,9 @@ async fn connect_and_run(
 
                 match tag.as_str() {
                     "job_assignment" => {
-                        let job: JobAssignment = match cbor_decode_payload(payload) {
+                        let job: JobAssignment = match decode_job_assignment_intkey(&payload)
+                            .or_else(|_| cbor_decode_payload(payload.clone()))
+                        {
                             Ok(j) => j,
                             Err(e) => { warn!(node = %short_id, error = %e, "bad JobAssignment"); continue; }
                         };
@@ -334,7 +423,9 @@ async fn connect_and_run(
                     }
 
                     "round_result" => {
-                        let result: RoundResult = match cbor_decode_payload(payload) {
+                        let result: RoundResult = match decode_round_result_intkey(&payload)
+                            .or_else(|_| cbor_decode_payload(payload.clone()))
+                        {
                             Ok(r) => r,
                             Err(e) => { warn!(node = %short_id, error = %e, "bad RoundResult"); continue; }
                         };

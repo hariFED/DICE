@@ -26,6 +26,21 @@ pub struct Config {
     #[arg(long, env = "DICE_SIMULATION", default_value_t = false)]
     pub simulation: bool,
 
+    /// Enable mTLS WebSocket even in simulation mode.
+    /// Requires --tls-cert-path, --tls-key-path, and --ca-cert-path.
+    #[arg(long, env = "DICE_TLS", default_value_t = false)]
+    pub tls: bool,
+
+    /// API key for protecting coordinator endpoints (Bearer token).
+    /// If set, all endpoints except /health and /metrics require
+    /// Authorization: Bearer <key>. If unset, all endpoints are public.
+    #[arg(long, env = "DICE_API_KEY")]
+    pub api_key: Option<String>,
+
+    /// Maximum requests per second for the /simulate endpoint.
+    #[arg(long, env = "DICE_RATE_LIMIT_RPS", default_value_t = 10)]
+    pub rate_limit_rps: u32,
+
     /// PostgreSQL connection URL (required unless --simulation)
     #[arg(long, env = "DATABASE_URL", default_value = "postgres://dice:dice@localhost/dice")]
     pub database_url: String,
@@ -65,4 +80,17 @@ pub struct Config {
     /// Seconds before the reveal phase times out
     #[arg(long, env = "DICE_REVEAL_TIMEOUT_SECS", default_value_t = 60)]
     pub reveal_timeout_secs: u64,
+
+    /// Protocol treasury wallet — receives 20% of every fee.
+    /// Must be a base58 Solana pubkey. If unset, claim_rewards_v2 TXs are
+    /// NOT submitted after finalization (v7 operators earn nothing until
+    /// this is configured). For local simulation you can pass any valid
+    /// pubkey; only mainnet / real-economics deployments need this wired.
+    #[arg(long, env = "DICE_TREASURY")]
+    pub treasury: Option<String>,
+
+    /// Protocol reserve wallet — receives 10% of every fee.
+    /// Same semantics as --treasury.
+    #[arg(long, env = "DICE_RESERVE")]
+    pub reserve: Option<String>,
 }

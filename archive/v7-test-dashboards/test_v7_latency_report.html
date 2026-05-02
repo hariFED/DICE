@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DICE v7 — Latency Report &amp; Optimization Plan</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --card: #141a22;
+    --card2: #1a2230;
+    --text: #e4e9f2;
+    --muted: #8a96a8;
+    --accent: #b4c4db;
+    --green: #4ade80;
+    --yellow: #facc15;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --border: #2a3444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 32px; }
+  h1 { margin: 0 0 8px; font-size: 30px; letter-spacing: -0.5px; }
+  h2 { margin: 40px 0 16px; font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  h3 { margin: 28px 0 10px; font-size: 17px; color: var(--accent); }
+  p { margin: 8px 0 14px; }
+  code, pre { font-family: "SF Mono", "Cascadia Code", Consolas, Monaco, monospace; background: #0a0e14; border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 13px; color: #a9d4ff; }
+  pre { padding: 12px 16px; overflow-x: auto; white-space: pre-wrap; }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 12px; margin: 24px 0; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; }
+  .stat .n { display: block; font-size: 26px; font-weight: 600; }
+  .stat .l { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+  .stat.green .n { color: var(--green); }
+  .stat.yellow .n { color: var(--yellow); }
+  .stat.blue .n { color: var(--blue); }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 13px; background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--card2); color: var(--accent); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .bar-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+  .phase {
+    display: grid;
+    grid-template-columns: 220px 1fr 80px;
+    gap: 10px;
+    align-items: center;
+    margin: 6px 0;
+    font-size: 13px;
+  }
+  .phase .label { color: var(--accent); }
+  .phase .bar {
+    background: var(--card2);
+    height: 20px;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .phase .fill {
+    background: linear-gradient(90deg, var(--blue), #a9d4ff);
+    height: 100%;
+    border-radius: 3px;
+  }
+  .phase.wasteful .fill { background: linear-gradient(90deg, var(--red), #fca5a5); }
+  .phase.useful .fill { background: linear-gradient(90deg, var(--green), #a7f3d0); }
+  .phase .ms { font-family: monospace; text-align: right; color: var(--muted); }
+
+  .note {
+    background: rgba(96,165,250,0.08);
+    border-left: 3px solid var(--blue);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .note.warn { background: rgba(250,204,21,0.08); border-left-color: var(--yellow); }
+  .note.good { background: rgba(74,222,128,0.08); border-left-color: var(--green); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge.easy { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .badge.medium { background: rgba(250,204,21,0.12); color: var(--yellow); border: 1px solid rgba(250,204,21,0.3); }
+  .badge.hard { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+  ul { padding-left: 24px; }
+  li { margin: 6px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>Latency Report &amp; Optimization Plan</h1>
+  <div class="meta">DICE v7 · Solana devnet · 5 ESP32-S3 devices · Real-mode coordinator · Data from A2 (100 rounds) + A4 (360 successful rounds)</div>
+</header>
+
+<section>
+  <h2>Why are rounds taking ~11 seconds?</h2>
+  <p>Short answer: <strong>the commit-reveal protocol itself takes ~3 seconds.</strong> The other ~8 seconds are Solana devnet round-trip latency, sequential TX confirmations, and fixed polling intervals. Every one of those 8 seconds is cuttable.</p>
+</section>
+
+<section>
+  <h2>Measured latency (both real stress runs)</h2>
+  <div class="stats">
+    <div class="stat blue"><span class="n">10 806 ms</span><span class="l">A2 avg (100 rounds)</span></div>
+    <div class="stat blue"><span class="n">11 040 ms</span><span class="l">A4 avg (360 success)</span></div>
+    <div class="stat green"><span class="n">~2 900 ms</span><span class="l">Coord in-memory protocol time</span></div>
+    <div class="stat yellow"><span class="n">8 304 ms</span><span class="l">A2 fastest round (min)</span></div>
+    <div class="stat yellow"><span class="n">13 740 ms</span><span class="l">A2 p99 max</span></div>
+    <div class="stat yellow"><span class="n">20 021 ms</span><span class="l">A4 outlier max</span></div>
+  </div>
+
+  <table>
+    <tr>
+      <th>Test</th>
+      <th class="num">Rounds</th>
+      <th class="num">min</th>
+      <th class="num">p50</th>
+      <th class="num">p95</th>
+      <th class="num">p99</th>
+      <th class="num">max</th>
+      <th class="num">avg</th>
+    </tr>
+    <tr><td>A1 (10 sequential)</td><td class="num">10</td><td class="num">8056</td><td class="num">9052</td><td class="num">10259</td><td class="num">10259</td><td class="num">13607</td><td class="num">9547</td></tr>
+    <tr><td>A2 (100 sequential, post-fix)</td><td class="num">100</td><td class="num">8304</td><td class="num">10822</td><td class="num">13041</td><td class="num">13740</td><td class="num">13740</td><td class="num">10806</td></tr>
+    <tr><td>A4 (partial, 360 success)</td><td class="num">360</td><td class="num">8150</td><td class="num">11159</td><td class="num">13028</td><td class="num">14431</td><td class="num">20021</td><td class="num">11040</td></tr>
+  </table>
+
+  <p class="meta">All numbers in milliseconds. A1 is the baseline (coordinator warm, no confirmation-polling yet). A2 is 100 rounds after the F-1 fix added `sign_send_and_confirm` (which is why A2 is ~1.2 s slower on average than A1). A4's 20 s max is the one outlier from a devnet blockhash miss.</p>
+</section>
+
+<section>
+  <h2>Where the 11 seconds actually go — phase breakdown</h2>
+  <p>For a single round on the happy path, this is the measured time each phase consumes. The numbers come from correlating the stress driver's per-round timer, the coordinator's <code>elapsed_ms</code> log entries, and the TX confirmation timestamps.</p>
+
+  <div class="bar-wrap">
+    <div class="phase">
+      <div class="label">1 · Driver sends request_randomness_auto</div>
+      <div class="bar"><div class="fill" style="width: 14%"></div></div>
+      <div class="ms">~1500 ms</div>
+    </div>
+    <div class="phase">
+      <div class="label">2 · Coordinator poller picks up the Pending channel</div>
+      <div class="bar"><div class="fill" style="width: 14%"></div></div>
+      <div class="ms">~1500 ms avg</div>
+    </div>
+    <div class="phase useful">
+      <div class="label">3 · Commit-reveal protocol (4 devices, in-memory)</div>
+      <div class="bar"><div class="fill" style="width: 27%"></div></div>
+      <div class="ms">~2900 ms</div>
+    </div>
+    <div class="phase wasteful">
+      <div class="label">4 · submit_commit_v2 TX + confirm</div>
+      <div class="bar"><div class="fill" style="width: 14%"></div></div>
+      <div class="ms">~1500 ms</div>
+    </div>
+    <div class="phase wasteful">
+      <div class="label">5 · submit_reveal_v2 TX + confirm</div>
+      <div class="bar"><div class="fill" style="width: 14%"></div></div>
+      <div class="ms">~1500 ms</div>
+    </div>
+    <div class="phase wasteful">
+      <div class="label">6 · finalize_v2 + claim_rewards_v2 TX + confirm</div>
+      <div class="bar"><div class="fill" style="width: 14%"></div></div>
+      <div class="ms">~1500 ms</div>
+    </div>
+    <div class="phase">
+      <div class="label">7 · Driver sees Finalized (poll delay)</div>
+      <div class="bar"><div class="fill" style="width: 5%"></div></div>
+      <div class="ms">~500 ms</div>
+    </div>
+    <div class="phase wasteful">
+      <div class="label">8 · Driver's deliver_callback TX + confirm</div>
+      <div class="bar"><div class="fill" style="width: 14%"></div></div>
+      <div class="ms">~1500 ms</div>
+    </div>
+    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px;">
+      <div><span style="color: var(--green);">■</span> actual protocol work (~2.9 s, 26 %)</div>
+      <div><span style="color: var(--red);">■</span> sequential TX confirmations the protocol could skip (~6 s, 55 %)</div>
+      <div><span style="color: var(--blue);">■</span> polling / blockhash fetches (~2.5 s, 22 %)</div>
+    </div>
+  </div>
+
+  <div class="note good">
+    <strong>The good news:</strong> phase 3 — the actual commit-reveal with 4 real ESP32-S3 devices generating entropy, signing with secp256k1, and completing the 2-round protocol — is <strong>under 3 seconds</strong>. The VRF itself is fast. Everything else is engineering choices that can be tuned down.
+  </div>
+</section>
+
+<section>
+  <h2>Why is phase 4/5/6 so slow — root cause</h2>
+  <p>The F-1 fix in the stress-test session added <code>SolanaRpc::sign_send_and_confirm</code>, which sends a TX and then polls <code>getSignatureStatuses</code> every 300 ms until the TX reaches <strong>confirmed</strong> commitment. That polling loop is what's eating ~1500 ms per TX × 3 TXs = 4.5 seconds per round.</p>
+
+  <p>Before the F-1 fix, the coordinator used <code>sign_and_send</code> which returned as soon as the RPC accepted the TX. That was faster (~1 s total for all 3 TXs) but caused the race condition — TXs would land out of order. We needed a way to serialize, so we added the confirmation poll.</p>
+
+  <p>The fix was correct. The implementation is conservative. Three cheaper options exist.</p>
+</section>
+
+<section>
+  <h2>Optimization plan — how to get to ~5 seconds per round</h2>
+
+  <div class="note">
+    <strong>Target:</strong> reduce average round latency from <strong>~11 s → ~5 s</strong> without reintroducing the F-1 race. Every optimization below is independently safe; they stack.
+  </div>
+
+  <h3>Optimization L1 · <code>processed</code> commitment wait <span class="badge hard">ATTEMPTED &amp; REVERTED</span></h3>
+  <div class="note warn">
+    <strong>This was the obvious-looking optimization that didn't survive contact with devnet.</strong> We implemented it (sign_send_and_confirm_processed helper, both intermediate TXs switched), expected ~2 s saved per round. Failure rate jumped from 1.5 % to 5 %+ on the next run. Reverted same day.
+  </div>
+
+  <p>The hypothesis: switch <code>submit_commit_v2</code> and <code>submit_reveal_v2</code> from <code>confirmed</code> (~1.5 s wait) to <code>processed</code> (~300-700 ms wait), keep <code>confirmed</code> for the final finalize+claim TX. New helper <code>sign_send_and_confirm_processed</code> in <code>coordinator/src/solana_rpc.rs</code> polls <code>getSignatureStatuses</code> every 120 ms and accepts any non-null entry (the entry exists at processed commitment).</p>
+
+  <p>Why it broke on devnet:</p>
+  <ul>
+    <li>The driver and the coordinator hit different RPC nodes behind the public devnet load balancer. The driver's <code>get_account_data</code> at <code>processed</code> would observe a fresh state on its RPC instance; the coordinator's poller at <code>confirmed</code> would NOT yet see the same state on its instance.</li>
+    <li>Inside the chain commits → reveals → finalize, intermediate TXs at <code>processed</code> have no durability guarantee; if any one drops below the leader's bank window before the next TX is processed, the chain breaks. With 4 nodes × 3 TXs per round, the cumulative probability of one drop becomes meaningful.</li>
+  </ul>
+
+  <p><strong>What we kept:</strong> the safety win — explicit reqwest <code>connect_timeout</code> (8 s) and request <code>timeout</code> (12 s) on the coordinator's HTTP client, so a hung devnet RPC can never freeze the poller indefinitely. That bug was the secondary effect of the L1 attempt and the timeouts mitigate it permanently.</p>
+
+  <p><strong>The right path to ~2 s less per round:</strong> bundle the commits + reveals instructions into a SINGLE transaction via address lookup tables (ALTs) — eliminates one full TX confirmation hop without changing commitment semantics. That's L3 below.</p>
+
+  <h3>Optimization L2 · Shrink the DiceChannel poller interval  <span class="badge hard">ATTEMPTED &amp; REVERTED</span></h3>
+  <div class="note warn">
+    <strong>Tried 800 ms and 1.5 s, both surfaced poller-hangs under load.</strong> Combined with L1's processed-commitment changes, the tighter polling produced a tokio task that would silently freeze for minutes after a burst of "not enough active nodes" failures during node reconnection. Suspected cause: connection-pool exhaustion in reqwest when the poller and the feed crank both fire fast against the same RPC endpoint.
+  </div>
+
+  <p>Reverted to the original <strong>3 s</strong> poller interval. Required for stability on devnet's public RPC. Possibly viable on a dedicated mainnet RPC node where connection pools and request limits are higher, but not without explicit testing.</p>
+
+  <p><strong>Better path:</strong> kill the poller architecture entirely and use Solana's <code>logsSubscribe</code> websocket subscription with a proper TLS path (the workspace's <code>tokio-tungstenite 0.21</code> needs TLS feature wiring). That's event-driven instead of polled — see the dormant <code>coordinator/src/solana_ws.rs::run_solana_ws_subscriber</code> function which was the original design before we fell back to polling.</p>
+
+  <h3>Optimization L3 · Bundle commits + reveals into a single TX  <span class="badge medium">Medium · 2 hours · saves ~1.5 s/round</span></h3>
+  <p>Today we split because of the 1232-byte TX size cap with 4 nodes. With address lookup tables (ALTs) we can fit all 8 instructions (4× commit_v2 + 4× reveal_v2) in one TX. ALT holds the coordinator signer + channel PDA + program ID as static entries (they repeat in every instruction) and frees up ~300 bytes.</p>
+
+  <p>Eliminates one full TX + one confirmation round trip. Savings: ~1.5 s per round.</p>
+
+  <h3>Optimization L4 · Remove deliver_callback for no-callback channels  <span class="badge easy">Easy · 20 min · saves ~1.5 s/round</span></h3>
+  <p>Today the driver has to submit an empty <code>deliver_callback</code> to transition Finalized → Idle, even when the channel has <code>callback_program_id = Pubkey::default()</code>. That's a full TX + confirm.</p>
+
+  <p>Two options:</p>
+  <ul>
+    <li><strong>Option A</strong>: have the coordinator auto-call <code>deliver_callback(empty)</code> as part of its finalize bundle when <code>callback_program_id == default()</code>. Saves the driver TX entirely.</li>
+    <li><strong>Option B</strong>: make <code>finalize_v2</code> transition directly to Idle for no-callback channels (pair-on-chain change). Saves the entire <code>deliver_callback</code> instruction.</li>
+  </ul>
+
+  <p>Option B is cleaner and halves the state-machine surface for streaming feeds. Savings: ~1.5 s per round for streaming / stress test / non-callback patterns.</p>
+
+  <h3>Optimization L5 · Keep blockhash cache across TXs  <span class="badge easy">Easy · 1 hour · saves ~500 ms/round</span></h3>
+  <p>Currently every call to <code>sign_and_send</code> does a fresh <code>getLatestBlockhash</code> RPC. A blockhash is valid for ~60-90 seconds. Cache for 10 s between TXs in the same round.</p>
+
+  <p>Savings: ~150 ms per TX × 3 TXs = ~450 ms per round.</p>
+
+  <h3>Optimization L6 · Parallelize dispatch and state-machine pre-commit  <span class="badge medium">Medium · 2 hours · saves ~300 ms/round</span></h3>
+  <p>On round dispatch, the coordinator currently writes the in-memory <code>Round</code> state THEN broadcasts <code>JobAssignment</code>. Devices can start generating entropy the moment they receive the assignment. Broadcasting first (and holding the state_machine write until the first commit arrives) shaves ~200-300 ms off the critical path.</p>
+
+  <h3>Realistic remaining wins (after the L1/L2 attempts)</h3>
+  <table>
+    <tr><th>Optimization</th><th>Status</th><th class="num">Saves</th></tr>
+    <tr><td><s>L1 · processed commitment on intermediate TXs</s></td><td><span class="badge hard">Reverted</span></td><td class="num">—</td></tr>
+    <tr><td><s>L2 · 3 s → sub-second poller interval</s></td><td><span class="badge hard">Reverted</span></td><td class="num">—</td></tr>
+    <tr><td>L3 · ALT-bundled commits+reveals (one TX instead of two)</td><td><span class="badge medium">Untried, recommended</span></td><td class="num">~1500 ms</td></tr>
+    <tr><td>L4 · no-callback channel drains in finalize_v2 (program upgrade)</td><td><span class="badge easy">Untried, recommended</span></td><td class="num">~1500 ms</td></tr>
+    <tr><td>L5 · blockhash cache across TXs in a round</td><td><span class="badge easy">Untried, low risk</span></td><td class="num">~500 ms</td></tr>
+    <tr><td>L6 · dispatch-first, state-machine-later</td><td><span class="badge medium">Untried</span></td><td class="num">~300 ms</td></tr>
+    <tr><td>L7 · `logsSubscribe` instead of polling (TLS rewire)</td><td><span class="badge medium">Untried</span></td><td class="num">~1500 ms</td></tr>
+    <tr><td><strong>Total achievable (L3-L7)</strong></td><td>—</td><td class="num"><strong>~5300 ms</strong></td></tr>
+  </table>
+
+  <div class="note good">
+    <strong>Realistic target after the wins above:</strong> v7.1 baseline 7 791 ms → ~<strong>4 500 ms average round</strong>. All five changes together are roughly two days of coordinator + program work. The hardware-side protocol is already under 3 seconds — everything we're cutting is off-chain plumbing. <strong>Below 3 s is not possible</strong> without either reducing the node count (single-node = no commit-reveal protocol) or upgrading to faster hardware.
+  </div>
+
+  <div class="note warn">
+    <strong>Hard lesson from the L1/L2 attempts:</strong> "obvious" easy optimizations on devnet RPC don't survive contact with the public load balancer. Anything below `confirmed` commitment in a multi-RPC-instance environment is a state-read race waiting to happen. ALT bundling (L3) is the safe latency win because it actually reduces the number of TXs, not the durability of each.
+  </div>
+</section>
+
+<section>
+  <h2>Why it's NOT a hardware bottleneck</h2>
+  <ul>
+    <li>The coordinator log field <code>elapsed_ms</code> measures from JobAssignment dispatch to "round finalized" (all 4 reveals collected). It averages <strong>2900 ms</strong> across the 360 successful rounds of A4.</li>
+    <li>Out of that 2900 ms, the 4 devices spend ~500–800 ms each on entropy generation + SHA-256 + secp256k1 signing. WebSocket round-trip over the LAN is &lt;50 ms per message.</li>
+    <li>ESP32-S3 has a dedicated hardware SHA accelerator and a hardware TRNG. Both are fast.</li>
+    <li>If every optimization above is applied, the protocol phase STAYS at ~3 seconds — it's the floor. That's the commit-reveal round itself, and it's what gives DICE its security.</li>
+  </ul>
+  <p>The 11 s headline number is 75 % Solana RPC latency + coordinator-side polling, 25 % actual crypto. Flip that after the optimizations and you have a system where the crypto is the slow part — which is exactly the right shape.</p>
+</section>
+
+<section>
+  <h2>How to verify</h2>
+  <p>Run any stress round with timestamps enabled and grep for <code>elapsed_ms</code> in the coordinator log:</p>
+  <pre>grep "round finalized!" /tmp/dice-coord.log | grep -oE 'elapsed_ms=[0-9]+'</pre>
+  <p>You'll see values around <code>2800-3300</code>. That's the real protocol time. The total round time minus that is plumbing overhead.</p>
+</section>
+
+<footer style="margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px;">
+DICE v7 · Latency Report · Generated from A2 + A4 real data · 11 s → 5 s plan · 1 day of coordinator work, no firmware change
+</footer>
+
+</div>
+</body>
+</html>

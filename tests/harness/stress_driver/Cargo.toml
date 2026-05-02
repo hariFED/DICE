@@ -1,0 +1,29 @@
+[package]
+name    = "stress-driver"
+version = "0.1.0"
+edition = "2021"
+description = "Lightweight v2 channel stress runner — loops request_randomness_auto for N rounds against live hardware and records latency distributions."
+
+[[bin]]
+name = "stress-driver"
+path = "src/main.rs"
+
+[dependencies]
+tokio              = { workspace = true }
+serde              = { workspace = true }
+serde_json         = { workspace = true }
+anyhow             = { workspace = true }
+sha2               = { workspace = true }
+hex                = { workspace = true }
+solana-sdk         = { workspace = true }
+
+clap               = { version = "4", features = ["derive"] }
+reqwest            = { version = "0.12", features = ["json"] }
+base64             = "0.22"
+bincode            = "1"
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
+# WebSocket for accountSubscribe — driver uses its own (native-tls) stack so
+# it doesn't inherit the coordinator's pinned rustls 0.21 constraint.
+tokio-tungstenite  = { version = "0.21", features = ["native-tls"] }
+futures-util       = "0.3"

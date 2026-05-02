@@ -20,6 +20,9 @@ cpi    = ["dep:dice"]
 name = "request_and_poll"
 required-features = ["client"]
 
+[[example]]
+name = "subscribe_to_feed"
+
 [dependencies]
 anchor-lang  = { workspace = true }
 solana-sdk   = { workspace = true }

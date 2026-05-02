@@ -1,0 +1,18 @@
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <title>DICE</title>
+  <!-- Isometric cube silhouette -->
+  <path d="M32 4 L60 19 L60 45 L32 60 L4 45 L4 19 Z" fill="currentColor"/>
+  <!-- Top-face split -->
+  <path d="M4 19 L32 34 L60 19" stroke="var(--background, #0a0a0a)" stroke-width="2" stroke-linejoin="miter" fill="none"/>
+  <path d="M32 4 L32 34" stroke="var(--background, #0a0a0a)" stroke-width="2" fill="none"/>
+  <!-- 2x2 subdivisions on top face -->
+  <path d="M18 11.5 L46 26.5 M46 11.5 L18 26.5" stroke="var(--background, #0a0a0a)" stroke-width="1.25" fill="none" opacity="0.9"/>
+  <!-- Front-left-right vertical seams -->
+  <path d="M32 34 L32 60" stroke="var(--background, #0a0a0a)" stroke-width="2" fill="none"/>
+  <path d="M18 26.5 L18 52.5 M46 26.5 L46 52.5" stroke="var(--background, #0a0a0a)" stroke-width="1.25" fill="none" opacity="0.9"/>
+  <!-- Mid horizontal on left + right face -->
+  <path d="M4 32 L32 47 M60 32 L32 47" stroke="var(--background, #0a0a0a)" stroke-width="1.25" fill="none" opacity="0.9"/>
+  <!-- Small protruding sub-cube in top-right corner -->
+  <path d="M46 11.5 L53 15 L53 22 L46 18.5 Z" fill="currentColor" stroke="var(--background, #0a0a0a)" stroke-width="1.25"/>
+  <path d="M46 11.5 L46 18.5 M53 15 L46 18.5" stroke="var(--background, #0a0a0a)" stroke-width="1.25" fill="none"/>
+</svg>

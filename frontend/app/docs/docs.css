@@ -1,0 +1,17 @@
+/* Syntax highlighting tokens — mono palette. The ASCII redesign drops
+   the rainbow tokens; everything reads in foreground/muted-foreground.
+   We keep `tk-c` (comment) slightly dimmer so structure is still readable. */
+
+.tk-c { color: var(--muted-foreground); font-style: italic; opacity: 0.8; }   /* comment */
+.tk-s { color: var(--foreground); }                                          /* string */
+.tk-k { color: var(--foreground); font-weight: 600; }                        /* keyword */
+.tk-t { color: var(--foreground); }                                          /* type */
+.tk-n { color: var(--foreground); }                                          /* number */
+.tk-m { color: var(--foreground); font-weight: 600; }                        /* macro! */
+.tk-a { color: var(--muted-foreground); }                                    /* attribute #[...] */
+
+/* Light-weight focus on anchor-link headers */
+article h2 > a:hover,
+article h3 > a:hover {
+  color: var(--foreground);
+}

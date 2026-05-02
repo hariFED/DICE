@@ -1,0 +1,246 @@
+{
+  "label": "explorer_live_demo_25rounds",
+  "channel_index": 250,
+  "channel_pda": "6SFHi9he2AMBbFb34wSYMJPrzG51yu9hWkhsgHSFtzQw",
+  "node_count": 4,
+  "total_rounds": 25,
+  "succeeded": 25,
+  "failed": 0,
+  "total_duration_ms": 191062,
+  "avg_ms": 7641,
+  "p50_ms": 7124,
+  "p95_ms": 10354,
+  "p99_ms": 11115,
+  "min_ms": 6596,
+  "max_ms": 11136,
+  "start_balance_sol": 3.45742268,
+  "end_balance_sol": 3.39035521,
+  "spent_sol": 0.06706747,
+  "rounds": [
+    {
+      "round_index": 0,
+      "round_id": 1,
+      "status": "ok",
+      "duration_ms": 11115,
+      "request_tx": "dXKHrgPHvcy3n5NsbwUFLLu6eVgPubmR5Au8n3d6427RTQtdVXgAS38wmQ6NteGdYFkKgEmWKNhxEpRWigQrMut",
+      "randomness_prefix": "cedd714cc71de4d1",
+      "error": null
+    },
+    {
+      "round_index": 1,
+      "round_id": 2,
+      "status": "ok",
+      "duration_ms": 6748,
+      "request_tx": "aPxrmhmGfgpRm1LYxowYF7wzymnSWib7pDVmNBMTGrrhuc8fPVAyMrVvUkBP9ErvhWNzGAWy96PFcxRLLYQYq2Y",
+      "randomness_prefix": "ccdad295f363be4a",
+      "error": null
+    },
+    {
+      "round_index": 2,
+      "round_id": 3,
+      "status": "ok",
+      "duration_ms": 6644,
+      "request_tx": "38ZAwiUc5ZP6XCwK9NuL3CRJSF9W2ymkgD823oasW98DVxyrKEcMcD2JhwAc4hV7sUXk92NjKejQ3NBLvS8eg9Qe",
+      "randomness_prefix": "6c425786692fd860",
+      "error": null
+    },
+    {
+      "round_index": 3,
+      "round_id": 4,
+      "status": "ok",
+      "duration_ms": 8011,
+      "request_tx": "2XmA1kPJniUufdXDvaJ71zfpiGXjponxfcN9c912cbTYPNjt1ygMvmWyLu9wtaydcc8YkYoUw1LrixPXdXq6EMFr",
+      "randomness_prefix": "2bf082ca3314ab28",
+      "error": null
+    },
+    {
+      "round_index": 4,
+      "round_id": 5,
+      "status": "ok",
+      "duration_ms": 6791,
+      "request_tx": "4AeFjpXWzniQ4QVWwbfwAdPtQDLSaSZaFpJtrxm79pHTPGoxj4HSkdCS6kL4ya1rMpGYpNxCMkiSKkHZHyHkFZfG",
+      "randomness_prefix": "25e2d997bc0ec161",
+      "error": null
+    },
+    {
+      "round_index": 5,
+      "round_id": 6,
+      "status": "ok",
+      "duration_ms": 7488,
+      "request_tx": "4vrU96DAKVSiAn5p18EbauqknA1ccohtxdR89V1YLwoLyzSa9xAeC1XDX2pUCgdsq9tE5XFxc5zffM8FCLEGpwHe",
+      "randomness_prefix": "09e00d10708b3790",
+      "error": null
+    },
+    {
+      "round_index": 6,
+      "round_id": 7,
+      "status": "ok",
+      "duration_ms": 6677,
+      "request_tx": "2UTohsUjzGFSvBNx5kgcNLGUA4GG5sLpzWm3osBMAdnNTspqk4GzBiRiWaQoA49gYL2n3fZaRsGtjcYMsbcAT1cQ",
+      "randomness_prefix": "5fc57b16afa87b81",
+      "error": null
+    },
+    {
+      "round_index": 7,
+      "round_id": 8,
+      "status": "ok",
+      "duration_ms": 7257,
+      "request_tx": "2yTyvvC8TUWaMu9h77EZyrhCpJB9x6jHyZjQDa2SNR6TumCEq3z2sijZ9j5CVxdwsPTyWnCYu8pjfKjV8yhWd7nD",
+      "randomness_prefix": "945015d5b28e40dc",
+      "error": null
+    },
+    {
+      "round_index": 8,
+      "round_id": 9,
+      "status": "ok",
+      "duration_ms": 11136,
+      "request_tx": "52CB1DgC5Wv5Cj41LaxT6oLQdnTSF6cJUzPsrBHjvpCy39JNhgXqi6Goz7FtUrfSdj8zPFYKByN19ehQM4Xpqg3m",
+      "randomness_prefix": "728df7f0bc286d7b",
+      "error": null
+    },
+    {
+      "round_index": 9,
+      "round_id": 10,
+      "status": "ok",
+      "duration_ms": 10354,
+      "request_tx": "3LBfDrgdPvFsnyMGCVcRQo1NTpuKLE1682bBEB8nHhjnR3mNPVzyCmrmfjTpCoYFMzsxDCVGDGiJjkiq65NCm9b3",
+      "randomness_prefix": "783a47d48d6a8658",
+      "error": null
+    },
+    {
+      "round_index": 10,
+      "round_id": 11,
+      "status": "ok",
+      "duration_ms": 7277,
+      "request_tx": "Xg1d5e5Vb43MA8z3CqZQtaoKEXCe9GR33jjYKQrHFuujfRb2eXVecjyfGzPoZZJQZum399w7Ca5GTo1QM2tM4KT",
+      "randomness_prefix": "e0e74f7a8041b8d9",
+      "error": null
+    },
+    {
+      "round_index": 11,
+      "round_id": 12,
+      "status": "ok",
+      "duration_ms": 7019,
+      "request_tx": "55G92h4GBFDnJwg44mEV353B7crmsrJZdenpQfZsJg1SPzTBMN1sQTXGvTj4dPGrzE3RtgAaFvCGwYY3qMu4vKxK",
+      "randomness_prefix": "be7ffd90cc277a42",
+      "error": null
+    },
+    {
+      "round_index": 12,
+      "round_id": 13,
+      "status": "ok",
+      "duration_ms": 7950,
+      "request_tx": "3ckEKCT33FmtuATkoKjnyfqipLRvGUm4JyJbWfXSJiGXyaGzZueKLStEx2XTFduQkGN6dVfLygJk1e62JqBf1Pyc",
+      "randomness_prefix": "9d78a4c38bc3b8d2",
+      "error": null
+    },
+    {
+      "round_index": 13,
+      "round_id": 14,
+      "status": "ok",
+      "duration_ms": 8163,
+      "request_tx": "39PWn8T2XF2sp2MJJHUQ98sgLMJ2GwX9o2pSNVpnapQdnLjsDChAPVuCDxGmEvvVqbNb7ns4jnk61BPQRFXa8Zct",
+      "randomness_prefix": "738a57104b8aaaff",
+      "error": null
+    },
+    {
+      "round_index": 14,
+      "round_id": 15,
+      "status": "ok",
+      "duration_ms": 6596,
+      "request_tx": "2W5SWvxPArf64YoCDXJCBJP2eSZAvdBrGTYrskYpHQMJS2idcKxfBadYXbLR8TKu5aXV5HXBr2arVrqH27cW7dQV",
+      "randomness_prefix": "e838095a237e74a8",
+      "error": null
+    },
+    {
+      "round_index": 15,
+      "round_id": 16,
+      "status": "ok",
+      "duration_ms": 7450,
+      "request_tx": "5Ve3LWqn5jDnDo6A9iMFrGTs2SLATy6stSfo9oY7xdHF7aZzXjCqCzEWfLsVpTBX3PcL8StvA6fvDuJTTcWKsPhN",
+      "randomness_prefix": "0762ef591eae2215",
+      "error": null
+    },
+    {
+      "round_index": 16,
+      "round_id": 17,
+      "status": "ok",
+      "duration_ms": 6809,
+      "request_tx": "5HbEsdGoHFsPyWaW3gxPkffP3jNr5SRDRNc61xKU6sfmf87cbt7cYzmHC4RMzkvQP5UtHpXHWNAnxEgMkMxFNJCd",
+      "randomness_prefix": "38f35eb9532eeaa6",
+      "error": null
+    },
+    {
+      "round_index": 17,
+      "round_id": 18,
+      "status": "ok",
+      "duration_ms": 7110,
+      "request_tx": "4uSZL4XtgiiEn5wN5pMJoa77W1dAwFxVnVnevYbKQpLeikLqdsrPG295kofdqwBPGxxbo4fC8ZMHaDF8UPUCeUyp",
+      "randomness_prefix": "97049c884424aa72",
+      "error": null
+    },
+    {
+      "round_index": 18,
+      "round_id": 19,
+      "status": "ok",
+      "duration_ms": 6830,
+      "request_tx": "2GgJvmajpN97aJgSvvTDHMJonGSNgMdL4DLt3tN1Pi8MycZdQDg93gcSY4rw6vByJzZGR4TagSaV1NTHKUDFYiFa",
+      "randomness_prefix": "75d5559f17072e23",
+      "error": null
+    },
+    {
+      "round_index": 19,
+      "round_id": 20,
+      "status": "ok",
+      "duration_ms": 6994,
+      "request_tx": "3aTcLqGcYXRH2ZVdq9izCSmXNXNuSZTbrsDVDx1Z22Fzw8esb5PThVkE7bUWpRuQfR1S9JVLo1vihnCgG4bSUgZ8",
+      "randomness_prefix": "c6656ace68cc2499",
+      "error": null
+    },
+    {
+      "round_index": 20,
+      "round_id": 21,
+      "status": "ok",
+      "duration_ms": 8018,
+      "request_tx": "3JbaQjHjCPm3DBcyde5iPz2Pz8EXv3WjPSksrzLhPsmGbZJ9wst8fjzWgoqxLqh9hDty2X1qeJBnt57Qszs8DMsQ",
+      "randomness_prefix": "35c7aec40ba5e28f",
+      "error": null
+    },
+    {
+      "round_index": 21,
+      "round_id": 22,
+      "status": "ok",
+      "duration_ms": 7112,
+      "request_tx": "1dtpLbK1LEVgmCEap3YwsECof8Tw7BspHk3xffp19bGPmfsapTmrnWsrBnxi1zN35gcvtzgJfUH6BGxwGXjepaG",
+      "randomness_prefix": "c3d3af5b6282307e",
+      "error": null
+    },
+    {
+      "round_index": 22,
+      "round_id": 23,
+      "status": "ok",
+      "duration_ms": 6861,
+      "request_tx": "2ffnEpiaRbc3iwBzkD6viG9KoBhgFtgBjWm8tBCb2hcfDpt6oS7P1iU75XNf25mHQrNEgkkCnwbmSqbVnuiVLmPC",
+      "randomness_prefix": "d404266e7a5797a5",
+      "error": null
+    },
+    {
+      "round_index": 23,
+      "round_id": 24,
+      "status": "ok",
+      "duration_ms": 7124,
+      "request_tx": "2k2bpaeCkB99P44t8fXpSPr2q5fRykgcAGkD9ZFMTZEZWRPdtqXeD8NEuMAR9hxkptjt72i8JRc3zGi3o6zWEsrj",
+      "randomness_prefix": "41b35dfd48329581",
+      "error": null
+    },
+    {
+      "round_index": 24,
+      "round_id": 25,
+      "status": "ok",
+      "duration_ms": 7511,
+      "request_tx": "sL1VySRJdJ4B5THUbZ8BUJC96MigBEA3MxmxYWXESFnPqjDWrGmHc4xkUyUKNhiVwTJBmKNH4y8oiqTToPsVTxk",
+      "randomness_prefix": "32deda3820eb9201",
+      "error": null
+    }
+  ]
+}

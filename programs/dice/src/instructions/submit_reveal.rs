@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::keccak;
-use anchor_lang::solana_program::secp256k1_recover::secp256k1_recover;
+use solana_program::keccak;
+use solana_program::secp256k1_recover::secp256k1_recover;
 
 use crate::constants::{REVEAL_TIMEOUT_SLOTS, SEED_COMMIT, SEED_REQUEST, SEED_REVEAL};
 use crate::error::DiceError;
@@ -96,39 +96,50 @@ pub fn handler(
     require!(is_selected, DiceError::UnauthorizedNode);
 
     // Verify hash(entropy) matches the stored commit
-    let entropy_hash = anchor_lang::solana_program::hash::hashv(&[&entropy]);
+    let entropy_hash = solana_program::hash::hashv(&[&entropy]);
     require!(
         entropy_hash.to_bytes() == ctx.accounts.commit_record.commit_hash,
         DiceError::RevealMismatch
     );
 
-    // Verify ECDSA secp256k1 signature
-    // The message is keccak256(entropy) following Ethereum signing convention
+    // Verify ECDSA secp256k1 signature.
+    // The message is keccak256(entropy) following Ethereum signing convention.
+    //
+    // NOTE on recovery-id logic: `secp256k1_recover` almost always returns
+    // `Ok` for BOTH recovery IDs — the two results are distinct public keys
+    // and only one of them is the signer. The previous implementation did
+    //   secp256k1_recover(.., 0, ..).or_else(|_| secp256k1_recover(.., 1, ..))
+    // which bailed out on the first Ok and returned a valid-but-wrong
+    // pubkey for half of legitimate reveals. We now try both recovery IDs
+    // and only accept the result whose compressed form matches the stored
+    // device pubkey.
     let msg_hash = keccak::hash(&entropy);
-    // signature[0..64] is [r (32 bytes) || s (32 bytes)], recovery_id = 0 or 1
-    // We try both recovery ids and check which produces the expected pubkey
     let sig_bytes = &signature[..64];
     let mut sig_arr = [0u8; 64];
     sig_arr.copy_from_slice(sig_bytes);
 
-    let recovered = secp256k1_recover(msg_hash.as_ref(), 0, &sig_arr)
-        .or_else(|_| secp256k1_recover(msg_hash.as_ref(), 1, &sig_arr))
-        .map_err(|_| DiceError::InvalidSignature)?;
+    let mut matched = false;
+    for rec_id in [0u8, 1u8] {
+        if let Ok(recovered) = secp256k1_recover(msg_hash.as_ref(), rec_id, &sig_arr) {
+            // secp256k1_recover returns an uncompressed pubkey (64 bytes,
+            // x || y without the 0x04 prefix). Compress it and compare
+            // against the stored 33-byte device pubkey.
+            let raw = recovered.0;
+            let y_parity = raw[63] & 1;
+            let prefix = if y_parity == 0 { 0x02u8 } else { 0x03u8 };
+            let mut compressed = [0u8; 33];
+            compressed[0] = prefix;
+            compressed[1..33].copy_from_slice(&raw[..32]);
+            if compressed == device_pubkey {
+                matched = true;
+                break;
+            }
+        }
+    }
+    require!(matched, DiceError::InvalidSignature);
 
-    // secp256k1_recover returns an uncompressed pubkey (64 bytes, x||y without 0x04 prefix).
-    // We need to compare against the stored compressed pubkey (33 bytes).
-    // Compress: prefix is 0x02 if y is even, 0x03 if y is odd.
-    let raw = recovered.0; // [u8; 64]
-    let y_parity = raw[63] & 1;
-    let prefix = if y_parity == 0 { 0x02u8 } else { 0x03u8 };
-    let mut compressed = [0u8; 33];
-    compressed[0] = prefix;
-    compressed[1..33].copy_from_slice(&raw[..32]);
-
-    require!(compressed == device_pubkey, DiceError::InvalidSignature);
-
-    // Record the reveal (drop req borrow first to avoid conflict)
-    drop(req);
+    // Record the reveal (release req reference to avoid borrow conflict)
+    let _ = req;
 
     let reveal = &mut ctx.accounts.reveal_record;
     reveal.request = request_key;

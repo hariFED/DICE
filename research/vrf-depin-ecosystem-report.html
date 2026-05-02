@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VRF &amp; Randomness Oracle Ecosystem on Solana: DePIN Intersection</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --surface2: #1a1a1a;
+    --surface3: #222;
+    --border: #1e1e1e;
+    --text: #d4d4d4;
+    --dim: #777;
+    --accent: #00ff88;
+    --accent2: #00cc66;
+    --blue: #4da6ff;
+    --purple: #b388ff;
+    --warn: #ff6b35;
+    --red: #ff4444;
+    --yellow: #ffd866;
+    --cyan: #00d4ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ---- Header ---- */
+  .header {
+    background: linear-gradient(135deg, #0d1117, #060d08 50%, #0d1117);
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+  }
+  .header h1 { font-size: 2.2rem; color: var(--accent); letter-spacing: -0.02em; }
+  .header .sub { color: var(--dim); font-size: 0.95rem; margin-top: 0.3rem; }
+  .header .meta { color: var(--dim); font-size: 0.78rem; margin-top: 0.6rem; opacity: 0.7; }
+  .header-tags { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+
+  /* ---- Container ---- */
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+  /* ---- Executive Banner ---- */
+  .exec-banner {
+    background: linear-gradient(90deg, rgba(0,255,136,0.06), rgba(0,255,136,0.01));
+    border-left: 3px solid var(--accent);
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.9rem;
+  }
+  .exec-banner strong { color: var(--accent); }
+  .exec-banner ul { margin: 0.75rem 0 0 1.25rem; }
+  .exec-banner li { margin-bottom: 0.5rem; font-size: 0.88rem; }
+
+  /* ---- Sections ---- */
+  .section { margin-top: 3rem; }
+  .section-title {
+    font-size: 1.35rem;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .section-num {
+    background: rgba(0,255,136,0.12);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+  }
+  .section-subtitle {
+    font-size: 1.05rem;
+    color: #fff;
+    margin: 1.8rem 0 0.75rem;
+    padding-left: 0.5rem;
+    border-left: 2px solid var(--accent);
+  }
+
+  /* ---- Cards ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #333; }
+  .card h3 {
+    font-size: 1rem;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card p, .card li { font-size: 0.88rem; }
+  .card ul { margin: 0.5rem 0 0 1.25rem; }
+  .card li { margin-bottom: 0.3rem; }
+  .card .note {
+    background: rgba(0,255,136,0.05);
+    border-left: 2px solid var(--accent);
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.82rem;
+  }
+  .card .note strong { color: var(--accent); }
+  .card .warn-note {
+    background: rgba(255,68,68,0.05);
+    border-left: 2px solid var(--red);
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.82rem;
+  }
+  .card .warn-note strong { color: var(--red); }
+
+  /* ---- Tags ---- */
+  .tag {
+    display: inline-block;
+    padding: 0.18rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .tag-green { background: rgba(0,255,136,0.12); color: var(--accent); }
+  .tag-blue { background: rgba(77,166,255,0.12); color: var(--blue); }
+  .tag-purple { background: rgba(179,136,255,0.12); color: var(--purple); }
+  .tag-warn { background: rgba(255,107,53,0.12); color: var(--warn); }
+  .tag-red { background: rgba(255,68,68,0.12); color: var(--red); }
+  .tag-dim { background: rgba(119,119,119,0.12); color: var(--dim); }
+  .tag-cyan { background: rgba(0,212,255,0.12); color: var(--cyan); }
+
+  /* ---- Tables ---- */
+  .table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  th {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    background: var(--surface2);
+    color: var(--accent);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid #151515;
+    vertical-align: top;
+  }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+  td.provider-name { color: #fff; font-weight: 600; white-space: nowrap; }
+
+  /* ---- Links ---- */
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---- Quote Block ---- */
+  .quote-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--purple);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .quote-block blockquote {
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #ccc;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+  }
+  .quote-block .attribution {
+    font-size: 0.75rem;
+    color: var(--dim);
+  }
+  .quote-block .attribution a { color: var(--purple); }
+
+  /* ---- Stat Grid ---- */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+  @media (max-width: 768px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .stat-grid { grid-template-columns: 1fr; } }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .stat-val {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.2rem;
+  }
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ---- Capability Grid ---- */
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  @media (max-width: 640px) { .cap-grid { grid-template-columns: 1fr; } }
+  .cap-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.85rem;
+  }
+  .cap-box h4 { color: var(--accent); font-size: 0.8rem; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .cap-box p { font-size: 0.8rem; color: var(--dim); }
+
+  /* ---- Gap Indicator ---- */
+  .gap-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .gap-fill {
+    height: 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .gap-label {
+    font-size: 0.78rem;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .gap-severity {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  /* ---- Convergence Diagram ---- */
+  .convergence {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+  @media (max-width: 640px) { .convergence { grid-template-columns: 1fr; } }
+  .conv-pillar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1rem;
+    position: relative;
+  }
+  .conv-pillar h4 { font-size: 0.85rem; color: #fff; margin-bottom: 0.5rem; }
+  .conv-pillar p { font-size: 0.78rem; color: var(--dim); }
+  .conv-pillar .conv-icon { font-size: 1.8rem; margin-bottom: 0.5rem; display: block; }
+  .conv-center {
+    background: linear-gradient(135deg, rgba(0,255,136,0.08), rgba(0,212,255,0.08));
+    border: 1px solid rgba(0,255,136,0.25);
+  }
+  .conv-center h4 { color: var(--accent); }
+
+  /* ---- Invest Row ---- */
+  .invest-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  @media (max-width: 640px) { .invest-grid { grid-template-columns: 1fr; } }
+
+  /* ---- Pain Point List ---- */
+  .pain-list { list-style: none; padding: 0; }
+  .pain-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #151515;
+    font-size: 0.85rem;
+  }
+  .pain-list li:last-child { border-bottom: none; }
+  .pain-sev {
+    flex-shrink: 0;
+    width: 50px;
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.2rem 0;
+    border-radius: 3px;
+    margin-top: 0.1rem;
+  }
+  .sev-high { background: rgba(255,68,68,0.12); color: var(--red); }
+  .sev-med { background: rgba(255,216,102,0.12); color: var(--yellow); }
+  .sev-low { background: rgba(119,119,119,0.12); color: var(--dim); }
+
+  /* ---- Moat ---- */
+  .moat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  @media (max-width: 768px) { .moat-grid { grid-template-columns: 1fr; } }
+  .moat-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .moat-item h4 { font-size: 0.85rem; color: #fff; margin-bottom: 0.35rem; }
+  .moat-item p { font-size: 0.78rem; color: var(--dim); }
+  .moat-strength {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    margin-top: 0.5rem;
+  }
+
+  /* ---- Footer ---- */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+    font-size: 0.75rem;
+    color: var(--dim);
+  }
+
+  /* ---- Source List ---- */
+  .source-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4rem 1.5rem;
+    font-size: 0.78rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 640px) { .source-list { grid-template-columns: 1fr; } }
+  .source-list a { color: var(--blue); }
+  .source-num { color: var(--dim); font-weight: 600; margin-right: 0.3rem; }
+</style>
+</head>
+<body>
+
+<!-- ==================== HEADER ==================== -->
+<div class="header">
+  <h1>VRF &amp; Randomness Oracle Ecosystem</h1>
+  <div class="sub">Solana Infrastructure &amp; DePIN Intersection Research</div>
+  <div class="meta">April 4, 2026 &mdash; Strategic Research Report</div>
+  <div class="header-tags">
+    <span class="tag tag-green">VRF</span>
+    <span class="tag tag-blue">SOLANA</span>
+    <span class="tag tag-purple">DePIN</span>
+    <span class="tag tag-cyan">ORACLES</span>
+    <span class="tag tag-warn">RANDOMNESS</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== EXECUTIVE SUMMARY ==================== -->
+<div class="exec-banner">
+  <strong>Executive Summary</strong>
+  <ul>
+    <li><strong>Three-player oligopoly:</strong> Switchboard (SGX-TEE), ORAO (Byzantine quorum), and MagicBlock (ephemeral rollup plugin) dominate Solana VRF. No provider offers hardware-backed true random number generation from physical entropy sources.</li>
+    <li><strong>TEE trust erosion:</strong> Switchboard v3 relies on Intel SGX, which Intel has deprecated on consumer CPUs. IAS end-of-life was April 2025; PCS API v2/v3 EOL extended to April 30, 2026. Documented side-channel attacks can extract keys in minutes.</li>
+    <li><strong>DePIN at peak momentum:</strong> $19.2B sector market cap (+270% YoY), $4.1B on Solana. VCs (a16z, Multicoin, Lightspeed) actively deploying. No DePIN project targets randomness as a service.</li>
+    <li><strong>Developer pain is real:</strong> Cost at scale, two-transaction latency, callback failures, deprecated SDKs, and SGX trust concerns are recurring themes.</li>
+    <li><strong>Uncontested niche:</strong> A hardware-backed commit-reveal VRF via physical node network (DePIN model) would be the first product at this intersection &mdash; combining true entropy, cryptographic proofs, and decentralized physical infrastructure.</li>
+  </ul>
+</div>
+
+<!-- ==================== KEY METRICS ==================== -->
+<div class="stat-grid">
+  <div class="stat-box">
+    <div class="stat-val">$19.2B</div>
+    <div class="stat-label">DePIN Sector Market Cap</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">$4-10M</div>
+    <div class="stat-label">On-Chain Randomness TAM</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">3</div>
+    <div class="stat-label">Active Solana VRF Providers</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">0</div>
+    <div class="stat-label">Hardware-Entropy DePIN Projects</div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 1: ECOSYSTEM MAP ==================== -->
+<div class="section">
+  <h2 class="section-title"><span class="section-num">01</span> VRF Ecosystem Map</h2>
+
+  <h3 class="section-subtitle">Provider Comparison</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Provider</th>
+          <th>Architecture</th>
+          <th>Entropy Source</th>
+          <th>Verification</th>
+          <th>Cost / Request</th>
+          <th>Latency</th>
+          <th>Trust Model</th>
+          <th>Solana Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="provider-name">Switchboard v3 (SRS)</td>
+          <td>Intel SGX enclave + oracle network</td>
+          <td>PRNG inside TEE</td>
+          <td>TEE attestation</td>
+          <td>~0.002 SOL</td>
+          <td>Single-tx callback</td>
+          <td><span class="tag tag-warn">SGX Trust</span></td>
+          <td><span class="tag tag-green">Live</span></td>
+        </tr>
+        <tr>
+          <td class="provider-name">Switchboard v2 (VRF)</td>
+          <td>Oracle network + VRF signature</td>
+          <td>Ed25519 VRF</td>
+          <td>On-chain VRF proof</td>
+          <td>~0.002 SOL</td>
+          <td>2-tx pattern</td>
+          <td><span class="tag tag-blue">Oracle Trust</span></td>
+          <td><span class="tag tag-red">Deprecated</span></td>
+        </tr>
+        <tr>
+          <td class="provider-name">ORAO VRF v2</td>
+          <td>Multi-node Byzantine quorum</td>
+          <td>EdDSA-based VRF</td>
+          <td>On-chain BFT proof</td>
+          <td>0.001 SOL + rent</td>
+          <td>Sub-second</td>
+          <td><span class="tag tag-blue">BFT Majority</span></td>
+          <td><span class="tag tag-green">Live</span></td>
+        </tr>
+        <tr>
+          <td class="provider-name">MagicBlock VRF</td>
+          <td>Ephemeral rollup plugin</td>
+          <td>Oracle collaboration</td>
+          <td>Mathematical proof</td>
+          <td>Single tx (unpublished)</td>
+          <td>Milliseconds (in rollup)</td>
+          <td><span class="tag tag-purple">Rollup Trust</span></td>
+          <td><span class="tag tag-cyan">Early</span></td>
+        </tr>
+        <tr>
+          <td class="provider-name">Pyth Entropy</td>
+          <td>Commit-reveal hash chain</td>
+          <td>Provider hash chain</td>
+          <td>Hash chain verification</td>
+          <td>Varies</td>
+          <td>Two-phase</td>
+          <td><span class="tag tag-blue">Provider Trust</span></td>
+          <td><span class="tag tag-red">EVM Only</span></td>
+        </tr>
+        <tr>
+          <td class="provider-name">Chainlink VRF</td>
+          <td>Distributed oracle network</td>
+          <td>ECVRF proof</td>
+          <td>On-chain proof</td>
+          <td>~0.25 LINK</td>
+          <td>Multi-block</td>
+          <td><span class="tag tag-blue">Oracle Network</span></td>
+          <td><span class="tag tag-red">Not on Solana</span></td>
+        </tr>
+        <tr>
+          <td class="provider-name">drand</td>
+          <td>BLS threshold beacon</td>
+          <td>Collective BLS sigs</td>
+          <td>Public verification</td>
+          <td>Free</td>
+          <td>3s rounds</td>
+          <td><span class="tag tag-green">League of Entropy</span></td>
+          <td><span class="tag tag-dim">No Integration</span></td>
+        </tr>
+        <tr>
+          <td class="provider-name">Supra dVRF</td>
+          <td>Distributed key aggregation</td>
+          <td>Threshold VRF</td>
+          <td>On-chain proof</td>
+          <td>Varies</td>
+          <td>Multi-block</td>
+          <td><span class="tag tag-blue">Validator Set</span></td>
+          <td><span class="tag tag-dim">Limited</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-subtitle">Architectural Classification</h3>
+  <div class="cap-grid">
+    <div class="cap-box">
+      <h4>Software-Only VRF</h4>
+      <p>Switchboard v2, ORAO, Chainlink, Supra. Relies on cryptographic hardness assumptions. Verifiable via on-chain proof checking. Standard approach.</p>
+    </div>
+    <div class="cap-box">
+      <h4>TEE-Dependent</h4>
+      <p>Switchboard v3 SRS. Uses Intel SGX for randomness generation. Not a true VRF &mdash; verifiability from TEE attestation. Vulnerable to documented side-channel attacks.</p>
+    </div>
+    <div class="cap-box">
+      <h4>Rollup-Integrated</h4>
+      <p>MagicBlock. VRF as a plugin within ephemeral rollups. Lowest latency potential but requires rollup adoption. Early stage with limited documentation.</p>
+    </div>
+    <div class="cap-box" style="border-color: rgba(0,255,136,0.3); background: rgba(0,255,136,0.03);">
+      <h4>Hardware Entropy (Gap)</h4>
+      <p>No provider exists on Solana. True RNG from physical phenomena. Would combine DePIN economics with cryptographic VRF proofs. SpaceComputer (satellite) is pre-commercial.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 2: SENTIMENT ANALYSIS ==================== -->
+<div class="section">
+  <h2 class="section-title"><span class="section-num">02</span> Sentiment &amp; Discourse Analysis</h2>
+
+  <h3 class="section-subtitle">Developer Pain Points</h3>
+
+  <div class="card">
+    <h3><span class="tag tag-red">HIGH</span> Two-Transaction Latency</h3>
+    <p>The async request-fulfill pattern forces developers to redesign UX flows around waiting states. Players cannot start new rounds until current randomness is fulfilled. Gaming protocols report this as the primary friction point.</p>
+    <div class="warn-note">
+      <strong>Developer impact:</strong> "The randomness will not be immediately available for your contract, so developers need to design it in a way that it'll wait for randomness being fulfilled." &mdash; ORAO VRF docs
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-red">HIGH</span> SGX Trust Dependency</h3>
+    <p>Switchboard v3 traded cryptographic VRF proofs for TEE attestation. Graz University researchers extracted RSA keys from SGX enclaves in 5 minutes. Foreshadow and SgxPectre attacks demonstrate structural vulnerability. Intel has deprecated SGX on consumer CPUs (11th gen+).</p>
+    <div class="warn-note">
+      <strong>Timeline pressure:</strong> Intel IAS end-of-life: April 2025. PCS API v2/v3 EOL: April 30, 2026. Infrastructure depending on SGX faces a deprecation cliff.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-warn">MEDIUM</span> Cost at Scale</h3>
+    <p>At 0.001-0.002 SOL per request, high-frequency gaming and DeFi applications face non-trivial costs. Account rent for ORAO request accounts adds hidden overhead. Large-scale protocols report this impacts feasibility.</p>
+    <div class="note">
+      <strong>Context:</strong> "Switchboard can be expensive for extensive random requests, potentially impacting the feasibility of large-scale applications." &mdash; Adevar Labs
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-warn">MEDIUM</span> Integration Complexity &amp; Deprecated SDKs</h3>
+    <p>The official Solana Foundation VRF course uses deprecated switchboard-v2 library. ORAO callback CPI errors cannot be caught on Solana, leading to silent failures. Configurable slot deadlines add architectural complexity. Limited provider choice creates vendor lock-in.</p>
+  </div>
+
+  <h3 class="section-subtitle">Exploit History</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Incident</th><th>Root Cause</th><th>Impact</th><th>Lesson</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="provider-name">$COPE Roulette</td>
+          <td>Predictable blockhash-based PRNG</td>
+          <td>Exploited by attackers</td>
+          <td>Never use blockhash for randomness</td>
+        </tr>
+        <tr>
+          <td class="provider-name">Trash Panda Mint</td>
+          <td>Predictable mint ordering</td>
+          <td>Sniped by bots</td>
+          <td>NFT minting needs VRF</td>
+        </tr>
+        <tr>
+          <td class="provider-name">Candy Machine v2</td>
+          <td>Slot hash + clock time seed</td>
+          <td>Validators could influence outcomes</td>
+          <td>Validators are adversarial actors</td>
+        </tr>
+        <tr>
+          <td class="provider-name">Drift Protocol (Apr 2026)</td>
+          <td>Solana feature exploitation</td>
+          <td>$270M drained</td>
+          <td>Infrastructure-level trust matters</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-subtitle">Ecosystem Sentiment Summary</h3>
+  <div class="cap-grid">
+    <div class="cap-box">
+      <h4>Positive Signals</h4>
+      <p>Switchboard Surge (sub-100ms) well received. MagicBlock's plugin approach praised. ORAO's low fees appreciated by indie devs. Active gaming ecosystem creating demand.</p>
+    </div>
+    <div class="cap-box">
+      <h4>Negative Signals</h4>
+      <p>No standard high-security DRB exists (a16z). Pyth Entropy absent from Solana. Chainlink VRF absent from Solana. Limited choice creates lock-in. SGX deprecation trajectory.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 3: DePIN + VRF CONVERGENCE ==================== -->
+<div class="section">
+  <h2 class="section-title"><span class="section-num">03</span> DePIN + VRF Convergence</h2>
+
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="stat-val">$19.2B</div>
+      <div class="stat-label">DePIN Market Cap (Sep 2025)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">270%</div>
+      <div class="stat-label">Year-over-Year Growth</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">$150M</div>
+      <div class="stat-label">Monthly On-Chain Revenue (Jan 2026)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">~250</div>
+      <div class="stat-label">Tracked DePIN Projects</div>
+    </div>
+  </div>
+
+  <h3 class="section-subtitle">Trust Model Comparison</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Software VRF</th>
+          <th>TEE-Based (SGX)</th>
+          <th>Hardware Entropy (Physical)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Entropy Source</td>
+          <td>Algorithmic PRNG</td>
+          <td>PRNG inside enclave</td>
+          <td style="color: var(--accent);">True RNG (physical phenomenon)</td>
+        </tr>
+        <tr>
+          <td>Verifiability</td>
+          <td>Cryptographic proof</td>
+          <td>TEE attestation</td>
+          <td style="color: var(--accent);">Crypto proof + hardware attestation</td>
+        </tr>
+        <tr>
+          <td>Trust Assumption</td>
+          <td>Crypto hardness</td>
+          <td>Intel + operator</td>
+          <td style="color: var(--accent);">Cryptographic hardness only</td>
+        </tr>
+        <tr>
+          <td>Side-Channel Risk</td>
+          <td><span class="tag tag-green">Low</span></td>
+          <td><span class="tag tag-red">High</span></td>
+          <td><span class="tag tag-green">Minimal</span></td>
+        </tr>
+        <tr>
+          <td>Decentralization</td>
+          <td>Depends on oracle count</td>
+          <td>Limited by SGX hardware</td>
+          <td style="color: var(--accent);">Scales with node network</td>
+        </tr>
+        <tr>
+          <td>DePIN Compatible</td>
+          <td><span class="tag tag-dim">No</span></td>
+          <td><span class="tag tag-dim">No</span></td>
+          <td><span class="tag tag-green">Yes</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-subtitle">The Convergence Thesis</h3>
+  <div class="convergence">
+    <div class="conv-pillar">
+      <span class="conv-icon">&#x1F3D7;</span>
+      <h4>DePIN Maturation</h4>
+      <p>Proven model: hardware operators deploy infrastructure for token rewards. Helium (1M+ hotspots), Hivemapper (200K+ dashcams). The flywheel works.</p>
+    </div>
+    <div class="conv-pillar conv-center">
+      <span class="conv-icon">&#x2728;</span>
+      <h4>Unoccupied Intersection</h4>
+      <p>Hardware entropy nodes + DePIN economics + commit-reveal VRF + Solana delivery. No project exists at this convergence point.</p>
+    </div>
+    <div class="conv-pillar">
+      <span class="conv-icon">&#x1F3B2;</span>
+      <h4>Randomness Demand</h4>
+      <p>Gaming, NFTs, DeFi, prediction markets all need provably fair randomness. Growing Solana ecosystem drives increasing request volume.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Missing DePIN Category: Randomness Infrastructure</h3>
+    <p>Active DePIN categories on Solana include wireless (Helium), mapping (Hivemapper), compute (Render, io.net), positioning (Geodnet), bandwidth (Pipe), and AI inference (Gradient). <strong>Randomness/oracle infrastructure via physical nodes is entirely absent.</strong> No physical node network provides verifiable oracle services through hardware entropy. This represents the only major cryptographic primitive not yet addressed by DePIN.</p>
+    <div class="note">
+      <strong>Key insight:</strong> A hardware-backed randomness network would be the first DePIN project providing a cryptographic service rather than a commodity resource (storage, compute, bandwidth).
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 4: PAIN POINTS & MARKET GAPS ==================== -->
+<div class="section">
+  <h2 class="section-title"><span class="section-num">04</span> Pain Points &amp; Market Gaps</h2>
+
+  <h3 class="section-subtitle">Severity-Ranked Pain Points</h3>
+  <div class="card">
+    <ul class="pain-list">
+      <li>
+        <span class="pain-sev sev-high">High</span>
+        <div><strong>Two-transaction latency</strong> &mdash; Async pattern breaks real-time gaming UX. Players wait seconds between action and outcome. Redesigning around callbacks adds architectural complexity.</div>
+      </li>
+      <li>
+        <span class="pain-sev sev-high">High</span>
+        <div><strong>SGX trust dependency</strong> &mdash; Switchboard v3 relies on Intel enclaves with documented vulnerabilities. No true VRF proof; verification via TEE attestation. Deprecation timeline creates platform risk.</div>
+      </li>
+      <li>
+        <span class="pain-sev sev-high">High</span>
+        <div><strong>Silent callback failures</strong> &mdash; Solana cannot catch CPI errors. Oracle uses configurable slot deadline; after deadline, callback is silently ignored. Developers must build manual retry logic.</div>
+      </li>
+      <li>
+        <span class="pain-sev sev-med">Med</span>
+        <div><strong>Cost at scale</strong> &mdash; 0.001-0.002 SOL per request plus account rent. High-frequency protocols (gaming, casino) face non-trivial costs at thousands of requests per day.</div>
+      </li>
+      <li>
+        <span class="pain-sev sev-med">Med</span>
+        <div><strong>No Chainlink / Pyth VRF on Solana</strong> &mdash; Cross-chain developers accustomed to Chainlink VRF have no path on Solana. Pyth Entropy is EVM-only. Creates ecosystem gap.</div>
+      </li>
+      <li>
+        <span class="pain-sev sev-med">Med</span>
+        <div><strong>Integration complexity</strong> &mdash; Deprecated SDKs in official courses. Fragmented documentation. Steep Rust learning curve compounds the problem for new Solana developers.</div>
+      </li>
+      <li>
+        <span class="pain-sev sev-med">Med</span>
+        <div><strong>Vendor lock-in</strong> &mdash; Limited provider choice (effectively 2-3 options). Abstracting over multiple providers adds significant complexity with no standard interface.</div>
+      </li>
+    </ul>
+  </div>
+
+  <h3 class="section-subtitle">Demand by Vertical</h3>
+  <div class="cap-grid">
+    <div class="cap-box">
+      <h4>On-Chain Gaming (Highest Demand)</h4>
+      <p>Real-time loot drops (&lt;100ms), fair matchmaking, combat resolution, provably rare item generation, anti-cheat randomness validators cannot predict. Dozens of Solana gaming protocols need VRF.</p>
+    </div>
+    <div class="cap-box">
+      <h4>NFT Platforms</h4>
+      <p>Fair mint ordering (Candy Machine exploits proved the need), trait rarity assignment, auction randomness for blind bidding. Any NFT launch with rarity mechanics needs VRF.</p>
+    </div>
+    <div class="cap-box">
+      <h4>DeFi Protocols</h4>
+      <p>Liquidation ordering fairness, random validator selection for governance, lottery mechanisms, yield distribution. Prediction markets need provably fair resolution.</p>
+    </div>
+    <div class="cap-box">
+      <h4>Casino &amp; Betting</h4>
+      <p>Gamba, Degen Coin Flip, and others require high-volume, low-cost, provably fair randomness. This vertical drives the highest per-protocol request volume on Solana.</p>
+    </div>
+  </div>
+
+  <h3 class="section-subtitle">The Hardware-Backed Opportunity</h3>
+  <div class="card" style="border-color: rgba(0,255,136,0.25);">
+    <h3 style="color: var(--accent);">Seven Properties That Do Not Exist Together Today</h3>
+    <ol style="margin: 0.75rem 0 0 1.25rem; font-size: 0.88rem;">
+      <li><strong>True hardware entropy</strong> &mdash; not PRNG, not TEE-encapsulated PRNG</li>
+      <li><strong>Cryptographic VRF proof</strong> &mdash; verifiable on-chain without trusting hardware manufacturer</li>
+      <li><strong>Commit-reveal protocol</strong> &mdash; eliminates front-running and manipulation</li>
+      <li><strong>Physical node network</strong> &mdash; DePIN tokenomics for decentralization and growth</li>
+      <li><strong>Sub-second fulfillment</strong> &mdash; competitive with Switchboard v3</li>
+      <li><strong>Low cost</strong> &mdash; sub-0.002 SOL to compete on price</li>
+      <li><strong>No TEE dependency</strong> &mdash; immune to SGX deprecation and side-channel attacks</li>
+    </ol>
+    <div class="note">
+      <strong>Market position:</strong> This combination represents a completely uncontested niche. The solution would be the first to combine DePIN hardware economics with cryptographic randomness delivery.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 5: COMPETITIVE ADVANTAGE ==================== -->
+<div class="section">
+  <h2 class="section-title"><span class="section-num">05</span> Competitive Advantage Indicators</h2>
+
+  <h3 class="section-subtitle">Defensibility Analysis</h3>
+  <div class="moat-grid">
+    <div class="moat-item">
+      <h4>Hardware Entropy</h4>
+      <p>True RNG from physical phenomena. Cannot be replicated in software. Provides a differentiation that software-only competitors cannot match.</p>
+      <span class="moat-strength" style="background: rgba(0,255,136,0.12); color: var(--accent);">Strong Moat</span>
+    </div>
+    <div class="moat-item">
+      <h4>Physical Node Network</h4>
+      <p>DePIN flywheel: more nodes = more decentralized = more trustworthy. Network effects compound over time. Costly for competitors to replicate.</p>
+      <span class="moat-strength" style="background: rgba(0,255,136,0.12); color: var(--accent);">Strong Moat</span>
+    </div>
+    <div class="moat-item">
+      <h4>Private PKI</h4>
+      <p>Device identity and attestation without Intel or any single vendor dependency. Self-sovereign hardware identity is a unique architectural advantage.</p>
+      <span class="moat-strength" style="background: rgba(0,255,136,0.12); color: var(--accent);">Strong Moat</span>
+    </div>
+    <div class="moat-item">
+      <h4>No TEE Dependency</h4>
+      <p>Immune to Intel SGX deprecation trajectory and documented side-channel vulnerabilities. As SGX support narrows, this advantage grows.</p>
+      <span class="moat-strength" style="background: rgba(255,216,102,0.12); color: var(--yellow);">Moderate Moat</span>
+    </div>
+    <div class="moat-item">
+      <h4>Commit-Reveal Protocol</h4>
+      <p>Mathematically eliminates front-running. Provably fair with on-chain verification. Well-understood security model.</p>
+      <span class="moat-strength" style="background: rgba(255,216,102,0.12); color: var(--yellow);">Moderate Moat</span>
+    </div>
+    <div class="moat-item">
+      <h4>Low-Cost Delivery</h4>
+      <p>Hardware amortization model can undercut per-request oracle fees. Node operators absorb capital cost; per-request marginal cost is near-zero.</p>
+      <span class="moat-strength" style="background: rgba(255,216,102,0.12); color: var(--yellow);">Moderate Moat</span>
+    </div>
+  </div>
+
+  <h3 class="section-subtitle">Timing Assessment</h3>
+  <div class="cap-grid">
+    <div class="cap-box" style="border-color: rgba(0,255,136,0.2);">
+      <h4 style="color: var(--accent);">Favorable Factors</h4>
+      <p>Intel SGX IAS EOL (Apr 2025) &amp; PCS API EOL (Apr 2026) create urgency. DePIN at peak growth. Solana gaming expanding. Zero competitors in hardware-entropy DePIN niche. VCs actively deploying into infrastructure. Colosseum DePIN track offers $250K pre-seed.</p>
+    </div>
+    <div class="cap-box" style="border-color: rgba(255,107,53,0.2);">
+      <h4 style="color: var(--warn);">Challenging Factors</h4>
+      <p>Switchboard Surge raised the bar (sub-100ms). Small direct TAM ($4-10M/yr for VRF alone). Hardware deployment needs supply chain. Developer switching costs from established providers. Rust learning curve for new integrators.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Positioning Strategy</h3>
+    <p>The strongest positioning is <strong>not</strong> "another VRF provider" but rather:</p>
+    <div class="note" style="font-size: 1rem; font-weight: 600; padding: 0.75rem 1rem;">
+      "The first decentralized physical infrastructure network for cryptographic randomness"
+    </div>
+    <p style="margin-top: 0.75rem;">This frames the solution as a DePIN project (taps $19.2B sector narrative), an infrastructure primitive (not just an oracle feature), and a hardware-differentiated product (not software competing with software).</p>
+  </div>
+</div>
+
+<!-- ==================== SECTION 6: NOTABLE QUOTES ==================== -->
+<div class="section">
+  <h2 class="section-title"><span class="section-num">06</span> Notable Quotes &amp; Sources</h2>
+
+  <h3 class="section-subtitle">On Randomness Infrastructure</h3>
+
+  <div class="quote-block">
+    <blockquote>"We still lack any standard DRB that provides high security."</blockquote>
+    <div class="attribution">&mdash; Joseph Bonneau &amp; Valeria Nikolaenko, <a href="https://a16zcrypto.com/posts/article/public-randomness-and-randomness-beacons/">a16z Crypto Research</a></div>
+  </div>
+
+  <div class="quote-block">
+    <blockquote>"Public randomness is an essential component of many protocols. No attacker, or coalition of attackers, should be able to bias the output."</blockquote>
+    <div class="attribution">&mdash; Bonneau &amp; Nikolaenko, <a href="https://a16zcrypto.com/posts/article/public-randomness-and-randomness-beacons/">a16z Crypto</a></div>
+  </div>
+
+  <div class="quote-block">
+    <blockquote>"You don't build a new oracle or launch a blockchain in space for the sake of randomness alone. Cosmic entropy won't make a market."</blockquote>
+    <div class="attribution">&mdash; Daniel Bar, SpaceComputer co-founder, <a href="https://blog.spacecomputer.io/randomness-as-infrastructure/">Randomness as Infrastructure</a></div>
+  </div>
+
+  <div class="quote-block">
+    <blockquote>"The entire on-chain randomness market produces an estimated $4 to $10 million annually. VRF generates less than 1% of Chainlink's total revenue."</blockquote>
+    <div class="attribution">&mdash; SpaceComputer, <a href="https://blog.spacecomputer.io/randomness-as-infrastructure/">Market Analysis</a></div>
+  </div>
+
+  <h3 class="section-subtitle">On DePIN &amp; Infrastructure</h3>
+
+  <div class="quote-block">
+    <blockquote>"DePIN networks are inherently decentralised, making them well suited for the distributed, low-latency, and cost-effective edge inference that will drive the market in 2026 and beyond."</blockquote>
+    <div class="attribution">&mdash; <a href="https://crypto.com/us/research/2025-review-2026-ahead">crypto.com 2025/2026 Year Review</a></div>
+  </div>
+
+  <div class="quote-block">
+    <blockquote>"If a single Oracle verifies all contributions, it becomes a point of failure. DePIN projects are exploring decentralized Oracles that use multiple verification nodes and secure computing methods."</blockquote>
+    <div class="attribution">&mdash; <a href="https://www.frontiersin.org/journals/blockchain/articles/10.3389/fbloc.2025.1644115/full">Frontiers in Blockchain, DePIN Tokenomics</a></div>
+  </div>
+
+  <div class="quote-block">
+    <blockquote>"Execution is the only moat, always."</blockquote>
+    <div class="attribution">&mdash; Anatoly Yakovenko, Solana co-founder, <a href="https://blockworks.co/news/anatoly-yakovenko-solana-insights">Blockworks</a></div>
+  </div>
+
+  <h3 class="section-subtitle">On SGX Vulnerabilities &amp; Trust</h3>
+
+  <div class="quote-block">
+    <blockquote>"Researchers at Graz University of Technology developed a proof-of-concept that can grab RSA keys from SGX enclaves running on the same system within five minutes."</blockquote>
+    <div class="attribution">&mdash; <a href="https://dl.acm.org/doi/fullHtml/10.1145/3456631">ACM Computing Surveys, SGX Vulnerability Analysis</a></div>
+  </div>
+
+  <div class="quote-block">
+    <blockquote>"Neither public randomness beacons nor VRFs solve for private randomness delivery."</blockquote>
+    <div class="attribution">&mdash; <a href="https://blog.spacecomputer.io/randomness-as-infrastructure/">SpaceComputer Infrastructure Thesis</a></div>
+  </div>
+
+  <div class="quote-block">
+    <blockquote>"Switchboard can be expensive for extensive random requests, potentially impacting the feasibility of large-scale applications."</blockquote>
+    <div class="attribution">&mdash; <a href="https://www.adevarlabs.com/blog/on-chain-randomness-on-solana-predictability-manipulation-safer-alternatives-part-1">Adevar Labs Technical Analysis</a></div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 7: INVESTMENT LANDSCAPE ==================== -->
+<div class="section">
+  <h2 class="section-title"><span class="section-num">07</span> Investment Landscape</h2>
+
+  <h3 class="section-subtitle">Funded Competitors</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Total Raised</th>
+          <th>Key Round</th>
+          <th>Lead Investors</th>
+          <th>Notable Backers</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="provider-name">Switchboard</td>
+          <td>$11M</td>
+          <td>Series A ($7.5M, May 2024)</td>
+          <td>Tribe Capital, RockawayX</td>
+          <td>Solana Foundation, Aptos, OtterSec, Mert Mumtaz, Joe McCann</td>
+        </tr>
+        <tr>
+          <td class="provider-name">MagicBlock</td>
+          <td>$10.5M</td>
+          <td>Seed ($7.5M, Apr 2025)</td>
+          <td>Lightspeed Faction</td>
+          <td>a16z CSX (pre-seed), Anatoly Yakovenko, Mert Mumtaz, Delphi Digital</td>
+        </tr>
+        <tr>
+          <td class="provider-name">Supra</td>
+          <td>$42M+</td>
+          <td>Seed (multiple closes)</td>
+          <td>Animoca Brands, Coinbase Ventures</td>
+          <td>Citi Ventures, HashKey, Prosus Ventures, Razer</td>
+        </tr>
+        <tr>
+          <td class="provider-name">Chainlink Labs</td>
+          <td>$300M+</td>
+          <td>Multiple rounds</td>
+          <td>a16z, others</td>
+          <td>Market leader; NOT on Solana for VRF</td>
+        </tr>
+        <tr>
+          <td class="provider-name">ORAO Network</td>
+          <td>Undisclosed</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td>Low public funding profile</td>
+        </tr>
+        <tr>
+          <td class="provider-name">Pyth Network</td>
+          <td>Token launch</td>
+          <td>N/A</td>
+          <td>Jump Crypto (contributor)</td>
+          <td>Entropy not on Solana</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-subtitle">VC Firms with Relevant Theses</h3>
+  <div class="invest-grid">
+    <div class="card">
+      <h3><span class="tag tag-green">DePIN Pioneer</span> Multicoin Capital</h3>
+      <p>Pioneered the DePIN category with Helium (2019). Portfolio: Hivemapper, Render, io.net, Geodnet, Pipe, Gradient. Now expanding thesis to "Internet Labor Markets" beyond hardware nodes.</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-blue">$2B Fund V</span> a16z Crypto</h3>
+      <p>Raising $2B fifth fund. Explicit DePIN focus areas: wireless, compute, storage. Deep oracle interest (early Chainlink backer). Backed MagicBlock via CSX program.</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-purple">Solana Focus</span> Lightspeed Faction</h3>
+      <p>Led MagicBlock's $7.5M seed. Solana-native thesis with infrastructure conviction. Active in gaming and real-time infrastructure.</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-cyan">Infrastructure</span> Tribe Capital + RockawayX</h3>
+      <p>Co-led Switchboard's $7.5M Series A. Infra-focused thesis. Tribe has deep enterprise connections; RockawayX is EU-based with strong technical diligence.</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-warn">DePIN + Compute</span> Pantera Capital</h3>
+      <p>Emphasizing DePIN and decentralized computing. Invested in Gradient Network. Active in infrastructure that bridges physical and digital.</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-purple">$1.5B New Fund</span> Paradigm</h3>
+      <p>Expanding beyond crypto into AI, robotics. ZK + infrastructure focus. Deep technical diligence team. Interest in novel cryptographic primitives.</p>
+    </div>
+  </div>
+
+  <h3 class="section-subtitle">Accelerators &amp; Grant Programs</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Program</th>
+          <th>Funding</th>
+          <th>Type</th>
+          <th>DePIN Track</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="provider-name">Colosseum Accelerator</td>
+          <td>$250K pre-seed</td>
+          <td>Hackathon + Accelerator</td>
+          <td><span class="tag tag-green">Yes</span></td>
+          <td>Rolling "Eternal" program; 4-week sprints anytime</td>
+        </tr>
+        <tr>
+          <td class="provider-name">Solana Foundation Grants</td>
+          <td>Milestone-based</td>
+          <td>Grant / Convertible</td>
+          <td><span class="tag tag-green">Yes</span></td>
+          <td>RFPs for specific challenges; no equity</td>
+        </tr>
+        <tr>
+          <td class="provider-name">Hydropower (Solana)</td>
+          <td>Mentorship</td>
+          <td>Accelerator</td>
+          <td><span class="tag tag-green">Yes</span></td>
+          <td>Early-stage; no equity required</td>
+        </tr>
+        <tr>
+          <td class="provider-name">Asia Momentum Spark</td>
+          <td>Part of $100M fund</td>
+          <td>Accelerator</td>
+          <td><span class="tag tag-green">Explicit</span></td>
+          <td>Solana + Astra Fintech; DePIN focus</td>
+        </tr>
+        <tr>
+          <td class="provider-name">Solana Incubator</td>
+          <td>Varies</td>
+          <td>Incubator</td>
+          <td><span class="tag tag-green">Yes</span></td>
+          <td>Cohort 5 applications opening</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-subtitle">Market Sizing</h3>
+  <div class="cap-grid">
+    <div class="cap-box">
+      <h4>Direct TAM: On-Chain Randomness</h4>
+      <p>Current: $4-10M annually. Growing with gaming and DeFi expansion. Solana share estimated 15-25%. Small standalone, but growing rapidly.</p>
+    </div>
+    <div class="cap-box">
+      <h4>Adjacent: Hardware TRNG</h4>
+      <p>$3.3-4.8B market (2024), 8-10% CAGR. Enterprise and defense demand for true random number generators. Converging with blockchain needs.</p>
+    </div>
+    <div class="cap-box">
+      <h4>Adjacent: Confidential Computing</h4>
+      <p>$5.5-9B (2024), 34-64% CAGR. Growing demand for verifiable, private computation. Private randomness is a subset of this market.</p>
+    </div>
+    <div class="cap-box">
+      <h4>Strategic: DePIN Sector</h4>
+      <p>$19.2B market cap. By positioning as DePIN, a project taps into VC capital flowing into physical infrastructure networks. Token economics align.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 8: SOURCES ==================== -->
+<div class="section">
+  <h2 class="section-title"><span class="section-num">08</span> Source Index</h2>
+
+  <div class="source-list">
+    <div><span class="source-num">1.</span> <a href="https://a16zcrypto.com/posts/article/public-randomness-and-randomness-beacons/">a16z: Public Randomness and Randomness Beacons</a></div>
+    <div><span class="source-num">2.</span> <a href="https://blog.spacecomputer.io/randomness-as-infrastructure/">SpaceComputer: Randomness as Infrastructure</a></div>
+    <div><span class="source-num">3.</span> <a href="https://www.adevarlabs.com/blog/on-chain-randomness-on-solana-predictability-manipulation-safer-alternatives-part-1">Adevar Labs: On-Chain Randomness on Solana</a></div>
+    <div><span class="source-num">4.</span> <a href="https://switchboardxyz.medium.com/verifiable-randomness-on-solana-46f72a46d9cf">Switchboard: VRF on Solana</a></div>
+    <div><span class="source-num">5.</span> <a href="https://orao.network/solana-vrf">ORAO Network: Solana VRF</a></div>
+    <div><span class="source-num">6.</span> <a href="https://www.magicblock.xyz/blog/verifiable-randomness-solana-plugin">MagicBlock: Verifiable Randomness Plugin</a></div>
+    <div><span class="source-num">7.</span> <a href="https://switchboardxyz.medium.com/introducing-switchboard-surge-the-fastest-oracle-on-solana-is-here-36ff615bfdf9">Switchboard Surge Launch</a></div>
+    <div><span class="source-num">8.</span> <a href="https://www.kucoin.com/blog/en-depin-crypto-sector-2026-how-decentralized-physical-infrastructure-surpassed-oracles">KuCoin: DePIN Crypto Sector 2026</a></div>
+    <div><span class="source-num">9.</span> <a href="https://dl.acm.org/doi/fullHtml/10.1145/3456631">ACM: SGX Vulnerabilities Survey</a></div>
+    <div><span class="source-num">10.</span> <a href="https://sgx.fail/">SGX.Fail: Intel SGX Vulnerability Tracker</a></div>
+    <div><span class="source-num">11.</span> <a href="https://solana.org/grants-funding">Solana Foundation Grants</a></div>
+    <div><span class="source-num">12.</span> <a href="https://colosseum.com/">Colosseum Hackathon &amp; Accelerator</a></div>
+    <div><span class="source-num">13.</span> <a href="https://www.magicblock.xyz/blog/seed-funding-announcement">MagicBlock $7.5M Seed Announcement</a></div>
+    <div><span class="source-num">14.</span> <a href="https://blockworks.co/news/lightspeed-newsletter-solana-oracles-venture-capital">Switchboard $7.5M Series A (Blockworks)</a></div>
+    <div><span class="source-num">15.</span> <a href="https://multicoin.capital/2026/02/06/multicoin-capitals-investment-thesis/">Multicoin Capital Investment Thesis (2026)</a></div>
+    <div><span class="source-num">16.</span> <a href="https://solana.com/solutions/depin">Solana DePIN Solutions</a></div>
+    <div><span class="source-num">17.</span> <a href="https://en.wikipedia.org/wiki/Software_Guard_Extensions">Intel SGX (Wikipedia)</a></div>
+    <div><span class="source-num">18.</span> <a href="https://www.pyth.network/entropy">Pyth Entropy</a></div>
+    <div><span class="source-num">19.</span> <a href="https://drand.love/">drand: Distributed Randomness Beacon</a></div>
+    <div><span class="source-num">20.</span> <a href="https://docs.supra.com/dvrf">Supra dVRF Documentation</a></div>
+    <div><span class="source-num">21.</span> <a href="https://crypto.com/us/research/2025-review-2026-ahead">Crypto.com 2025/2026 Year Review</a></div>
+    <div><span class="source-num">22.</span> <a href="https://www.frontiersin.org/journals/blockchain/articles/10.3389/fbloc.2025.1644115/full">Frontiers: DePIN Tokenomics</a></div>
+    <div><span class="source-num">23.</span> <a href="https://blockworks.co/news/anatoly-yakovenko-solana-insights">Blockworks: Yakovenko Interview</a></div>
+    <div><span class="source-num">24.</span> <a href="https://chain.link/education-hub/verifiable-random-function-vrf">Chainlink: VRF Explained</a></div>
+    <div><span class="source-num">25.</span> <a href="https://github.com/orao-network/solana-vrf">ORAO VRF GitHub Repository</a></div>
+    <div><span class="source-num">26.</span> <a href="https://www.coindesk.com/tech/2026/04/02/how-a-solana-feature-designed-for-convenience-let-an-attacker-drain-usd270-million-from-drift">CoinDesk: Drift Protocol Exploit</a></div>
+    <div><span class="source-num">27.</span> <a href="https://blog.colosseum.com/announcing-colosseum-eternal-and-solanas-2025-hackathon-schedule/">Colosseum Eternal &amp; 2025 Schedule</a></div>
+    <div><span class="source-num">28.</span> <a href="https://arxiv.org/html/2504.03936v2">Commit-Reveal&sup2;: Securing Randomness Beacons (arXiv)</a></div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<div class="footer">
+  VRF &amp; Randomness Oracle Ecosystem Research &mdash; April 2026 &mdash; Evidence-based analysis from public sources
+</div>
+
+</body>
+</html>

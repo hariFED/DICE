@@ -1,0 +1,30 @@
+{
+  "label": "B1",
+  "channel_index": 111,
+  "channel_pda": "2nqRXzg98pBpVegMXa8xdkoNEbqCDRa1ewoFCXvAsxMb",
+  "node_count": 4,
+  "total_rounds": 1,
+  "succeeded": 1,
+  "failed": 0,
+  "total_duration_ms": 14134,
+  "avg_ms": 14134,
+  "p50_ms": 14134,
+  "p95_ms": 14134,
+  "p99_ms": 14134,
+  "min_ms": 14134,
+  "max_ms": 14134,
+  "start_balance_sol": 3.7244312,
+  "end_balance_sol": 3.70305948,
+  "spent_sol": 0.02137172,
+  "rounds": [
+    {
+      "round_index": 0,
+      "round_id": 1,
+      "status": "ok",
+      "duration_ms": 14134,
+      "request_tx": "3qU2oRoNMaqFdaaHPtSiQACUS5MB9Q1X94zyBFWSAEGTiGw9V4QmaZ6SVPdc3Ypq6QYG6E7zr6Xi4kaDijq5Lizc",
+      "randomness_prefix": "49be41eef9b29a55",
+      "error": null
+    }
+  ]
+}

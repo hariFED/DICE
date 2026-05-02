@@ -1,0 +1,21 @@
+[package]
+name = "pulse"
+version = "0.1.0"
+edition = "2021"
+description = "Streaming VRF dice-roller example. Reads DICE RandomnessFeed as a passive account input — no commit-reveal roundtrip."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "pulse"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = { workspace = true }
+solana-program = { workspace = true }

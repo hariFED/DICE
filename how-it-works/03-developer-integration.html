@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE VRF - Developer Integration Guide</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:           #0a0a0a;
+    --bg-card:      #111111;
+    --bg-code:      #0d1117;
+    --bg-inline:    #1a1f2b;
+    --border:       #1e1e1e;
+    --border-accent:#00ff8833;
+    --green:        #00ff88;
+    --green-dim:    #00cc6a;
+    --green-glow:   #00ff8822;
+    --cyan:         #00d4ff;
+    --orange:       #ff9500;
+    --red:          #ff4444;
+    --yellow:       #ffcc00;
+    --purple:       #c084fc;
+    --text:         #e0e0e0;
+    --text-dim:     #888888;
+    --text-bright:  #ffffff;
+    --font-mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:       8px;
+    --radius-lg:    12px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ───────────────────────────────────────────────────────── */
+  .page-wrapper {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar Navigation */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    overflow-y: auto;
+    background: #0e0e0e;
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 0 24px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .sidebar-logo h2 {
+    font-size: 18px;
+    color: var(--green);
+    font-family: var(--font-mono);
+    letter-spacing: 2px;
+  }
+
+  .sidebar-logo span {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .sidebar nav { padding: 0 12px; }
+
+  .sidebar nav a {
+    display: block;
+    padding: 8px 12px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 13px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    border-left: 2px solid transparent;
+  }
+
+  .sidebar nav a:hover {
+    color: var(--green);
+    background: var(--green-glow);
+    border-left-color: var(--green);
+  }
+
+  .sidebar nav a.section-head {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 16px;
+    padding-left: 14px;
+    cursor: default;
+  }
+
+  .sidebar nav a.section-head:hover {
+    background: none;
+    border-left-color: transparent;
+    color: var(--text);
+  }
+
+  .sidebar nav a.sub { padding-left: 26px; font-size: 12.5px; }
+
+  /* Main content */
+  .main {
+    margin-left: 280px;
+    flex: 1;
+    max-width: 960px;
+    padding: 48px 48px 120px;
+  }
+
+  /* ── Typography ────────────────────────────────────────────────────── */
+  h1 {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--text-bright);
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  h1 .accent { color: var(--green); }
+
+  .subtitle {
+    font-size: 18px;
+    color: var(--text-dim);
+    margin-bottom: 40px;
+    line-height: 1.5;
+  }
+
+  h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin: 56px 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h2 .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: 12px;
+    vertical-align: middle;
+    position: relative;
+    top: -2px;
+  }
+
+  h2 .badge.core { background: #00ff8820; color: var(--green); }
+  h2 .badge.full { background: #00d4ff20; color: var(--cyan); }
+  h2 .badge.honest { background: #ff950020; color: var(--orange); }
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin: 36px 0 14px;
+  }
+
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--green);
+    margin: 24px 0 10px;
+    font-family: var(--font-mono);
+  }
+
+  p { margin-bottom: 16px; }
+
+  a { color: var(--green); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  strong { color: var(--text-bright); }
+
+  /* ── Hero Banner ──────────────────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, #0a1a10 0%, #0a0a0a 50%, #0a1020 100%);
+    border: 1px solid var(--border-accent);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--green);
+    background: #00ff8815;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    border: 1px solid #00ff8830;
+  }
+
+  .hero h1 { font-size: 32px; margin-bottom: 12px; }
+
+  .hero p { color: var(--text-dim); font-size: 16px; max-width: 600px; }
+
+  /* ── Cards ─────────────────────────────────────────────────────────── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .card.highlight {
+    border-color: var(--border-accent);
+    background: linear-gradient(135deg, #0a1a1000, #0a0a0a);
+  }
+
+  /* ── Code Blocks ───────────────────────────────────────────────────── */
+  .code-block {
+    position: relative;
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 16px 0 24px;
+    overflow: hidden;
+  }
+
+  .code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: #161b22;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+  }
+
+  .code-header .lang {
+    color: var(--green);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid #333;
+    color: var(--text-dim);
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: var(--font-sans);
+    transition: all 0.15s ease;
+  }
+
+  .copy-btn:hover {
+    color: var(--green);
+    border-color: var(--green);
+    background: var(--green-glow);
+  }
+
+  .copy-btn.copied {
+    color: var(--green);
+    border-color: var(--green);
+  }
+
+  .code-block pre {
+    padding: 16px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .code-block pre code { background: none; padding: 0; }
+
+  /* Inline code */
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--bg-inline);
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: var(--green);
+  }
+
+  /* ── Syntax Highlighting ───────────────────────────────────────────── */
+  .kw  { color: #ff7b72; }  /* keywords: pub, fn, let, use, mod, struct, impl, const, if, else, for, match */
+  .ty  { color: #79c0ff; }  /* types: u8, u64, Pubkey, Context, Result, Account, bool, Vec */
+  .fn  { color: #d2a8ff; }  /* function names */
+  .st  { color: #a5d6ff; }  /* strings */
+  .cm  { color: #6e7681; font-style: italic; }  /* comments */
+  .nu  { color: #79c0ff; }  /* numbers */
+  .mc  { color: #ffa657; }  /* macros: msg!, require!, declare_id! */
+  .at  { color: #ff7b72; }  /* attributes: #[account], #[program] */
+  .op  { color: #e6edf3; }  /* operators */
+  .lf  { color: #7ee787; }  /* lifetimes */
+  .sl  { color: #6e7681; }  /* line numbers (dim) */
+
+  /* ── Tables ────────────────────────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+
+  thead th {
+    text-align: left;
+    padding: 10px 16px;
+    background: #161b22;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tbody tr:hover { background: #ffffff06; }
+
+  /* ── Comparison Grid ───────────────────────────────────────────────── */
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0 28px;
+  }
+
+  .comparison .col {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .comparison .col h4 {
+    margin-top: 0;
+    margin-bottom: 14px;
+    font-size: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .comparison .col.dice-handles h4 { color: var(--green); }
+  .comparison .col.you-write h4 { color: var(--cyan); }
+
+  .comparison .col ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .comparison .col ul li {
+    padding: 5px 0;
+    font-size: 14px;
+    color: var(--text);
+    position: relative;
+    padding-left: 20px;
+  }
+
+  .comparison .col ul li::before {
+    position: absolute;
+    left: 0;
+    font-size: 12px;
+  }
+
+  .comparison .col.dice-handles ul li::before { content: '\2713'; color: var(--green); }
+  .comparison .col.you-write ul li::before { content: '\270E'; color: var(--cyan); }
+
+  /* ── Flow Diagrams (ASCII) ─────────────────────────────────────────── */
+  .flow-diagram {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 16px 0 24px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
+
+  .flow-diagram .highlight-line { color: var(--green); }
+  .flow-diagram .dim-line { color: #444; }
+
+  /* ── Step indicators ───────────────────────────────────────────────── */
+  .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--green), var(--green-dim));
+    color: #000;
+    font-weight: 800;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-top: 2px;
+  }
+
+  .step-content { flex: 1; }
+  .step-content h4 { margin-top: 0; }
+
+  /* ── Info/Warning Callouts ─────────────────────────────────────────── */
+  .callout {
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 16px 0 24px;
+    font-size: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+
+  .callout.info {
+    background: #00d4ff10;
+    border: 1px solid #00d4ff30;
+    color: var(--text);
+  }
+  .callout.info .callout-icon { color: var(--cyan); }
+
+  .callout.warn {
+    background: #ff950010;
+    border: 1px solid #ff950030;
+    color: var(--text);
+  }
+  .callout.warn .callout-icon { color: var(--orange); }
+
+  .callout.success {
+    background: #00ff8810;
+    border: 1px solid #00ff8830;
+    color: var(--text);
+  }
+  .callout.success .callout-icon { color: var(--green); }
+
+  .callout.danger {
+    background: #ff444410;
+    border: 1px solid #ff444430;
+    color: var(--text);
+  }
+  .callout.danger .callout-icon { color: var(--red); }
+
+  /* ── Tags / Badges ─────────────────────────────────────────────────── */
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    vertical-align: middle;
+    font-family: var(--font-mono);
+  }
+
+  .tag.green { background: #00ff8820; color: var(--green); }
+  .tag.cyan  { background: #00d4ff20; color: var(--cyan); }
+  .tag.orange { background: #ff950020; color: var(--orange); }
+
+  /* ── Cost comparison bar ───────────────────────────────────────────── */
+  .cost-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .cost-bar .label {
+    width: 140px;
+    font-weight: 600;
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  .cost-bar .bar-wrap {
+    flex: 1;
+    background: #1a1a1a;
+    border-radius: 4px;
+    height: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cost-bar .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: #000;
+    white-space: nowrap;
+  }
+
+  .cost-bar .bar-fill.dice-bar { background: var(--green); }
+  .cost-bar .bar-fill.chainlink-bar { background: var(--cyan); }
+  .cost-bar .bar-fill.switchboard-bar { background: var(--purple); }
+
+  /* ── Byte Layout Diagram ───────────────────────────────────────────── */
+  .byte-layout {
+    display: flex;
+    gap: 0;
+    margin: 16px 0 24px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .byte-layout .segment {
+    padding: 12px 16px;
+    text-align: center;
+    position: relative;
+  }
+
+  .byte-layout .segment .offset {
+    display: block;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .byte-layout .segment .name {
+    display: block;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .byte-layout .segment .size {
+    display: block;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .byte-layout .seg-disc  { background: #1a1a2e; color: var(--purple); flex: 1; }
+  .byte-layout .seg-key   { background: #1a2e1a; color: var(--green);  flex: 4; }
+  .byte-layout .seg-rand  { background: #2e1a1a; color: var(--cyan);   flex: 4; }
+
+  /* ── Example Tabs ──────────────────────────────────────────────────── */
+  .tab-group {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-top: 24px;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    padding: 10px 20px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s ease;
+  }
+
+  .tab-btn:hover { color: var(--text); }
+
+  .tab-btn.active {
+    color: var(--green);
+    border-bottom-color: var(--green);
+  }
+
+  .tab-panel { display: none; padding-top: 4px; }
+  .tab-panel.active { display: block; }
+
+  /* ── Metric Cards ──────────────────────────────────────────────────── */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 20px 0 28px;
+  }
+
+  .metric {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+  }
+
+  .metric .value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--green);
+    font-family: var(--font-mono);
+  }
+
+  .metric .label {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* ── Limitation List ───────────────────────────────────────────────── */
+  .limitation-list { list-style: none; padding: 0; }
+
+  .limitation-list li {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    font-size: 14px;
+  }
+
+  .limitation-list li:last-child { border-bottom: none; }
+
+  .limitation-list .severity {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    height: fit-content;
+    margin-top: 2px;
+  }
+
+  .severity.high   { background: #ff444420; color: var(--red); }
+  .severity.medium { background: #ff950020; color: var(--orange); }
+  .severity.low    { background: #ffcc0020; color: var(--yellow); }
+  .severity.info   { background: #00d4ff20; color: var(--cyan); }
+
+  /* ── Responsive ────────────────────────────────────────────────────── */
+  @media (max-width: 1100px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 32px 24px 80px; }
+  }
+
+  @media (max-width: 700px) {
+    .comparison { grid-template-columns: 1fr; }
+    .metrics { grid-template-columns: 1fr; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    .byte-layout { flex-direction: column; }
+  }
+
+  /* ── PDA Table ─────────────────────────────────────────────────────── */
+  .pda-table td:first-child {
+    font-family: var(--font-mono);
+    color: var(--green);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .pda-table td:nth-child(2) {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--cyan);
+  }
+
+  /* ── Scroll margin for anchor links ────────────────────────────────── */
+  [id] { scroll-margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SIDEBAR NAVIGATION
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page-wrapper">
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h2>DICE VRF</h2>
+    <span>Developer Integration Guide</span>
+  </div>
+  <nav>
+    <a href="#quick-start" class="section-head">Quick Start</a>
+    <a href="#four-lines" class="sub">Is It Really 4 Lines?</a>
+    <a href="#what-you-get" class="sub">What You Get</a>
+
+    <a href="#walkthrough" class="section-head">Full Walkthrough</a>
+    <a href="#step-1" class="sub">1. Define Game State</a>
+    <a href="#step-2" class="sub">2. Betting Instruction</a>
+    <a href="#step-3" class="sub">3. Callback Handler</a>
+    <a href="#step-4" class="sub">4. Claim Instruction</a>
+
+    <a href="#responsibility" class="section-head">Responsibility Split</a>
+    <a href="#dice-vs-you" class="sub">DICE vs. You</a>
+
+    <a href="#accounts" class="section-head">Account Structure</a>
+    <a href="#pda-seeds" class="sub">PDA Derivation</a>
+    <a href="#callback-format" class="sub">Callback Data Format</a>
+
+    <a href="#cost" class="section-head">Cost Analysis</a>
+    <a href="#cost-comparison" class="sub">Provider Comparison</a>
+
+    <a href="#examples" class="section-head">Complete Examples</a>
+    <a href="#ex-dice" class="sub">Dice Roll</a>
+    <a href="#ex-wheel" class="sub">Lucky Wheel</a>
+    <a href="#ex-prediction" class="sub">Prediction Market</a>
+
+    <a href="#limitations" class="section-head">Honest Assessment</a>
+    <a href="#known-limitations" class="sub">Known Limitations</a>
+  </nav>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MAIN CONTENT
+     ═══════════════════════════════════════════════════════════════════ -->
+<main class="main">
+
+<!-- ── Hero ──────────────────────────────────────────────────────────── -->
+<div class="hero" id="quick-start">
+  <div class="hero-tag">Developer Guide</div>
+  <h1>Integrate <span class="accent">DICE VRF</span> in Your Program</h1>
+  <p>Add provable, hardware-backed randomness to any Solana program. One callback function, zero external SDKs, verifiable on-chain. This guide covers everything from the 4-line minimum to production-ready examples.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION: IS IT REALLY 4 LINES?
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="four-lines">Is It Really 4 Lines? <span class="badge core">Core Concept</span></h2>
+
+<p>The core integration with DICE VRF is a single callback function. DICE calls <strong>your program</strong> via CPI when randomness is ready. Here is the absolute minimum:</p>
+
+<div class="code-block">
+  <div class="code-header">
+    <span class="lang">Rust</span>
+    <span>minimum_integration.rs</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code><span class="cm">// 1. Define the callback handler</span>
+<span class="kw">pub fn</span> <span class="fn">dice_callback</span>(
+    ctx: <span class="ty">Context</span>&lt;<span class="ty">MyCallback</span>&gt;,
+    _channel_key: <span class="ty">Pubkey</span>,
+    randomness: [<span class="ty">u8</span>; <span class="nu">32</span>],
+) -> <span class="ty">Result</span>&lt;()&gt; {
+    <span class="cm">// 2. Use the randomness</span>
+    <span class="kw">let</span> result = randomness[<span class="nu">0</span>] % <span class="nu">6</span> + <span class="nu">1</span>; <span class="cm">// dice roll 1-6</span>
+    ctx.accounts.game.result = result;
+    <span class="ty">Ok</span>(())
+}</code></pre>
+</div>
+
+<div class="callout info">
+  <div class="callout-icon">&#x1F4A1;</div>
+  <div class="callout-body">
+    <strong>That is genuinely the core integration.</strong>
+    DICE invokes your <code>dice_callback</code> function with 32 bytes of hardware-generated randomness via CPI. You transform those bytes into your game logic. But you also need account structs, game state, and payout logic &mdash; which is what the rest of this guide covers.
+  </div>
+</div>
+
+<h3 id="what-you-get">What the callback signature means</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>ctx</code></td>
+      <td><code>Context&lt;YourAccounts&gt;</code></td>
+      <td>Your program's accounts, passed by the coordinator as <code>remaining_accounts</code></td>
+    </tr>
+    <tr>
+      <td><code>_channel_key</code></td>
+      <td><code>Pubkey</code></td>
+      <td>The DiceChannel PDA that produced the randomness (useful for multi-channel setups)</td>
+    </tr>
+    <tr>
+      <td><code>randomness</code></td>
+      <td><code>[u8; 32]</code></td>
+      <td>32 bytes of hardware-generated, commit-reveal verified randomness</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The function name <strong>must</strong> be <code>dice_callback</code>. DICE uses the Anchor discriminator <code>SHA-256("global:dice_callback")[0..8]</code> to locate it in your program. This is the same pattern Anchor uses for all instruction dispatch.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION: FULL WALKTHROUGH
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="walkthrough">Full Integration Walkthrough <span class="badge full">Complete</span></h2>
+
+<p>Let's build a complete dice game step by step. Players bet on a number 1-6, wager SOL, and DICE VRF determines the outcome. Winners receive 5x their wager.</p>
+
+<!-- Step 1 -->
+<div class="step" id="step-1">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <h4>Define Your Game State</h4>
+    <p>Every game needs state accounts to track players, bets, and outcomes. In Anchor, these are <code>#[account]</code> structs stored as PDAs.</p>
+  </div>
+</div>
+
+<div class="code-block">
+  <div class="code-header">
+    <span class="lang">Rust</span>
+    <span>state.rs &mdash; Game accounts</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code><span class="cm">/// House account &mdash; tracks overall game statistics.</span>
+<span class="at">#[account]</span>
+<span class="kw">pub struct</span> <span class="ty">House</span> {
+    <span class="kw">pub</span> authority: <span class="ty">Pubkey</span>,             <span class="cm">// house owner</span>
+    <span class="kw">pub</span> total_rolls: <span class="ty">u64</span>,             <span class="cm">// lifetime roll count</span>
+    <span class="kw">pub</span> roll_distribution: [<span class="ty">u64</span>; <span class="nu">6</span>], <span class="cm">// [count_1, count_2, ..., count_6]</span>
+    <span class="kw">pub</span> bump: <span class="ty">u8</span>,                     <span class="cm">// PDA bump seed</span>
+}
+
+<span class="kw">impl</span> <span class="ty">House</span> {
+    <span class="kw">const</span> LEN: <span class="ty">usize</span> = <span class="nu">32</span> + <span class="nu">8</span> + (<span class="nu">6</span> * <span class="nu">8</span>) + <span class="nu">1</span>; <span class="cm">// 89 bytes</span>
+}
+
+<span class="cm">/// Roll account &mdash; one per player per bet.</span>
+<span class="at">#[account]</span>
+<span class="kw">pub struct</span> <span class="ty">Roll</span> {
+    <span class="kw">pub</span> player: <span class="ty">Pubkey</span>,        <span class="cm">// who placed this bet</span>
+    <span class="kw">pub</span> bet: <span class="ty">u8</span>,              <span class="cm">// 1-6</span>
+    <span class="kw">pub</span> wager: <span class="ty">u64</span>,           <span class="cm">// lamports wagered</span>
+    <span class="kw">pub</span> roll_id: <span class="ty">u64</span>,         <span class="cm">// unique identifier (prevents dupes)</span>
+    <span class="kw">pub</span> result: <span class="ty">u8</span>,           <span class="cm">// 1-6 (0 = unresolved)</span>
+    <span class="kw">pub</span> settled: <span class="ty">bool</span>,        <span class="cm">// true after callback received</span>
+    <span class="kw">pub</span> randomness: [<span class="ty">u8</span>; <span class="nu">32</span>], <span class="cm">// raw VRF output (for audit)</span>
+    <span class="kw">pub</span> bump: <span class="ty">u8</span>,             <span class="cm">// PDA bump seed</span>
+}
+
+<span class="kw">impl</span> <span class="ty">Roll</span> {
+    <span class="kw">const</span> LEN: <span class="ty">usize</span> = <span class="nu">32</span> + <span class="nu">1</span> + <span class="nu">8</span> + <span class="nu">8</span> + <span class="nu">1</span> + <span class="nu">1</span> + <span class="nu">32</span> + <span class="nu">1</span>; <span class="cm">// 84 bytes</span>
+}</code></pre>
+</div>
+
+<div class="callout success">
+  <div class="callout-icon">&#x2714;</div>
+  <div class="callout-body">
+    <strong>Design pattern:</strong> Store the raw 32-byte <code>randomness</code> in your game account. This lets anyone independently verify the result on-chain &mdash; full auditability without trusting your math.
+  </div>
+</div>
+
+<!-- Step 2 -->
+<div class="step" id="step-2">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <h4>Create the Betting Instruction</h4>
+    <p>The <code>roll_dice</code> instruction validates the bet, creates a Roll PDA, and transfers the wager to a vault. After this transaction confirms, the coordinator detects the pending request and dispatches it to ESP32 hardware nodes.</p>
+  </div>
+</div>
+
+<div class="code-block">
+  <div class="code-header">
+    <span class="lang">Rust</span>
+    <span>instructions/roll_dice.rs</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code><span class="kw">pub fn</span> <span class="fn">roll_dice</span>(
+    ctx: <span class="ty">Context</span>&lt;<span class="ty">RollDice</span>&gt;,
+    bet: <span class="ty">u8</span>,
+    wager: <span class="ty">u64</span>,
+    roll_id: <span class="ty">u64</span>,
+) -> <span class="ty">Result</span>&lt;()&gt; {
+    <span class="cm">// Validate inputs</span>
+    <span class="mc">require!</span>(bet >= <span class="nu">1</span> && bet <= <span class="nu">6</span>, <span class="ty">DiceRollError</span>::InvalidBet);
+    <span class="mc">require!</span>(wager > <span class="nu">0</span>, <span class="ty">DiceRollError</span>::ZeroWager);
+
+    <span class="cm">// Initialize the Roll account</span>
+    <span class="kw">let</span> roll = &<span class="kw">mut</span> ctx.accounts.roll;
+    roll.player = ctx.accounts.player.key();
+    roll.bet = bet;
+    roll.wager = wager;
+    roll.roll_id = roll_id;
+    roll.result = <span class="nu">0</span>;         <span class="cm">// unresolved</span>
+    roll.settled = <span class="kw">false</span>;
+    roll.randomness = [<span class="nu">0u8</span>; <span class="nu">32</span>];
+    roll.bump = ctx.bumps.roll;
+
+    <span class="cm">// Transfer wager to vault PDA</span>
+    <span class="kw">let</span> cpi_ctx = <span class="ty">CpiContext</span>::new(
+        ctx.accounts.system_program.to_account_info(),
+        anchor_lang::system_program::<span class="ty">Transfer</span> {
+            from: ctx.accounts.player.to_account_info(),
+            to: ctx.accounts.vault.to_account_info(),
+        },
+    );
+    anchor_lang::system_program::transfer(cpi_ctx, wager)?;
+
+    <span class="mc">msg!</span>(<span class="st">"Dice roll: bet={}, wager={} lamports"</span>, bet, wager);
+    <span class="ty">Ok</span>(())
+}
+
+<span class="at">#[derive(Accounts)]</span>
+<span class="at">#[instruction(bet: u8, wager: u64, roll_id: u64)]</span>
+<span class="kw">pub struct</span> <span class="ty">RollDice</span>&lt;<span class="lf">'info</span>&gt; {
+    <span class="at">#[account(mut)]</span>
+    <span class="kw">pub</span> player: <span class="ty">Signer</span>&lt;<span class="lf">'info</span>&gt;,
+
+    <span class="at">#[account(
+        init, payer = player,
+        space = 8 + Roll::LEN,
+        seeds = [b"roll", player.key().as_ref(), &roll_id.to_le_bytes()],
+        bump,
+    )]</span>
+    <span class="kw">pub</span> roll: <span class="ty">Account</span>&lt;<span class="lf">'info</span>, <span class="ty">Roll</span>&gt;,
+
+    <span class="cm">/// CHECK: vault PDA holds lamports</span>
+    <span class="at">#[account(mut, seeds = [b"vault"], bump)]</span>
+    <span class="kw">pub</span> vault: <span class="ty">AccountInfo</span>&lt;<span class="lf">'info</span>&gt;,
+
+    <span class="kw">pub</span> system_program: <span class="ty">Program</span>&lt;<span class="lf">'info</span>, <span class="ty">System</span>&gt;,
+}</code></pre>
+</div>
+
+<!-- Step 3 -->
+<div class="step" id="step-3">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <h4>Implement dice_callback</h4>
+    <p>This is where DICE delivers randomness to your program. The coordinator calls <code>deliver_callback</code> on the DICE program, which CPI-invokes your <code>dice_callback</code>. Your accounts are passed as <code>remaining_accounts</code>.</p>
+  </div>
+</div>
+
+<div class="code-block">
+  <div class="code-header">
+    <span class="lang">Rust</span>
+    <span>instructions/dice_callback.rs &mdash; The Integration Point</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code><span class="cm">/// Called by DICE VRF after hardware nodes generate randomness.</span>
+<span class="cm">///</span>
+<span class="cm">/// Converts 32 bytes of entropy into a dice roll (1-6).</span>
+<span class="cm">/// Uses first 4 bytes as u32 for better distribution.</span>
+<span class="kw">pub fn</span> <span class="fn">dice_callback</span>(
+    ctx: <span class="ty">Context</span>&lt;<span class="ty">DiceRollCallback</span>&gt;,
+    _channel_key: <span class="ty">Pubkey</span>,
+    randomness: [<span class="ty">u8</span>; <span class="nu">32</span>],
+) -> <span class="ty">Result</span>&lt;()&gt; {
+    <span class="kw">let</span> roll = &<span class="kw">mut</span> ctx.accounts.roll;
+    <span class="mc">require!</span>(!roll.settled, <span class="ty">DiceRollError</span>::AlreadySettled);
+
+    <span class="cm">// Convert randomness to dice roll (1-6)</span>
+    <span class="cm">// Use first 4 bytes as u32 for better distribution</span>
+    <span class="kw">let</span> rand_u32 = <span class="ty">u32</span>::from_le_bytes([
+        randomness[<span class="nu">0</span>], randomness[<span class="nu">1</span>],
+        randomness[<span class="nu">2</span>], randomness[<span class="nu">3</span>],
+    ]);
+    <span class="kw">let</span> result = (rand_u32 % <span class="nu">6</span>) <span class="kw">as</span> <span class="ty">u8</span> + <span class="nu">1</span>;
+
+    <span class="cm">// Store everything for audit</span>
+    roll.randomness = randomness;
+    roll.result = result;
+    roll.settled = <span class="kw">true</span>;
+
+    <span class="cm">// Update house statistics</span>
+    <span class="kw">let</span> house = &<span class="kw">mut</span> ctx.accounts.house;
+    house.total_rolls += <span class="nu">1</span>;
+    house.roll_distribution[(result - <span class="nu">1</span>) <span class="kw">as</span> <span class="ty">usize</span>] += <span class="nu">1</span>;
+
+    <span class="kw">let</span> won = result == roll.bet;
+    <span class="mc">msg!</span>(<span class="st">"Rolled: {}. Bet: {}. {}!"</span>, result, roll.bet,
+         <span class="kw">if</span> won { <span class="st">"WIN"</span> } <span class="kw">else</span> { <span class="st">"LOSE"</span> });
+    <span class="ty">Ok</span>(())
+}
+
+<span class="at">#[derive(Accounts)]</span>
+<span class="kw">pub struct</span> <span class="ty">DiceRollCallback</span>&lt;<span class="lf">'info</span>&gt; {
+    <span class="at">#[account(mut)]</span>
+    <span class="kw">pub</span> roll: <span class="ty">Account</span>&lt;<span class="lf">'info</span>, <span class="ty">Roll</span>&gt;,
+
+    <span class="at">#[account(mut, seeds = [b"house"], bump = house.bump)]</span>
+    <span class="kw">pub</span> house: <span class="ty">Account</span>&lt;<span class="lf">'info</span>, <span class="ty">House</span>&gt;,
+}</code></pre>
+</div>
+
+<div class="callout warn">
+  <div class="callout-icon">&#x26A0;</div>
+  <div class="callout-body">
+    <strong>Distribution bias note:</strong>
+    Using <code>randomness[0] % 6</code> (single byte) has a 1.56% bias because 256 is not evenly divisible by 6. The actual code uses <code>u32::from_le_bytes(randomness[0..4]) % 6</code> which reduces bias to 0.0000001% (4,294,967,296 mod 6 = 4). For cryptographic applications, use rejection sampling.
+  </div>
+</div>
+
+<!-- Step 4 -->
+<div class="step" id="step-4">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <h4>Create the Claim Instruction</h4>
+    <p>After the callback settles the game, winning players call <code>claim</code> to collect their payout from the vault PDA.</p>
+  </div>
+</div>
+
+<div class="code-block">
+  <div class="code-header">
+    <span class="lang">Rust</span>
+    <span>instructions/claim.rs</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code><span class="cm">/// Player claims winnings (5x wager) after a winning roll.</span>
+<span class="kw">pub fn</span> <span class="fn">claim</span>(ctx: <span class="ty">Context</span>&lt;<span class="ty">ClaimRoll</span>&gt;) -> <span class="ty">Result</span>&lt;()&gt; {
+    <span class="kw">let</span> roll = &ctx.accounts.roll;
+    <span class="mc">require!</span>(roll.settled, <span class="ty">DiceRollError</span>::NotSettled);
+    <span class="mc">require!</span>(roll.result == roll.bet, <span class="ty">DiceRollError</span>::PlayerLost);
+
+    <span class="kw">let</span> payout = roll.wager * <span class="nu">5</span>; <span class="cm">// 1-in-6 chance, 5x payout = 16.7% house edge</span>
+
+    <span class="cm">// Direct lamport transfer from vault to player</span>
+    **ctx.accounts.vault.to_account_info().try_borrow_mut_lamports()? -= payout;
+    **ctx.accounts.player.to_account_info().try_borrow_mut_lamports()? += payout;
+
+    <span class="mc">msg!</span>(<span class="st">"Payout: {} lamports to {}"</span>, payout, ctx.accounts.player.key());
+    <span class="ty">Ok</span>(())
+}
+
+<span class="at">#[derive(Accounts)]</span>
+<span class="kw">pub struct</span> <span class="ty">ClaimRoll</span>&lt;<span class="lf">'info</span>&gt; {
+    <span class="at">#[account(mut)]</span>
+    <span class="kw">pub</span> player: <span class="ty">Signer</span>&lt;<span class="lf">'info</span>&gt;,
+
+    <span class="at">#[account(
+        mut,
+        has_one = player,
+        constraint = roll.settled @ DiceRollError::NotSettled,
+    )]</span>
+    <span class="kw">pub</span> roll: <span class="ty">Account</span>&lt;<span class="lf">'info</span>, <span class="ty">Roll</span>&gt;,
+
+    <span class="cm">/// CHECK: vault PDA holds lamports</span>
+    <span class="at">#[account(mut, seeds = [b"vault"], bump)]</span>
+    <span class="kw">pub</span> vault: <span class="ty">AccountInfo</span>&lt;<span class="lf">'info</span>&gt;,
+}</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION: RESPONSIBILITY SPLIT
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="responsibility">What DICE Handles vs. What You Write</h2>
+
+<div class="comparison" id="dice-vs-you">
+  <div class="col dice-handles">
+    <h4>DICE Handles (The Hard Part)</h4>
+    <ul>
+      <li>Protocol fee collection (0.002 SOL per request)</li>
+      <li>Node coordination and job dispatch</li>
+      <li>ESP32-S3 hardware entropy generation</li>
+      <li>Commit-reveal protocol enforcement</li>
+      <li>ECDSA signature verification per node</li>
+      <li>SHA-256 hash binding (commit matches reveal)</li>
+      <li>Multi-node entropy combination</li>
+      <li>CPI callback delivery to your program</li>
+      <li>Fee distribution (70% nodes / 20% treasury / 10% reserve)</li>
+      <li>Timeout handling and round failure recovery</li>
+      <li>On-chain verifiable node selection</li>
+    </ul>
+  </div>
+  <div class="col you-write">
+    <h4>You Write (The Fun Part)</h4>
+    <ul>
+      <li>Game logic (how randomness maps to outcomes)</li>
+      <li>State management (player accounts, game accounts)</li>
+      <li>Input validation (bet ranges, wager limits)</li>
+      <li>Payout rules (multipliers, house edge)</li>
+      <li>The <code>dice_callback</code> function</li>
+      <li>Account structs for your game</li>
+      <li>Claim/settlement mechanics</li>
+      <li>Frontend UI (when you build one)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION: ACCOUNT STRUCTURE & PDA SEEDS
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="accounts">Account Structure &amp; PDA Seeds</h2>
+
+<h3 id="pda-seeds">DICE Protocol PDAs</h3>
+
+<p>DICE uses these PDA seeds internally. You don't derive these yourself &mdash; but knowing them helps you understand the on-chain data model.</p>
+
+<table class="pda-table">
+  <thead>
+    <tr>
+      <th>Account</th>
+      <th>Seeds</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DiceChannel</td>
+      <td>["channel", authority, &channel_index.to_le_bytes()]</td>
+      <td>Persistent, reusable VRF request channel</td>
+    </tr>
+    <tr>
+      <td>DeviceRegistry</td>
+      <td>["device", &device_id]</td>
+      <td>Registered ESP32-S3 hardware node</td>
+    </tr>
+    <tr>
+      <td>RandomnessRequest</td>
+      <td>["request", requester, &sequence.to_le_bytes()]</td>
+      <td>One-shot randomness request (v1)</td>
+    </tr>
+    <tr>
+      <td>EscrowAccount</td>
+      <td>["escrow", requester, &sequence.to_le_bytes()]</td>
+      <td>Protocol fee escrow per request</td>
+    </tr>
+    <tr>
+      <td>CommitRecord</td>
+      <td>["commit", request, &device_pubkey]</td>
+      <td>Commit hash from a node (v1)</td>
+    </tr>
+    <tr>
+      <td>RevealRecord</td>
+      <td>["reveal", request, &device_pubkey]</td>
+      <td>Revealed entropy from a node (v1)</td>
+    </tr>
+    <tr>
+      <td>RandomnessResult</td>
+      <td>["result", request]</td>
+      <td>Final combined randomness (v1)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Your Program's PDAs (Dice Roll example)</h3>
+
+<table class="pda-table">
+  <thead>
+    <tr>
+      <th>Account</th>
+      <th>Seeds</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>House</td>
+      <td>["house"]</td>
+      <td>Global game stats, one per program</td>
+    </tr>
+    <tr>
+      <td>Roll</td>
+      <td>["roll", player, &roll_id.to_le_bytes()]</td>
+      <td>Individual bet, unique per player + roll_id</td>
+    </tr>
+    <tr>
+      <td>Vault</td>
+      <td>["vault"]</td>
+      <td>Holds wager lamports</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Callback Data Format -->
+<h3 id="callback-format">Callback Data Format</h3>
+
+<p>When DICE calls your <code>dice_callback</code>, it constructs 72 bytes of instruction data:</p>
+
+<div class="byte-layout">
+  <div class="segment seg-disc">
+    <span class="offset">[0..8]</span>
+    <span class="name">discriminator</span>
+    <span class="size">8 bytes</span>
+  </div>
+  <div class="segment seg-key">
+    <span class="offset">[8..40]</span>
+    <span class="name">channel_key</span>
+    <span class="size">32 bytes &mdash; Pubkey</span>
+  </div>
+  <div class="segment seg-rand">
+    <span class="offset">[40..72]</span>
+    <span class="name">randomness</span>
+    <span class="size">32 bytes &mdash; [u8; 32]</span>
+  </div>
+</div>
+
+<div class="code-block">
+  <div class="code-header">
+    <span class="lang">Rust</span>
+    <span>Discriminator computation (for reference)</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code><span class="cm">// The discriminator is the first 8 bytes of:</span>
+<span class="cm">//   SHA-256("global:dice_callback")</span>
+<span class="cm">// = [128, 131, 129, 45, 53, 113, 215, 151]</span>
+
+<span class="kw">const</span> DICE_CALLBACK_DISCRIMINATOR: [<span class="ty">u8</span>; <span class="nu">8</span>] =
+    [<span class="nu">128</span>, <span class="nu">131</span>, <span class="nu">129</span>, <span class="nu">45</span>, <span class="nu">53</span>, <span class="nu">113</span>, <span class="nu">215</span>, <span class="nu">151</span>];
+
+<span class="cm">// You do NOT need to use this constant yourself.</span>
+<span class="cm">// Anchor handles discriminator matching automatically</span>
+<span class="cm">// when you name your function `dice_callback`.</span></code></pre>
+</div>
+
+<div class="callout info">
+  <div class="callout-icon">&#x1F517;</div>
+  <div class="callout-body">
+    <strong>How CPI delivery works under the hood:</strong>
+    <ol style="margin-top:8px; padding-left:18px; font-size:14px;">
+      <li>DICE's <code>deliver_callback</code> instruction is called by the coordinator</li>
+      <li>It reads <code>channel.callback_program_id</code> and <code>channel.randomness</code></li>
+      <li>It builds a 72-byte instruction and invokes your program via <code>solana_program::program::invoke</code></li>
+      <li>Your accounts are forwarded from the coordinator's <code>remaining_accounts[1..]</code></li>
+      <li>If the CPI fails, the channel reverts to <code>Finalized</code> so delivery can be retried</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION: COST ANALYSIS
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="cost">Cost Analysis</h2>
+
+<div class="metrics" id="cost-comparison">
+  <div class="metric">
+    <div class="value">0.002</div>
+    <div class="label">SOL per VRF Request</div>
+  </div>
+  <div class="metric">
+    <div class="value">~$0.30</div>
+    <div class="label">USD at $150/SOL</div>
+  </div>
+  <div class="metric">
+    <div class="value">~1.7s</div>
+    <div class="label">End-to-end Latency</div>
+  </div>
+</div>
+
+<h3>Provider Comparison</h3>
+
+<div style="margin: 20px 0 28px;">
+  <div class="cost-bar">
+    <div class="label">DICE VRF</div>
+    <div class="bar-wrap">
+      <div class="bar-fill dice-bar" style="width: 50%;">0.002 SOL (~$0.30)</div>
+    </div>
+  </div>
+  <div class="cost-bar">
+    <div class="label">Chainlink VRF</div>
+    <div class="bar-wrap">
+      <div class="bar-fill chainlink-bar" style="width: 42%;">~$0.25 (LINK token)</div>
+    </div>
+  </div>
+  <div class="cost-bar">
+    <div class="label">Switchboard</div>
+    <div class="bar-wrap">
+      <div class="bar-fill switchboard-bar" style="width: 50%;">~0.002 SOL (~$0.30)</div>
+    </div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>DICE VRF</th>
+      <th>Chainlink VRF</th>
+      <th>Switchboard</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Cost per request</strong></td>
+      <td>0.002 SOL</td>
+      <td>~$0.25 in LINK</td>
+      <td>~0.002 SOL</td>
+    </tr>
+    <tr>
+      <td><strong>Entropy source</strong></td>
+      <td>Hardware TRNG (ESP32-S3)</td>
+      <td>Software VRF (BLS)</td>
+      <td>TEE (Intel SGX)</td>
+    </tr>
+    <tr>
+      <td><strong>Latency</strong></td>
+      <td>~1.7s</td>
+      <td>~2-10s</td>
+      <td>&lt;100ms (price feeds)</td>
+    </tr>
+    <tr>
+      <td><strong>Chain</strong></td>
+      <td>Solana native</td>
+      <td>EVM chains, Solana</td>
+      <td>Solana native</td>
+    </tr>
+    <tr>
+      <td><strong>Callback model</strong></td>
+      <td>CPI to your program</td>
+      <td>Callback function</td>
+      <td>On-demand / callback</td>
+    </tr>
+    <tr>
+      <td><strong>Solana TX fees</strong></td>
+      <td>~0.000005 SOL</td>
+      <td>~0.000005 SOL</td>
+      <td>~0.000005 SOL</td>
+    </tr>
+    <tr>
+      <td><strong>Min nodes (BFT)</strong></td>
+      <td>4</td>
+      <td>1</td>
+      <td>1 (TEE)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout info">
+  <div class="callout-icon">&#x1F4B0;</div>
+  <div class="callout-body">
+    <strong>Fee distribution breakdown:</strong>
+    Of the 0.002 SOL fee, <strong>70%</strong> (0.0014 SOL) goes to the hardware nodes that generated entropy, <strong>20%</strong> (0.0004 SOL) to the protocol treasury, and <strong>10%</strong> (0.0002 SOL) to the reserve fund. Node operators earn per-request, incentivizing uptime.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION: THREE COMPLETE EXAMPLES
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="examples">Complete Examples <span class="badge full">Production Code</span></h2>
+
+<p>These are the actual example programs in the DICE repository. Each one demonstrates a different way to consume VRF randomness.</p>
+
+<!-- Tab Navigation -->
+<div class="tab-group">
+  <button class="tab-btn active" onclick="switchTab(event, 'tab-dice')">Dice Roll</button>
+  <button class="tab-btn" onclick="switchTab(event, 'tab-wheel')">Lucky Wheel</button>
+  <button class="tab-btn" onclick="switchTab(event, 'tab-prediction')">Prediction Market</button>
+</div>
+
+<!-- ── TAB 1: Dice Roll ──────────────────────────────────────────────── -->
+<div class="tab-panel active" id="tab-dice">
+  <h3 id="ex-dice">Example 1: Dice Roll</h3>
+  <p><span class="tag green">randomness[0..4] % 6 + 1</span> Player guesses 1-6, wins 5x on correct guess.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="lang">Rust</span>
+      <span>dapp-examples/dice-roll/src/lib.rs &mdash; Callback</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><code><span class="kw">pub fn</span> <span class="fn">dice_callback</span>(
+    ctx: <span class="ty">Context</span>&lt;<span class="ty">DiceRollCallback</span>&gt;,
+    _channel_key: <span class="ty">Pubkey</span>,
+    randomness: [<span class="ty">u8</span>; <span class="nu">32</span>],
+) -> <span class="ty">Result</span>&lt;()&gt; {
+    <span class="kw">let</span> roll = &<span class="kw">mut</span> ctx.accounts.roll;
+    <span class="mc">require!</span>(!roll.settled, <span class="ty">DiceRollError</span>::AlreadySettled);
+
+    <span class="cm">// Convert randomness to dice roll (1-6)</span>
+    <span class="kw">let</span> rand_u32 = <span class="ty">u32</span>::from_le_bytes([
+        randomness[<span class="nu">0</span>], randomness[<span class="nu">1</span>],
+        randomness[<span class="nu">2</span>], randomness[<span class="nu">3</span>],
+    ]);
+    <span class="kw">let</span> result = (rand_u32 % <span class="nu">6</span>) <span class="kw">as</span> <span class="ty">u8</span> + <span class="nu">1</span>;
+
+    roll.randomness = randomness;
+    roll.result = result;
+    roll.settled = <span class="kw">true</span>;
+
+    <span class="cm">// Update house stats</span>
+    <span class="kw">let</span> house = &<span class="kw">mut</span> ctx.accounts.house;
+    house.total_rolls += <span class="nu">1</span>;
+    house.roll_distribution[(result - <span class="nu">1</span>) <span class="kw">as</span> <span class="ty">usize</span>] += <span class="nu">1</span>;
+
+    <span class="ty">Ok</span>(())
+}</code></pre>
+  </div>
+
+  <table>
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Outcomes</strong></td><td>6 (numbers 1-6)</td></tr>
+      <tr><td><strong>Entropy used</strong></td><td>4 bytes (u32)</td></tr>
+      <tr><td><strong>Bias</strong></td><td>0.0000001% (4,294,967,296 mod 6 = 4)</td></tr>
+      <tr><td><strong>Payout</strong></td><td>5x wager on correct guess</td></tr>
+      <tr><td><strong>House edge</strong></td><td>16.7%</td></tr>
+      <tr><td><strong>Program ID</strong></td><td><code>C1UBkxcNM5g5kfJFDPCFkXVXAgrxsLksFoDTamk6XqJu</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── TAB 2: Lucky Wheel ────────────────────────────────────────────── -->
+<div class="tab-panel" id="tab-wheel">
+  <h3 id="ex-wheel">Example 2: Lucky Wheel</h3>
+  <p><span class="tag cyan">Weighted segment selection</span> Configurable wheel with up to 10 segments, each with custom weight and multiplier.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="lang">Rust</span>
+      <span>dapp-examples/lucky-wheel/src/lib.rs &mdash; Callback</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><code><span class="kw">pub fn</span> <span class="fn">dice_callback</span>(
+    ctx: <span class="ty">Context</span>&lt;<span class="ty">WheelCallback</span>&gt;,
+    _channel_key: <span class="ty">Pubkey</span>,
+    randomness: [<span class="ty">u8</span>; <span class="nu">32</span>],
+) -> <span class="ty">Result</span>&lt;()&gt; {
+    <span class="kw">let</span> wheel = &ctx.accounts.wheel;
+    <span class="kw">let</span> spin = &<span class="kw">mut</span> ctx.accounts.spin_account;
+    <span class="mc">require!</span>(!spin.settled, <span class="ty">WheelError</span>::AlreadySettled);
+
+    <span class="cm">// Convert randomness to selection point</span>
+    <span class="kw">let</span> rand_u32 = <span class="ty">u32</span>::from_le_bytes([
+        randomness[<span class="nu">0</span>], randomness[<span class="nu">1</span>],
+        randomness[<span class="nu">2</span>], randomness[<span class="nu">3</span>],
+    ]);
+    <span class="kw">let</span> point = rand_u32 % (wheel.total_weight <span class="kw">as</span> <span class="ty">u32</span>);
+
+    <span class="cm">// Walk segments to find winner</span>
+    <span class="kw">let mut</span> accumulated: <span class="ty">u32</span> = <span class="nu">0</span>;
+    <span class="kw">let mut</span> winner_index: <span class="ty">u8</span> = <span class="nu">0</span>;
+    <span class="kw">let mut</span> winner_multiplier: <span class="ty">u16</span> = <span class="nu">0</span>;
+
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="nu">0</span>..wheel.segment_count <span class="kw">as</span> <span class="ty">usize</span> {
+        accumulated += wheel.segment_weights[i] <span class="kw">as</span> <span class="ty">u32</span>;
+        <span class="kw">if</span> point < accumulated {
+            winner_index = i <span class="kw">as</span> <span class="ty">u8</span>;
+            winner_multiplier = wheel.segment_multipliers[i];
+            <span class="kw">break</span>;
+        }
+    }
+
+    <span class="cm">// Calculate payout: wager * multiplier / 100</span>
+    <span class="kw">let</span> payout = (spin.wager <span class="kw">as</span> <span class="ty">u128</span>
+                  * winner_multiplier <span class="kw">as</span> <span class="ty">u128</span> / <span class="nu">100</span>) <span class="kw">as</span> <span class="ty">u64</span>;
+
+    spin.randomness = randomness;
+    spin.segment_index = winner_index;
+    spin.multiplier = winner_multiplier;
+    spin.payout = payout;
+    spin.settled = <span class="kw">true</span>;
+
+    <span class="ty">Ok</span>(())
+}</code></pre>
+  </div>
+
+  <h4>Segment Selection Algorithm</h4>
+  <div class="flow-diagram">
+<span class="highlight-line">Segments:  [  2x (40%)  |  5x (25%)  |  10x (10%)  |  0x (20%)  |  50x (5%)  ]</span>
+<span class="dim-line">Weights:   [     40     |     25     |     10      |     20     |      5     ]</span>
+<span class="dim-line">Ranges:    [  0..40     | 40..65     |  65..75     |  75..95    |  95..100   ]</span>
+
+<span class="highlight-line">rand_u32 = u32::from_le_bytes(randomness[0..4])</span>
+<span class="highlight-line">point    = rand_u32 % 100   (total_weight = 100)</span>
+
+<span class="dim-line">Example:   point = 72</span>
+<span class="dim-line">           0..40? NO  |  40..65? NO  |  65..75? YES  -->  10x segment!</span>
+  </div>
+
+  <table>
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Max segments</strong></td><td>10</td></tr>
+      <tr><td><strong>Multiplier format</strong></td><td>Basis points (100 = 1x, 500 = 5x, 5000 = 50x)</td></tr>
+      <tr><td><strong>Weight format</strong></td><td>Arbitrary u16, probability = weight / total_weight</td></tr>
+      <tr><td><strong>Program ID</strong></td><td><code>2P8i6supnfNb2LYg4Dx3aSaJmjqw2fo8y9TtJF57fn82</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── TAB 3: Prediction Market ──────────────────────────────────────── -->
+<div class="tab-panel" id="tab-prediction">
+  <h3 id="ex-prediction">Example 3: Prediction Market</h3>
+  <p><span class="tag orange">Binary resolution via VRF</span> Polymarket-style YES/NO markets resolved by verifiable randomness. Winners split the total pool proportionally.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="lang">Rust</span>
+      <span>dapp-examples/prediction-market/src/lib.rs &mdash; Callback</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><code><span class="kw">pub fn</span> <span class="fn">dice_callback</span>(
+    ctx: <span class="ty">Context</span>&lt;<span class="ty">MarketCallback</span>&gt;,
+    _channel_key: <span class="ty">Pubkey</span>,
+    randomness: [<span class="ty">u8</span>; <span class="nu">32</span>],
+) -> <span class="ty">Result</span>&lt;()&gt; {
+    <span class="kw">let</span> market = &<span class="kw">mut</span> ctx.accounts.market;
+    <span class="mc">require!</span>(!market.resolved, <span class="ty">MarketError</span>::MarketResolved);
+
+    <span class="kw">let</span> outcome = <span class="kw">match</span> market.resolution_mode {
+        <span class="cm">// Binary: even byte = YES (0), odd byte = NO (1)</span>
+        <span class="nu">0</span> => randomness[<span class="nu">0</span>] & <span class="nu">1</span>,
+
+        <span class="cm">// Threshold: 64-bit value > midpoint = YES (0)</span>
+        <span class="nu">1</span> => {
+            <span class="kw">let</span> value = <span class="ty">u64</span>::from_le_bytes(
+                randomness[<span class="nu">0</span>..<span class="nu">8</span>].try_into().unwrap()
+            );
+            <span class="kw">let</span> threshold = <span class="ty">u64</span>::MAX / <span class="nu">2</span>;
+            <span class="kw">if</span> value > threshold { <span class="nu">0</span> } <span class="kw">else</span> { <span class="nu">1</span> }
+        }
+        _ => <span class="kw">return</span> <span class="ty">Err</span>(<span class="ty">MarketError</span>::InvalidResolutionMode.into()),
+    };
+
+    market.outcome = outcome;
+    market.resolved = <span class="kw">true</span>;
+    market.randomness = randomness;
+
+    <span class="ty">Ok</span>(())
+}
+
+<span class="cm">// ── Payout formula ──────────────────────────────────</span>
+<span class="cm">// payout = total_pool * (my_amount / winning_pool)</span>
+<span class="cm">//</span>
+<span class="cm">// Example: YES pool = 100 SOL, NO pool = 50 SOL</span>
+<span class="cm">//          YES wins. Player bet 10 SOL on YES.</span>
+<span class="cm">//          payout = 150 * (10/100) = 15 SOL  (+50%)</span></code></pre>
+  </div>
+
+  <table>
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Resolution modes</strong></td><td>Binary (even/odd) and Threshold (u64 midpoint)</td></tr>
+      <tr><td><strong>Binary fairness</strong></td><td>Exactly 50/50 (128/256 byte values per side)</td></tr>
+      <tr><td><strong>Threshold fairness</strong></td><td>50/50 with 64-bit precision</td></tr>
+      <tr><td><strong>Payout model</strong></td><td>Proportional share of total pool</td></tr>
+      <tr><td><strong>House edge</strong></td><td>0% (parimutuel &mdash; house takes no cut)</td></tr>
+      <tr><td><strong>Program ID</strong></td><td><code>EvyL8EnSA74p9be1eJeP4dheJcRiM1S97dmnN9XXjdPp</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION: END-TO-END FLOW
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2>End-to-End Transaction Flow</h2>
+
+<p>Here is the complete lifecycle from a player placing a bet to receiving their payout:</p>
+
+<div class="flow-diagram">
+<span class="highlight-line">Player                   Your Program            DICE VRF Oracle          ESP32 Nodes</span>
+<span class="dim-line">  |                          |                        |                       |</span>
+  |<span class="highlight-line">-- roll_dice(bet=3) ----></span>|                        |                       |
+  |                          |<span class="cm"> [create Roll PDA,</span>       |                       |
+  |                          |<span class="cm">  transfer wager</span>        |                       |
+  |                          |<span class="cm">  to vault]</span>              |                       |
+  |                          |                        |                       |
+<span class="dim-line">  |                    Coordinator detects pending request on-chain           |</span>
+  |                          |                        |                       |
+  |                          |  <span class="highlight-line">request_randomness</span>  |                       |
+  |                          | ---------------------->|                       |
+  |                          |                        |<span class="cm"> [deduct 0.002 SOL]</span>    |
+  |                          |                        |                       |
+  |                          |                        |<span class="highlight-line">-- JobAssignment ---></span>|
+  |                          |                        |                       |<span class="cm"> [TRNG + ADC noise</span>
+  |                          |                        |                       |<span class="cm">  + timing jitter]</span>
+  |                          |                        |                       |
+  |                          |                        |<span class="highlight-line"><-- commit(hash) ----|</span>
+  |                          |                        |<span class="highlight-line"><-- commit(hash) ----|</span>   x4-7 nodes
+  |                          |                        |                       |
+  |                          |                        |<span class="highlight-line"><-- reveal(entropy) -|</span>
+  |                          |                        |<span class="highlight-line"><-- reveal(entropy) -|</span>   x4-7 nodes
+  |                          |                        |                       |
+  |                          |                        |<span class="cm"> [verify commits,</span>     |
+  |                          |                        |<span class="cm">  combine entropy:</span>    |
+  |                          |                        |<span class="cm">  SHA-256(e1||e2||eN)]</span> |
+  |                          |                        |                       |
+  |                          |  <span class="highlight-line">deliver_callback</span>    |                       |
+  |                          |<span class="highlight-line"><----- CPI ----------|</span>                       |
+  |                          |<span class="cm"> [dice_callback runs,</span>  |                       |
+  |                          |<span class="cm">  result = rand % 6+1,</span> |                       |
+  |                          |<span class="cm">  roll.settled = true]</span> |                       |
+  |                          |                        |                       |
+  |<span class="highlight-line">-- claim() -----------></span>|                        |                       |
+  |<span class="highlight-line"><-- 5x payout ---------|</span>                        |                       |
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION: HONEST ASSESSMENT
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="limitations">Honest Assessment <span class="badge honest">Transparency</span></h2>
+
+<p>No project is perfect. Here are the known limitations, trade-offs, and areas where DICE VRF is not yet production-hardened.</p>
+
+<div class="card" id="known-limitations">
+  <ul class="limitation-list">
+    <li>
+      <span class="severity high">High</span>
+      <div>
+        <strong>Single coordinator is a centralization point.</strong>
+        All commit/reveal transactions are submitted by one coordinator process. If it goes down, no randomness is delivered. <em>Planned mitigation:</em> coordinator federation with leader election, so multiple coordinators can take over.
+      </div>
+    </li>
+    <li>
+      <span class="severity high">High</span>
+      <div>
+        <strong>On-chain TX flow not fully tested end-to-end.</strong>
+        PDA initialization and the full request &rarr; commit &rarr; reveal &rarr; finalize &rarr; callback cycle has been tested against real ESP32 hardware, but devnet PDAs are not all initialized in the current deployment state. The CPI callback path works in local validator tests.
+      </div>
+    </li>
+    <li>
+      <span class="severity medium">Medium</span>
+      <div>
+        <strong>1.7-second latency.</strong>
+        From request to callback delivery takes approximately 1.7 seconds. This is acceptable for gaming and lottery use cases, but not for latency-sensitive applications like real-time price feeds. For comparison, Switchboard price feeds update in sub-100ms &mdash; but those are data feeds, not VRF. Chainlink VRF on EVM chains takes 2-10 seconds.
+      </div>
+    </li>
+    <li>
+      <span class="severity medium">Medium</span>
+      <div>
+        <strong>Minimum 4 nodes required for BFT, only 1 device tested.</strong>
+        The protocol requires at least 4 nodes to achieve Byzantine fault tolerance (configurable up to 50). Currently, only 1 ESP32-S3 device has been tested in hardware. Multi-node coordination has been tested with simulated nodes. Real multi-device testing is pending.
+      </div>
+    </li>
+    <li>
+      <span class="severity medium">Medium</span>
+      <div>
+        <strong>No TypeScript SDK yet.</strong>
+        Integration is Rust/Anchor only. There is no <code>@dice-vrf/sdk</code> npm package for frontend or Node.js integration. Developers must construct transactions manually or use Anchor's generated IDL. A TypeScript SDK is planned.
+      </div>
+    </li>
+    <li>
+      <span class="severity low">Low</span>
+      <div>
+        <strong>Modular arithmetic bias in randomness reduction.</strong>
+        Using <code>u32 % N</code> introduces micro-bias when N does not evenly divide 2^32. For N=6, the bias is 4 parts in 4.29 billion (negligible). For applications requiring zero bias, rejection sampling should be used &mdash; but this is not currently implemented in the example programs.
+      </div>
+    </li>
+    <li>
+      <span class="severity info">Info</span>
+      <div>
+        <strong>Channel-based (v2) is the recommended path.</strong>
+        The v1 API (<code>request_randomness</code> with separate PDA per request) still works but creates more accounts and costs more rent. The v2 channel-based API (<code>init_channel</code> + <code>request_randomness_v2</code>) reuses a single persistent PDA and is what the examples target.
+      </div>
+    </li>
+  </ul>
+</div>
+
+<!-- ── What makes DICE different despite limitations ──────────────────── -->
+<h3>What Makes It Worth Using Despite These Limitations</h3>
+
+<div class="comparison">
+  <div class="col dice-handles">
+    <h4 style="color: var(--green);">Strengths</h4>
+    <ul>
+      <li>Hardware entropy &mdash; not software PRNGs</li>
+      <li>Commit-reveal prevents front-running</li>
+      <li>ECDSA signatures bind entropy to device identity</li>
+      <li>Multi-node combination (no single point of entropy)</li>
+      <li>On-chain verifiable (all data stored in PDAs)</li>
+      <li>Solana-native (no bridges, no wrapped tokens)</li>
+      <li>Open source &mdash; full audit trail</li>
+    </ul>
+  </div>
+  <div class="col you-write">
+    <h4 style="color: var(--orange);">Trade-offs</h4>
+    <ul>
+      <li>Newer project (less battle-tested than Chainlink)</li>
+      <li>Smaller node network (growing)</li>
+      <li>No cross-chain support yet</li>
+      <li>Documentation still being built</li>
+      <li>Coordinator centralization (pre-federation)</li>
+      <li>Limited to VRF (no price feeds, no compute)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION: QUICK REFERENCE CHEAT SHEET
+     ═══════════════════════════════════════════════════════════════════ -->
+<h2>Quick Reference</h2>
+
+<div class="card highlight">
+  <h4 style="margin-top:0;">Integration Checklist</h4>
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:30px; text-align:center; color:var(--green);">1</td>
+        <td>Add a <code>dice_callback</code> instruction to your Anchor program</td>
+      </tr>
+      <tr>
+        <td style="width:30px; text-align:center; color:var(--green);">2</td>
+        <td>Signature: <code>fn dice_callback(ctx, _channel_key: Pubkey, randomness: [u8; 32])</code></td>
+      </tr>
+      <tr>
+        <td style="width:30px; text-align:center; color:var(--green);">3</td>
+        <td>Define account structs for the callback context (your game accounts)</td>
+      </tr>
+      <tr>
+        <td style="width:30px; text-align:center; color:var(--green);">4</td>
+        <td>Transform <code>randomness</code> bytes into your game outcome</td>
+      </tr>
+      <tr>
+        <td style="width:30px; text-align:center; color:var(--green);">5</td>
+        <td>Store raw randomness in your account for auditability</td>
+      </tr>
+      <tr>
+        <td style="width:30px; text-align:center; color:var(--green);">6</td>
+        <td>Provide your program ID when creating a DiceChannel (<code>callback_program_id</code>)</td>
+      </tr>
+      <tr>
+        <td style="width:30px; text-align:center; color:var(--green);">7</td>
+        <td>Fund the channel with at least 0.002 SOL per request</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="code-block">
+  <div class="code-header">
+    <span class="lang">Rust</span>
+    <span>Minimal complete program &mdash; copy and customize</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code><span class="kw">use</span> anchor_lang::prelude::*;
+
+<span class="mc">declare_id!</span>(<span class="st">"YOUR_PROGRAM_ID_HERE"</span>);
+
+<span class="at">#[program]</span>
+<span class="kw">pub mod</span> my_game {
+    <span class="kw">use super</span>::*;
+
+    <span class="kw">pub fn</span> <span class="fn">dice_callback</span>(
+        ctx: <span class="ty">Context</span>&lt;<span class="ty">MyCallback</span>&gt;,
+        _channel_key: <span class="ty">Pubkey</span>,
+        randomness: [<span class="ty">u8</span>; <span class="nu">32</span>],
+    ) -> <span class="ty">Result</span>&lt;()&gt; {
+        <span class="kw">let</span> state = &<span class="kw">mut</span> ctx.accounts.state;
+        state.randomness = randomness;
+        state.settled = <span class="kw">true</span>;
+
+        <span class="cm">// ── YOUR LOGIC HERE ──────────────────────────</span>
+        <span class="cm">// Examples:</span>
+        <span class="cm">//   Dice:   (u32(rand[0..4]) % 6) + 1</span>
+        <span class="cm">//   Coin:   rand[0] & 1</span>
+        <span class="cm">//   Wheel:  u32(rand[0..4]) % total_weight</span>
+        <span class="cm">//   Range:  u32(rand[0..4]) % (max - min) + min</span>
+        <span class="cm">// ─────────────────────────────────────────────</span>
+
+        <span class="ty">Ok</span>(())
+    }
+}
+
+<span class="at">#[derive(Accounts)]</span>
+<span class="kw">pub struct</span> <span class="ty">MyCallback</span>&lt;<span class="lf">'info</span>&gt; {
+    <span class="at">#[account(mut)]</span>
+    <span class="kw">pub</span> state: <span class="ty">Account</span>&lt;<span class="lf">'info</span>, <span class="ty">MyState</span>&gt;,
+}
+
+<span class="at">#[account]</span>
+<span class="kw">pub struct</span> <span class="ty">MyState</span> {
+    <span class="kw">pub</span> randomness: [<span class="ty">u8</span>; <span class="nu">32</span>],
+    <span class="kw">pub</span> settled: <span class="ty">bool</span>,
+    <span class="cm">// ... your fields</span>
+}</code></pre>
+</div>
+
+<div style="text-align: center; padding: 40px 0 20px; color: var(--text-dim); font-size: 13px;">
+  <p style="font-family: var(--font-mono); color: var(--green);">DICE VRF</p>
+  <p>Hardware-backed verifiable randomness for Solana</p>
+  <p style="margin-top: 8px;">
+    Program ID: <code>78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv</code>
+  </p>
+</div>
+
+</main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SCRIPTS
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+// Copy code to clipboard
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const code = pre.textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// Tab switching
+function switchTab(event, tabId) {
+  // Deactivate all tabs and panels
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  // Activate the clicked tab and corresponding panel
+  event.target.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// Sidebar active state on scroll
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      if (id) {
+        document.querySelectorAll('.sidebar nav a').forEach(a => {
+          a.style.color = '';
+          a.style.borderLeftColor = '';
+        });
+        const active = document.querySelector(`.sidebar nav a[href="#${id}"]`);
+        if (active && !active.classList.contains('section-head')) {
+          active.style.color = 'var(--green)';
+          active.style.borderLeftColor = 'var(--green)';
+        }
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+document.querySelectorAll('[id]').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

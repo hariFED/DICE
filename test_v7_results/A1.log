@@ -1,0 +1,33 @@
+stress-driver v1
+  payer: 3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9
+  start balance: 5.278683 SOL
+  channel_index: 100, rounds: 10, node_count: 4
+  channel PDA: 7EqKd8hxCFjieW2dqrjsvoGbam1tHA1iyLCjsvY7G25X
+  init_channel (max_nodes=7)
+    TX: 41RgQGMLdP3DN4hr3FHjY9xKwG5KySxkmY4JgZ5Z4bmiNouCZXm3XkSNmBWwFxxYuA2sMMQFAao52CXr1RAwZFzc
+  pre-funding channel with 0.0300 SOL (30000000 lamports)
+    TX: 25mVBVjSHk127FyeKrkcSnXBGJ6zqEmYsqwkpnMWN4ckHwm6W8iwNgPUpAXniTFHsorzwagsMj6d2EhWHgRk5KBs
+  required channel balance for 10 rounds: 20000000 lamports
+
+── running 10 rounds ─────────────────────────────
+[   1/10] round_id=1  13607ms ✓ rand=3c181f786343cc09...
+[   2/10] round_id=2   9017ms ✓ rand=fd7aef88928df07f...
+[   3/10] round_id=3  10259ms ✓ rand=4faa6e36380d7208...
+[   4/10] round_id=4   8056ms ✓ rand=4601a482a1fc0639...
+[   5/10] round_id=5   9265ms ✓ rand=6eeb50c71e155b47...
+[   6/10] round_id=6   8359ms ✓ rand=8941e41c12b0fd60...
+[   7/10] round_id=7   9184ms ✓ rand=0f7c89c3d0450ead...
+[   8/10] round_id=8   9052ms ✓ rand=63b7fefefe027a34...
+[   9/10] round_id=9   8689ms ✓ rand=e670b759acabd02a...
+[  10/10] round_id=10   9991ms ✓ rand=4c141cc4d1dcf73a...
+
+── summary ───────────────────────────────────────
+  total time:   95486 ms (95.5 s)
+  succeeded:    10/10
+  failed:       0
+  avg round:    9547 ms
+  p50 / p95 / p99 / min / max: 9052 / 10259 / 10259 / 8056 / 13607
+  start bal:    5.278683 SOL
+  end bal:      5.238716 SOL
+  spent:        0.039967 SOL
+  wrote summary: test_v7_results/A1.json

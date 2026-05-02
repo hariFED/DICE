@@ -59,115 +59,35 @@ pub struct ClaimRewards<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<ClaimRewards>, device_pubkey: [u8; 33]) -> Result<()> {
-    // Verify the request has been finalized
-    require!(
-        ctx.accounts.randomness_request.status == RequestStatus::Finalized,
-        DiceError::RoundNotComplete
-    );
-
-    // Verify the escrow has not already been claimed
-    require!(
-        !ctx.accounts.escrow.is_claimed,
-        DiceError::EscrowInsufficient
-    );
-
-    // Verify the device participated in this round
-    let contributing_count = ctx.accounts.randomness_result.contributing_count;
-    let mut node_participated = false;
-    for i in 0..contributing_count as usize {
-        if ctx.accounts.randomness_result.contributing_nodes[i] == device_pubkey {
-            node_participated = true;
-            break;
-        }
-    }
-    require!(node_participated, DiceError::UnauthorizedNode);
-
-    let escrow_amount = ctx.accounts.escrow.amount;
-    require!(escrow_amount > 0, DiceError::EscrowInsufficient);
-
-    let num_nodes = contributing_count as u64;
-    require!(num_nodes > 0, DiceError::InsufficientNodes);
-
-    // Calculate distribution amounts
-    // NODE_REWARD_BPS = 7000 (70%) split equally across all contributing nodes
-    let total_node_share = escrow_amount
-        .checked_mul(NODE_REWARD_BPS)
-        .unwrap()
-        .checked_div(10_000)
-        .unwrap();
-    let per_node_share = total_node_share.checked_div(num_nodes).unwrap();
-
-    let treasury_share = escrow_amount
-        .checked_mul(TREASURY_REWARD_BPS)
-        .unwrap()
-        .checked_div(10_000)
-        .unwrap();
-
-    let reserve_share = escrow_amount
-        .checked_mul(RESERVE_REWARD_BPS)
-        .unwrap()
-        .checked_div(10_000)
-        .unwrap();
-
-    // Build escrow PDA signer seeds using the bump stored in ctx.bumps
-    let requester_key = ctx.accounts.randomness_request.requester;
-    let sequence_le = ctx.accounts.randomness_request.sequence.to_le_bytes();
-    let escrow_bump = ctx.bumps.escrow;
-    let signer_seeds: &[&[&[u8]]] = &[&[
-        SEED_ESCROW,
-        requester_key.as_ref(),
-        sequence_le.as_ref(),
-        &[escrow_bump],
-    ]];
-
-    // Transfer per-node share to node_wallet
-    system_program::transfer(
-        CpiContext::new_with_signer(
-            ctx.accounts.system_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.escrow.to_account_info(),
-                to: ctx.accounts.node_wallet.to_account_info(),
-            },
-            signer_seeds,
-        ),
-        per_node_share,
-    )?;
-
-    // Transfer treasury share
-    system_program::transfer(
-        CpiContext::new_with_signer(
-            ctx.accounts.system_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.escrow.to_account_info(),
-                to: ctx.accounts.treasury.to_account_info(),
-            },
-            signer_seeds,
-        ),
-        treasury_share,
-    )?;
-
-    // Transfer reserve share
-    system_program::transfer(
-        CpiContext::new_with_signer(
-            ctx.accounts.system_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.escrow.to_account_info(),
-                to: ctx.accounts.reserve.to_account_info(),
-            },
-            signer_seeds,
-        ),
-        reserve_share,
-    )?;
-
-    // Mark escrow as claimed
-    ctx.accounts.escrow.is_claimed = true;
-
+/// v1 claim_rewards is **deprecated** — returns `V1ClaimRewardsDeprecated`.
+///
+/// Background: the original design takes a single `device_pubkey` and pays
+/// one node + full treasury + full reserve per call, setting
+/// `escrow.is_claimed = true` at the end. Two bugs interact:
+///
+///   1. The `is_claimed` flag is escrow-scoped, not per-node. After the
+///      first call sets it, every subsequent node's claim fails the
+///      `!is_claimed` check — so only one of N contributing nodes ever
+///      gets paid.
+///
+///   2. If `is_claimed` didn't exist, treasury + reserve would be paid
+///      on EVERY node's claim (N times), draining the escrow.
+///
+/// The two bugs mask each other: `is_claimed` prevents the N-times drain
+/// by also preventing N-1 of the nodes from collecting. There is no
+/// minimal fix that preserves the single-node-per-call API without schema
+/// changes to `EscrowAccount` (per-node claim tracking or per-node PDAs).
+///
+/// v2 `claim_rewards_v2` solves this cleanly: the coordinator passes all
+/// contributing NodeVault PDAs in `remaining_accounts` and the instruction
+/// atomically distributes the full split in one call. That's the
+/// supported path — every deployed channel uses it.
+///
+/// Returning an error here prevents silent under-/over-payment on any
+/// remaining caller; it does not touch existing escrow state.
+pub fn handler(_ctx: Context<ClaimRewards>, _device_pubkey: [u8; 33]) -> Result<()> {
     msg!(
-        "Rewards claimed: node_wallet={} lamports, treasury={} lamports, reserve={} lamports",
-        per_node_share,
-        treasury_share,
-        reserve_share,
+        "v1 claim_rewards is deprecated — use claim_rewards_v2 (v2 channel path)"
     );
-    Ok(())
+    err!(DiceError::V1ClaimRewardsDeprecated)
 }

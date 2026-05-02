@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE Script 1 — The Discovery</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #e8e8e8;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    line-height: 1.9;
+    padding: 3rem 1.5rem;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .meta {
+    border-bottom: 1px solid #222;
+    padding-bottom: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .meta h1 {
+    font-size: 2rem;
+    font-weight: 400;
+    color: #fff;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.5rem;
+  }
+
+  .meta .subtitle {
+    color: #666;
+    font-size: 0.95rem;
+    font-style: italic;
+  }
+
+  .meta .details {
+    margin-top: 1rem;
+    display: flex;
+    gap: 2rem;
+    font-size: 0.8rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .line {
+    margin-bottom: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 3px;
+    transition: background 0.2s;
+    cursor: pointer;
+    font-size: 1.15rem;
+  }
+
+  .line:hover {
+    background: #1a1a1a;
+  }
+
+  .line.active {
+    background: #1a1a0a;
+    border-left: 3px solid #f0c040;
+    padding-left: calc(0.8rem - 3px);
+  }
+
+  /* Spoken dialogue */
+  .spoken {
+    color: #f5f5f5;
+    font-size: 1.2rem;
+  }
+
+  /* Stage directions */
+  .direction {
+    color: #4a9eff;
+    font-size: 0.85rem;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-style: italic;
+    padding: 0.6rem 0.8rem;
+    margin: 1rem 0;
+    border-left: 2px solid #1a3a5a;
+    background: #0d1520;
+  }
+
+  /* Delivery coaching notes */
+  .delivery {
+    color: #ff6b6b;
+    font-size: 0.8rem;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    padding: 0.4rem 0.8rem;
+    margin: 0.3rem 0 1.2rem 0;
+    opacity: 0.8;
+  }
+
+  /* Beat / pause markers */
+  .pause {
+    text-align: center;
+    color: #333;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    padding: 1rem 0;
+    user-select: none;
+  }
+
+  .pause::before, .pause::after {
+    content: '———';
+    color: #222;
+    margin: 0 1rem;
+  }
+
+  /* Section dividers */
+  .section {
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  .section h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #444;
+    font-weight: 400;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  .section .time {
+    float: right;
+    color: #333;
+    font-size: 0.7rem;
+    font-family: monospace;
+  }
+
+  /* Motion graphic description */
+  .mg {
+    background: #0a1a0a;
+    border: 1px solid #1a3a1a;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    font-size: 0.85rem;
+    color: #5a9a5a;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  .mg::before {
+    content: '▶ MOTION GRAPHIC';
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: #3a6a3a;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Teleprompter mode toggle */
+  .controls {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .controls button {
+    background: #1a1a1a;
+    color: #888;
+    border: 1px solid #333;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: monospace;
+    transition: all 0.2s;
+  }
+
+  .controls button:hover {
+    background: #222;
+    color: #fff;
+  }
+
+  .controls button.active-btn {
+    background: #f0c040;
+    color: #000;
+    border-color: #f0c040;
+  }
+
+  /* Teleprompter mode */
+  body.teleprompter .direction,
+  body.teleprompter .delivery,
+  body.teleprompter .mg,
+  body.teleprompter .meta .details,
+  body.teleprompter .section h2,
+  body.teleprompter .controls { display: none; }
+
+  body.teleprompter {
+    font-size: 1.8rem;
+    line-height: 2.2;
+    max-width: 600px;
+  }
+
+  body.teleprompter .spoken { font-size: 2rem; }
+  body.teleprompter .pause { font-size: 1rem; }
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <h1>Script 1 — The Discovery</h1>
+  <div class="subtitle">Style: quiet investigative — like a short documentary where the founder narrates what he found</div>
+  <div class="details">
+    <span>Runtime: ~80s</span>
+    <span>Energy: low-to-medium</span>
+    <span>Arc: mystery → reveal → build</span>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The question <span class="time">0:00</span></h2>
+</div>
+
+<div class="direction">FACE — medium shot, looking slightly past camera like remembering something, then snapping to lens</div>
+
+<div class="line spoken">"I asked a really simple question one night."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"Where does the random number come from?"</div>
+
+<div class="delivery">Say it like you're genuinely still curious. Not rhetorical. Like you asked it to your screen at midnight and nobody answered.</div>
+
+<div class="line spoken">"I build lottery games on Solana.</div>
+<div class="line spoken">People put in real money... and one number decides who gets it.</div>
+<div class="line spoken">I'd shipped five of these.</div>
+<div class="line spoken">Never once checked where the number actually came from."</div>
+
+<div class="delivery">The "never once checked" should sting a little. You're admitting something. That honesty is what makes the audience trust you.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The answer nobody likes <span class="time">0:18</span></h2>
+</div>
+
+<div class="line spoken">"So I looked."</div>
+
+<div class="pause">2 seconds — hold eye contact, say nothing</div>
+
+<div class="line spoken">"It's a server.</div>
+<div class="line spoken">One server. In a data center. Run by one company."</div>
+
+<div class="mg">
+Single server rack in darkness. A thin bright line connects it to a cluster of dApp icons — lottery wheels, dice, NFT mints. All dependent on this one box. The image should feel fragile.
+</div>
+
+<div class="line spoken">"Every lottery. Every coin flip.</div>
+<div class="line spoken">Every NFT that picks which trait you get."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"All of it comes from one rented machine</div>
+<div class="line spoken">that I have to just... believe is being honest."</div>
+
+<div class="delivery">The word "believe" should feel uncomfortable in your mouth. You're a builder — you don't do belief, you do verification. That tension is the scene.</div>
+
+<div class="pause">silence — 2 seconds</div>
+
+<div class="line spoken">"That's not decentralized.</div>
+<div class="line spoken">That's a cloud rental with a blockchain receipt."</div>
+
+<div class="delivery">THE LINE. Flat. Tired. Like you've said it 50 times to yourself already. No performance. Just the fact.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>What I did about it <span class="time">0:40</span></h2>
+</div>
+
+<div class="direction">HARD CUT — energy shift. You reach below frame and bring up the ESP32. Hold it at chest height.</div>
+
+<div class="line spoken">"So I went and built the thing that should've existed."</div>
+
+<div class="pause">hold the device — let camera see it — 2 seconds of nothing</div>
+
+<div class="line spoken">"This is an eight dollar chip.</div>
+<div class="line spoken">It has its own key — burned into the silicon.</div>
+<div class="line spoken">Can't copy it. Can't extract it.</div>
+<div class="line spoken">Can't snapshot it and roll back like a cloud VM."</div>
+
+<div class="delivery">Tap the chip gently when you say "burned into the silicon." The tactile moment makes it real.</div>
+
+<div class="direction">Set the device down. Camera widens slightly to show 4 devices on desk, LEDs green.</div>
+
+<div class="line spoken">"Four of these generate their own randomness.</div>
+<div class="line spoken">Each one locks in before seeing anyone else's answer.</div>
+<div class="line spoken">And the final number comes from all of them combined."</div>
+
+<div class="line spoken">"Not from one server.</div>
+<div class="line spoken">Not from one company.</div>
+<div class="line spoken">From physics."</div>
+
+<div class="delivery">The three "not from" lines should feel like doors closing. Then "from physics" is the one that opens.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>What it means for you <span class="time">1:00</span></h2>
+</div>
+
+<div class="mg">
+Split screen — left: two transaction blocks appearing slowly with a timer counting to 7 seconds. Right: ONE block, timer stops at 3.5s, green checkmark. Clean. No labels. The visual is self-explanatory.
+</div>
+
+<div class="line spoken">"One transaction. Three and a half seconds. Done.</div>
+<div class="line spoken">Ten lines of code to integrate."</div>
+
+<div class="line spoken">"And something nobody on Solana has shipped yet —</div>
+<div class="line spoken">streaming randomness.</div>
+<div class="line spoken">You subscribe once... and values just keep coming."</div>
+
+<div class="mg">
+Continuous river of glowing values flowing from the devices into a game UI. Feels alive, continuous, effortless.
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The close <span class="time">1:10</span></h2>
+</div>
+
+<div class="direction">Pull back. Calm. Looking right into the lens. Hands still.</div>
+
+<div class="line spoken">"If someone's money is on the line...</div>
+<div class="line spoken">the number that decides it</div>
+<div class="line spoken">should come from the real world."</div>
+
+<div class="pause">2 seconds — hold</div>
+
+<div class="line spoken">"Not from a rental."</div>
+
+<div class="delivery">Last word. Don't nod. Don't smile. Don't add "check us out" or "visit our site." Just... stop. The silence after "rental" IS the ending.</div>
+
+<div class="pause">cut to black — 1s</div>
+
+<div class="mg">
+White screen. DICE logo centered. Below it: "Real hardware. Real entropy. Solana." URL beneath. Hold 3 seconds. Fade.
+</div>
+
+<!-- ============================================ -->
+
+<div class="controls">
+  <button onclick="toggleTeleprompter()" id="tele-btn">Teleprompter Mode</button>
+  <button onclick="toggleHighlight()" id="hi-btn">Click Lines to Mark</button>
+</div>
+
+<script>
+  function toggleTeleprompter() {
+    document.body.classList.toggle('teleprompter');
+    document.getElementById('tele-btn').classList.toggle('active-btn');
+  }
+
+  let highlightMode = false;
+  function toggleHighlight() {
+    highlightMode = !highlightMode;
+    document.getElementById('hi-btn').classList.toggle('active-btn');
+  }
+
+  document.querySelectorAll('.line').forEach(el => {
+    el.addEventListener('click', () => {
+      if (highlightMode) el.classList.toggle('active');
+    });
+  });
+</script>
+
+</body>
+</html>

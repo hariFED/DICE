@@ -1,0 +1,25 @@
+[package]
+name    = "pulse-driver"
+version = "0.1.0"
+edition = "2021"
+description = "Streaming VRF driver for the pulse example dApp — creates a RandomnessFeed, triggers DICE rounds, and plays dice via the feed PDA."
+
+[[bin]]
+name = "pulse-driver"
+path = "src/main.rs"
+
+[dependencies]
+tokio              = { workspace = true }
+serde              = { workspace = true }
+serde_json         = { workspace = true }
+anyhow             = { workspace = true }
+sha2               = { workspace = true }
+hex                = { workspace = true }
+solana-sdk         = { workspace = true }
+
+clap               = { version = "4", features = ["derive"] }
+reqwest            = { version = "0.12", features = ["json"] }
+base64             = "0.22"
+bincode            = "1"
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }

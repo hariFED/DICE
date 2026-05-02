@@ -59,3 +59,34 @@ bool dice_crypto_sign(const uint8_t *data, size_t data_len, uint8_t sig_out[64])
  * @return true on success.
  */
 bool dice_crypto_get_pubkey(uint8_t pubkey_out[33]);
+
+/**
+ * Sign a payout-wallet binding message with the device's hardware key.
+ *
+ * The binding message layout — which MUST match the on-chain verifier in
+ * `programs/dice/src/instructions/register_node_vault.rs` exactly — is:
+ *
+ *     msg = "DICE_PAYOUT_BINDING_V1"     (22 bytes)
+ *        || device_pubkey                 (33 bytes)
+ *        || payout_wallet                 (32 bytes, raw Solana pubkey bytes)
+ *        || timestamp_le                  (8 bytes, i64 little-endian)
+ *        || nonce                         (32 bytes, locally-generated random)
+ *     hash = SHA-256(msg)
+ *     signature = ecdsa_sign(device_hw_key, hash)  (64 bytes r || s)
+ *
+ * The device's secp256k1 public key is the one DICE already uses for VRF
+ * commit-reveal — reused here so there's only one identity key on the
+ * chip.
+ *
+ * @param payout_wallet_32  The operator-entered Solana wallet, 32 raw bytes
+ *                          (base58-decoded by the caller).
+ * @param timestamp         Unix epoch seconds.
+ * @param nonce             32-byte random nonce generated locally.
+ * @param sig_out           Output: 64-byte raw signature (r || s).
+ * @return true on success.
+ */
+bool dice_crypto_sign_payout_binding(
+    const uint8_t payout_wallet_32[32],
+    int64_t       timestamp,
+    const uint8_t nonce[32],
+    uint8_t       sig_out[64]);

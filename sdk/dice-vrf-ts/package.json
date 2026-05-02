@@ -1,0 +1,39 @@
+{
+  "name": "@dice-vrf/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for DICE — hardware-backed VRF oracle on Solana (v2 channel path)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "solana",
+    "vrf",
+    "randomness",
+    "oracle",
+    "dice"
+  ],
+  "peerDependencies": {
+    "@solana/web3.js": "^1.95.0"
+  },
+  "devDependencies": {
+    "@solana/web3.js": "^1.95.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
