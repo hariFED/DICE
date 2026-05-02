@@ -16,11 +16,13 @@
 static const char *TAG = "dice_cr";
 
 /* ------------------------------------------------------------------ */
-/* Pending-job state                                                     */
+/* Pending-job queue (ring buffer)                                       */
 /* ------------------------------------------------------------------ */
 
+#define MAX_PENDING_JOBS 16  /* Max concurrent commit-reveal rounds */
+
 typedef struct {
-    bool     active;               /**< True when a job is pending reveal */
+    bool     active;               /**< True when this slot holds a pending reveal */
     uint8_t  request_id[32];
     uint32_t round_seq;
     uint64_t deadline_ts;
@@ -28,11 +30,11 @@ typedef struct {
     uint8_t  commit_hash[32];      /**< SHA-256(entropy) */
 } pending_job_t;
 
-static pending_job_t s_pending;
-static SemaphoreHandle_t s_mutex = NULL;  /* protects s_pending */
+static pending_job_t s_jobs[MAX_PENDING_JOBS];
+static SemaphoreHandle_t s_mutex = NULL;
 
 /* ------------------------------------------------------------------ */
-/* Internal init (called lazily)                                        */
+/* Internal helpers                                                      */
 /* ------------------------------------------------------------------ */
 
 static void ensure_mutex(void)
@@ -44,6 +46,47 @@ static void ensure_mutex(void)
             abort();
         }
     }
+}
+
+/** Find a free slot or return -1. Caller must hold mutex. */
+static int find_free_slot(void)
+{
+    for (int i = 0; i < MAX_PENDING_JOBS; i++) {
+        if (!s_jobs[i].active) return i;
+    }
+    return -1;
+}
+
+/**
+ * Find the active slot for `request_id` with the **highest** round_seq.
+ *
+ * In v2, the on-chain `request_id` is the DiceChannel pubkey and stays
+ * constant across every round on that channel. The coordinator bumps
+ * `round_seq` on each round. If a previous round on the same channel
+ * timed out (e.g. one device was slow and missed the commit deadline),
+ * its slot may still be `active` when the NEXT JobAssignment arrives —
+ * producing TWO active slots with the same request_id but different
+ * round_seq. Returning the first-matching slot (as the original code
+ * did) picked up the stale one, and on reveal the device sent entropy
+ * from the OLD round while the coordinator held a commit_hash for the
+ * NEW round — hash mismatch, reveal rejected, round failed.
+ *
+ * Fix: walk ALL matching slots and return the one with the largest
+ * `round_seq`. Caller must hold mutex.
+ */
+static int find_slot_by_request(const uint8_t request_id[32])
+{
+    int best = -1;
+    uint32_t best_seq = 0;
+    for (int i = 0; i < MAX_PENDING_JOBS; i++) {
+        if (!s_jobs[i].active) continue;
+        if (memcmp(s_jobs[i].request_id, request_id, 32) != 0) continue;
+        if (best < 0 || s_jobs[i].round_seq > best_seq) {
+            best = i;
+            best_seq = s_jobs[i].round_seq;
+        }
+    }
+    return best;
 }
 
 /* ------------------------------------------------------------------ */
@@ -86,38 +129,63 @@ void dice_cr_handle_job(const uint8_t request_id[32],
         return;
     }
 
-    /* --- Store pending job (hold mutex while updating) --- */
+    /* --- Store in pending job queue --- */
     if (xSemaphoreTake(s_mutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
         ESP_LOGE(TAG, "Could not acquire job mutex");
         memset(entropy, 0, sizeof(entropy));
         return;
     }
 
-    if (s_pending.active) {
-        ESP_LOGW(TAG, "Overwriting previous pending job — old entropy discarded");
-        memset(s_pending.entropy, 0, sizeof(s_pending.entropy));
+    /* v7.1 fix: if we already have an active slot for this request_id
+     * (common in v2 where request_id == channel PDA is reused across
+     * rounds), evict it before inserting the new round's data. This
+     * prevents a stale round_N slot from shadowing round_{N+1}'s
+     * reveal lookup, and also stops the per-channel slot count from
+     * growing every time a round times out. */
+    for (int i = 0; i < MAX_PENDING_JOBS; i++) {
+        if (s_jobs[i].active
+            && memcmp(s_jobs[i].request_id, request_id, 32) == 0)
+        {
+            ESP_LOGW(TAG, "Evicting stale slot %d (round_seq=%lu) for same request_id",
+                     i, (unsigned long)s_jobs[i].round_seq);
+            memset(s_jobs[i].entropy, 0, sizeof(s_jobs[i].entropy));
+            memset(&s_jobs[i], 0, sizeof(s_jobs[i]));
+        }
     }
 
-    s_pending.active      = true;
-    s_pending.round_seq   = round_seq;
-    s_pending.deadline_ts = deadline_ts;
-    memcpy(s_pending.request_id,  request_id,  32);
-    memcpy(s_pending.entropy,     entropy,      32);
-    memcpy(s_pending.commit_hash, commit_hash,  32);
+    int slot = find_free_slot();
+    if (slot < 0) {
+        ESP_LOGW(TAG, "Job queue full (%d slots) — discarding oldest job", MAX_PENDING_JOBS);
+        /* Evict slot 0, shift everything down */
+        memset(s_jobs[0].entropy, 0, sizeof(s_jobs[0].entropy));
+        for (int i = 0; i < MAX_PENDING_JOBS - 1; i++) {
+            s_jobs[i] = s_jobs[i + 1];
+        }
+        slot = MAX_PENDING_JOBS - 1;
+        memset(&s_jobs[slot], 0, sizeof(s_jobs[slot]));
+    }
 
-    /* Build the CommitSubmission message while still holding the mutex-protected
-     * values in local variables (commit_hash has not yet been zeroed). */
+    s_jobs[slot].active      = true;
+    s_jobs[slot].round_seq   = round_seq;
+    s_jobs[slot].deadline_ts = deadline_ts;
+    memcpy(s_jobs[slot].request_id,  request_id,  32);
+    memcpy(s_jobs[slot].entropy,     entropy,      32);
+    memcpy(s_jobs[slot].commit_hash, commit_hash,  32);
+
+    ESP_LOGI(TAG, "Job queued in slot %d (round_seq=%lu)", slot, (unsigned long)round_seq);
+
+    xSemaphoreGive(s_mutex);
+
+    /* Build the CommitSubmission message */
     dice_message_t msg;
     memset(&msg, 0, sizeof(msg));
     msg.type = DICE_MSG_COMMIT;
     memcpy(msg.commit.request_id,  request_id,  32);
     memcpy(msg.commit.node_id,     node_id,     33);
-    memcpy(msg.commit.commit_hash, commit_hash, 32);  /* use local copy, not s_pending */
+    memcpy(msg.commit.commit_hash, commit_hash, 32);
     memcpy(msg.commit.signature,   signature,   64);
 
-    xSemaphoreGive(s_mutex);
-
-    /* Scrub local sensitive copies now that they are in the message struct */
+    /* Scrub local sensitive copies */
     memset(entropy,     0, sizeof(entropy));
     memset(commit_hash, 0, sizeof(commit_hash));
     memset(signature,   0, sizeof(signature));
@@ -125,7 +193,6 @@ void dice_cr_handle_job(const uint8_t request_id[32],
     if (!dice_ws_send(&msg)) {
         ESP_LOGE(TAG, "Failed to send CommitSubmission for round %lu",
                  (unsigned long)round_seq);
-        /* Leave s_pending.active=true so reveal can still be attempted */
     } else {
         ESP_LOGI(TAG, "CommitSubmission sent for round %lu", (unsigned long)round_seq);
     }
@@ -140,21 +207,17 @@ bool dice_cr_do_reveal(const uint8_t request_id[32])
         return false;
     }
 
-    if (!s_pending.active) {
-        ESP_LOGW(TAG, "cr_do_reveal: no pending job");
-        xSemaphoreGive(s_mutex);
-        return false;
-    }
-
-    if (memcmp(s_pending.request_id, request_id, 32) != 0) {
-        ESP_LOGE(TAG, "cr_do_reveal: request_id mismatch — ignoring");
+    int slot = find_slot_by_request(request_id);
+    if (slot < 0) {
+        ESP_LOGW(TAG, "cr_do_reveal: no matching job in queue (id=%02x%02x...)",
+                 request_id[0], request_id[1]);
         xSemaphoreGive(s_mutex);
         return false;
     }
 
     /* Copy entropy out of the locked region before signing */
     uint8_t entropy[32];
-    memcpy(entropy, s_pending.entropy, 32);
+    memcpy(entropy, s_jobs[slot].entropy, 32);
     xSemaphoreGive(s_mutex);
 
     /* --- Sign entropy with device key --- */
@@ -192,10 +255,13 @@ bool dice_cr_do_reveal(const uint8_t request_id[32])
         return false;
     }
 
-    /* --- Clear pending job state --- */
+    /* --- Clear this job from the queue --- */
     if (xSemaphoreTake(s_mutex, pdMS_TO_TICKS(1000)) == pdTRUE) {
-        memset(s_pending.entropy, 0, sizeof(s_pending.entropy));
-        s_pending.active = false;
+        int s = find_slot_by_request(request_id);
+        if (s >= 0) {
+            memset(s_jobs[s].entropy, 0, sizeof(s_jobs[s].entropy));
+            s_jobs[s].active = false;
+        }
         xSemaphoreGive(s_mutex);
     }
 

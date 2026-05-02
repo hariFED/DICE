@@ -1,0 +1,26 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "github": {
+    "silent": true
+  },
+  "ignoreCommand": "bash -lc 'cd .. && git diff --quiet HEAD^ HEAD -- frontend/ 2>/dev/null; [ $? -eq 0 ] && exit 0 || exit 1'",
+  "headers": [
+    {
+      "source": "/api/v1/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3, s-maxage=3, stale-while-revalidate=10" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>DICE · How-To Cards</title>
+<meta name="pdf-size" content="Letter" />
+<meta name="pdf-orientation" content="portrait" />
+<link rel="stylesheet" href="../shared/styles.css" />
+<style>
+  @page { size: Letter; margin: 0.25in; }
+  body { background: var(--bg); padding: 0.25in; }
+
+  .page {
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 24px;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .title-row strong {
+    font-family: var(--pixel);
+    font-size: 18px;
+    letter-spacing: 0;
+    color: var(--fg);
+  }
+
+  .step-row {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 20px;
+    padding: 16px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .step-row:last-child { border-bottom: 0; }
+
+  .step-num {
+    font-family: var(--pixel);
+    font-size: 36px;
+    line-height: 0.9;
+    color: var(--fg);
+  }
+  .step-head {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    margin: 0 0 6px 0;
+  }
+  .step-body {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.65;
+    color: var(--muted);
+    margin: 0;
+  }
+  code {
+    font-family: var(--mono);
+    background: rgba(255,255,255,0.06);
+    padding: 2px 6px;
+    color: var(--fg);
+    font-size: 11px;
+  }
+  pre {
+    font-family: var(--mono);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    margin: 10px 0 0;
+    font-size: 11px;
+    color: var(--fg);
+    line-height: 1.5;
+    white-space: pre;
+    overflow-x: auto;
+  }
+</style>
+</head>
+<body>
+
+<!-- CARD 1 · OPERATOR QUICKSTART -->
+<section class="page">
+  <div class="title-row">
+    <span>card · 01 · operator · setup</span>
+    <strong>HOW TO: run a DICE node</strong>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">01</div>
+    <div>
+      <h3 class="step-head">Unbox + plug in</h3>
+      <p class="step-body">Plug the device into USB-C power. Status LED blinks red → orange → white while it attaches to your WiFi. Use the DICE companion app to scan the QR on the enclosure and hand off your WiFi credentials.</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">02</div>
+    <div>
+      <h3 class="step-head">Paste your Solana wallet</h3>
+      <p class="step-body">In the companion app, paste the pubkey you want rewards paid to. Your DICE-S3 signs an enrollment message and sends it to the coordinator — no private key ever leaves the chip.</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">03</div>
+    <div>
+      <h3 class="step-head">Wait for first round</h3>
+      <p class="step-body">Your node appears in the <code>/explorer</code> mesh strip within 60 seconds. The status LED pulses white when a round is in progress. First earned SOL shows up in your wallet within ~2 minutes of your first round.</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">04</div>
+    <div>
+      <h3 class="step-head">Optional: hold BOOT for 5s</h3>
+      <p class="step-body">Long-press BOOT if you ever need to re-provision (new WiFi, different wallet). The device wipes its NVS and opens a captive-portal — no re-flash required.</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">05</div>
+    <div>
+      <h3 class="step-head">Join operator Discord</h3>
+      <p class="step-body">Bundled in the box: a printed invite card. Operator channel has firmware updates, incident alerts, and routing discussions.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CARD 2 · DEV QUICKSTART -->
+<section class="page">
+  <div class="title-row">
+    <span>card · 02 · developer · integrate</span>
+    <strong>HOW TO: use DICE in your dApp</strong>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">01</div>
+    <div>
+      <h3 class="step-head">Install the SDK</h3>
+      <p class="step-body">TypeScript: <code>npm i @dicelabs/vrf</code>. Rust / Anchor: <code>cargo add dice-vrf</code>. Both SDKs ship with Devnet + Mainnet program IDs baked in.</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">02</div>
+    <div>
+      <h3 class="step-head">One CPI call in your program</h3>
+      <p class="step-body">Call <code>request_randomness_auto</code> from your instruction handler, passing a callback seed. The DICE program will CPI back into your chosen callback once the round finalizes.</p>
+<pre>use dice_vrf::cpi::request_randomness_auto;
+
+request_randomness_auto(
+    ctx.accounts.dice_ctx(),
+    callback_seed!("roll"),
+)?;</pre>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">03</div>
+    <div>
+      <h3 class="step-head">Handle the 32-byte result</h3>
+      <p class="step-body">Your callback receives <code>DiceResult {'{'} round_id, value, proof {'}'}</code>. Use <code>value</code> as a 32-byte RNG — interpret the first N bytes as a u64, or feed it into <code>ChaCha8</code> for deterministic sub-streams.</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">04</div>
+    <div>
+      <h3 class="step-head">Verify (optional)</h3>
+      <p class="step-body">For extra-paranoid use cases, call <code>verify_randomness</code> with the returned proof. This re-checks all six node signatures on-chain and costs ~8k compute units.</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">05</div>
+    <div>
+      <h3 class="step-head">Budget 0.002 SOL per request</h3>
+      <p class="step-body">The DICE program deducts 0.002 SOL from the caller on <code>request_randomness_auto</code>. For user-facing products, either pass the cost through or absorb it (it&apos;s ~$0.30 at current prices).</p>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

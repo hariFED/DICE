@@ -3,6 +3,7 @@
 
 #include "esp_log.h"
 #include "esp_err.h"
+#include "esp_timer.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_netif.h"
@@ -18,6 +19,10 @@
 #include "heartbeat.h"
 #include "commit_reveal.h"
 #include "dice_protocol.h"
+#include "captive_portal.h"
+#include "factory_reset.h"
+#include "led_status.h"
+#include "payout_binding.h"
 
 static const char *TAG = "dice_main";
 
@@ -25,12 +30,21 @@ static const char *TAG = "dice_main";
 /* WiFi event handling                                                   */
 /* ------------------------------------------------------------------ */
 
-#define WIFI_CONNECTED_BIT  BIT0
-#define WIFI_FAIL_BIT       BIT1
-#define WIFI_MAX_RETRIES    10
+/* WiFi event bits — only WIFI_CONNECTED_BIT is used in practice. We no
+ * longer surface a "failed" bit because the credentials were already
+ * validated by the captive portal before being saved to NVS. If the STA
+ * drops after boot it's an environmental issue (router down, channel
+ * change, roaming), not bad creds — so we retry forever with exponential
+ * backoff instead of giving up and wiping NVS like the old code did. */
+#define WIFI_CONNECTED_BIT BIT0
+
+/* Exponential backoff between reconnect attempts: 1s, 2s, 4s, 8s, 16s, 32s,
+ * then capped at BACKOFF_MAX_SECS thereafter. */
+#define BACKOFF_INITIAL_SECS 1
+#define BACKOFF_MAX_SECS     60
 
 static EventGroupHandle_t s_wifi_event_group;
-static int s_wifi_retry_count = 0;
+static uint32_t           s_wifi_backoff_secs = BACKOFF_INITIAL_SECS;
 
 static void wifi_event_handler(void *arg,
                                 esp_event_base_t event_base,
@@ -39,21 +53,36 @@ static void wifi_event_handler(void *arg,
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (s_wifi_retry_count < WIFI_MAX_RETRIES) {
-            ESP_LOGW(TAG, "WiFi disconnected, retrying (%d/%d)...",
-                     s_wifi_retry_count + 1, WIFI_MAX_RETRIES);
-            s_wifi_retry_count++;
-            esp_wifi_connect();
-        } else {
-            ESP_LOGE(TAG, "WiFi connection failed after %d retries", WIFI_MAX_RETRIES);
-            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+        return;
+    }
+
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        ESP_LOGW(TAG, "WiFi disconnected — retrying in %lu seconds",
+                 (unsigned long)s_wifi_backoff_secs);
+
+        /* Sleep the current backoff interval, then reconnect. Blocking this
+         * handler task is fine: esp_wifi runs its own task and isn't held up. */
+        vTaskDelay(pdMS_TO_TICKS(s_wifi_backoff_secs * 1000));
+
+        /* Double the backoff for next time, capped at BACKOFF_MAX_SECS. */
+        s_wifi_backoff_secs *= 2;
+        if (s_wifi_backoff_secs > BACKOFF_MAX_SECS) {
+            s_wifi_backoff_secs = BACKOFF_MAX_SECS;
         }
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+
+        esp_wifi_connect();
+        return;
+    }
+
+    if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
-        s_wifi_retry_count = 0;
+
+        /* Reset backoff on a successful connect so the next drop starts
+         * at 1 second again. */
+        s_wifi_backoff_secs = BACKOFF_INITIAL_SECS;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        return;
     }
 }
 
@@ -124,30 +153,30 @@ static void wifi_init_sta(void)
 
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    /* Block until connected or failed */
-    EventBits_t bits = xEventGroupWaitBits(
+    /* Block until STA is connected. There is no failure path here — the
+     * credentials were validated by the captive portal before being saved
+     * to NVS, so a failure means environmental (router down, ISP issue,
+     * moved devices). The event handler retries with exponential backoff
+     * forever, so we just wait.
+     *
+     * If the user legitimately needs to change WiFi creds (moved house,
+     * switched ISP) they hold the BOOT button for 5 seconds to trigger
+     * factory reset — see factory_reset.c. */
+    xEventGroupWaitBits(
         s_wifi_event_group,
-        WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+        WIFI_CONNECTED_BIT,
         pdFALSE,
         pdFALSE,
         portMAX_DELAY);
 
-    if (bits & WIFI_CONNECTED_BIT) {
-        ESP_LOGI(TAG, "WiFi connected");
-    } else if (bits & WIFI_FAIL_BIT) {
-        ESP_LOGE(TAG, "WiFi connection failed — halting");
-        abort();
-    } else {
-        ESP_LOGE(TAG, "Unexpected WiFi event bits: 0x%lx", (unsigned long)bits);
-        abort();
-    }
+    ESP_LOGI(TAG, "WiFi connected");
 
-    /* Unregister one-shot handlers (reconnection is handled by the handler) */
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(
-        IP_EVENT, IP_EVENT_STA_GOT_IP, inst_got_ip));
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(
-        WIFI_EVENT, ESP_EVENT_ANY_ID, inst_any_id));
-    vEventGroupDelete(s_wifi_event_group);
+    /* Leave the event handlers registered: the wifi_event_handler is still
+     * responsible for reconnecting on transient drops during normal
+     * operation. Do NOT unregister them or the device will sit dead on
+     * the first ISP outage. */
+    (void)inst_any_id;
+    (void)inst_got_ip;
 }
 
 /* ------------------------------------------------------------------ */
@@ -203,9 +232,6 @@ void app_main(void)
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
         err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        /* NVS partition was truncated/changed — erase and re-init.
-         * Note: this should not happen in production (Flash Encryption
-         * is enabled), but we handle it defensively. */
         ESP_LOGW(TAG, "NVS partition issue (%s), erasing and reinitialising",
                  esp_err_to_name(err));
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -215,11 +241,31 @@ void app_main(void)
     ESP_LOGI(TAG, "NVS flash initialised");
 
     /* ----------------------------------------------------------------
+     * 1b. Initialize LED status indicators
+     * -------------------------------------------------------------- */
+    dice_led_init();
+
+    /* ----------------------------------------------------------------
+     * 1c. First-boot detection — if not provisioned, start captive portal
+     *     This blocks until the user configures WiFi via the web UI.
+     *     After config is saved, the device reboots into normal mode.
+     * -------------------------------------------------------------- */
+    if (!dice_is_provisioned()) {
+        ESP_LOGI(TAG, "Device not provisioned — starting captive portal");
+        dice_captive_portal_start();
+        /* Never reaches here — captive_portal_start blocks until reboot */
+    }
+    ESP_LOGI(TAG, "Device is provisioned — normal boot");
+
+    /* ----------------------------------------------------------------
      * 2. Initialise crypto (loads device key from NVS)
      *    Done before WiFi so the key is in RAM before network is up.
      * -------------------------------------------------------------- */
+    dice_led_set(LED_STATUS_CONNECTING);
+
     if (!dice_crypto_init()) {
         ESP_LOGE(TAG, "Crypto init FAILED — halting");
+        dice_led_set(LED_STATUS_ERROR);
         abort();
     }
     ESP_LOGI(TAG, "Crypto initialised");
@@ -229,6 +275,7 @@ void app_main(void)
      * -------------------------------------------------------------- */
     if (!dice_entropy_selftest()) {
         ESP_LOGE(TAG, "Entropy self-test FAILED — halting");
+        dice_led_set(LED_STATUS_ERROR);
         abort();
     }
 
@@ -260,15 +307,52 @@ void app_main(void)
      * -------------------------------------------------------------- */
     if (!dice_ws_connect(coord_uri, on_message)) {
         ESP_LOGE(TAG, "WebSocket connect failed — halting");
+        dice_led_set(LED_STATUS_ERROR);
         abort();
     }
     ESP_LOGI(TAG, "WebSocket client started");
+    dice_led_set(LED_STATUS_ONLINE);
 
     /* ----------------------------------------------------------------
      * 7. Start heartbeat timer
      * -------------------------------------------------------------- */
     dice_heartbeat_start();
     ESP_LOGI(TAG, "Heartbeat started");
+
+    /* ----------------------------------------------------------------
+     * 7a. Send payout wallet binding if one is pending.
+     *
+     * The captive portal wrote `sol_wallet` to NVS when the operator
+     * typed in a Solana address. On first boot after provisioning, we
+     * sign the binding with the hardware ECDSA key and ship it to the
+     * coordinator, which submits `register_node_vault` on-chain. This
+     * is a one-shot per wallet — the helper tracks its own "already
+     * sent" flag in NVS.
+     *
+     * The WebSocket needs to actually be connected for the send to
+     * work. `dice_ws_connect` starts a task asynchronously, so we
+     * briefly wait for the `dice_ws_is_connected()` signal before
+     * calling the helper. If it doesn't come up within 10 seconds we
+     * skip this attempt and retry on the next boot.
+     * -------------------------------------------------------------- */
+    {
+        int wait_ms = 0;
+        while (!dice_ws_is_connected() && wait_ms < 10000) {
+            vTaskDelay(pdMS_TO_TICKS(250));
+            wait_ms += 250;
+        }
+        if (dice_ws_is_connected()) {
+            (void)dice_payout_binding_maybe_send();
+        } else {
+            ESP_LOGW(TAG, "WS still not connected — deferring payout binding");
+        }
+    }
+
+    /* ----------------------------------------------------------------
+     * 7b. Start factory reset monitor (BOOT button watchdog)
+     * -------------------------------------------------------------- */
+    dice_factory_reset_start();
+    ESP_LOGI(TAG, "Factory reset monitor started");
 
     /* ----------------------------------------------------------------
      * 8. Main loop — all work is done by FreeRTOS tasks/timers.

@@ -202,6 +202,22 @@ int dice_msg_encode(const dice_message_t *msg, uint8_t *buf, size_t buf_len)
         write_key(&e, 3); write_bytes(&e, msg->round_result.randomness, 32);
         break;
 
+    /* -----------------------------------------------------------------
+     * PayoutBindingRequest: { 0:type, 1:node_id, 2:payout_wallet,
+     *                         3:timestamp, 4:nonce, 5:signature }
+     * Timestamp is encoded as a uint; the coordinator casts to i64.
+     * Valid i64 timestamps for the foreseeable future are all positive.
+     * ----------------------------------------------------------------- */
+    case DICE_MSG_PAYOUT_BINDING:
+        write_map(&e, 6);
+        write_key(&e, 0); write_uint(&e, DICE_MSG_PAYOUT_BINDING);
+        write_key(&e, 1); write_bytes(&e, msg->payout_binding.node_id, 33);
+        write_key(&e, 2); write_bytes(&e, msg->payout_binding.payout_wallet, 32);
+        write_key(&e, 3); write_uint(&e, (uint64_t)msg->payout_binding.timestamp);
+        write_key(&e, 4); write_bytes(&e, msg->payout_binding.nonce, 32);
+        write_key(&e, 5); write_bytes(&e, msg->payout_binding.signature, 64);
+        break;
+
     default:
         LOG_E("dice_msg_encode: unknown message type %u", msg->type);
         return -1;

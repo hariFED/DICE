@@ -1,0 +1,25 @@
+[package]
+name    = "coin-toss-driver"
+version = "0.1.0"
+edition = "2021"
+description = "Player frontend driver for coin-toss — drives a real v2 VRF round through the example dApp end-to-end. NOT a test file: it represents the call sequence a production dApp frontend would build."
+
+[[bin]]
+name = "coin-toss-driver"
+path = "src/main.rs"
+
+[dependencies]
+tokio              = { workspace = true }
+serde              = { workspace = true }
+serde_json         = { workspace = true }
+anyhow             = { workspace = true }
+sha2               = { workspace = true }
+hex                = { workspace = true }
+solana-sdk         = { workspace = true }
+
+clap               = { version = "4", features = ["derive"] }
+reqwest            = { version = "0.12", features = ["json"] }
+base64             = "0.22"
+bincode            = "1"
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }

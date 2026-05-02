@@ -39,7 +39,7 @@ pub fn handler(ctx: Context<RequestRandomness>, sequence: u64, callback_program_
 
     // Transfer the protocol fee from requester to escrow PDA
     let cpi_ctx = CpiContext::new(
-        ctx.accounts.system_program.to_account_info(),
+        anchor_lang::system_program::System::id(),
         Transfer {
             from: ctx.accounts.requester.to_account_info(),
             to: ctx.accounts.escrow.to_account_info(),

@@ -1,3 +1,18 @@
+// Node selection for v2 channel rounds.
+//
+// SCOPE (v7): this is the selection authority used by the deployed
+// coordinator. On each new Pending channel the crank calls
+// `SelectionEngine::select_nodes` and dispatches JobAssignments to the
+// chosen device set over mTLS WebSocket.
+//
+// The on-chain `select_nodes` instruction at
+// `programs/dice/src/instructions/select_nodes.rs` is dormant in v7 and
+// NOT called during request_randomness_auto. See its module-level comment
+// for the forward-compat rationale (trust-minimized selection via
+// SlotHashes randomness + auditable on-chain selection transactions).
+// Bottom line: the coordinator's in-memory selection is the one that
+// runs every round today; on-chain select_nodes is a future primitive.
+
 use std::collections::HashSet;
 
 use rand::seq::SliceRandom;
@@ -10,6 +25,10 @@ const LATENCY_CANDIDATE_POOL: usize = 10;
 
 /// Engine responsible for selecting a fair, low-latency subset of nodes for
 /// each randomness round.
+///
+/// v7 authoritative selection path. The on-chain `select_nodes` instruction
+/// exists but is not yet wired into `request_randomness_auto`; this
+/// Rust-side engine is what actually picks nodes for every round.
 pub struct SelectionEngine;
 
 impl SelectionEngine {

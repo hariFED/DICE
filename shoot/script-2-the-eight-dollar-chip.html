@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE Script 2 — The Eight Dollar Chip</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #e8e8e8; font-family: 'Georgia', serif; line-height: 1.9; padding: 3rem 1.5rem; max-width: 720px; margin: 0 auto; }
+  .meta { border-bottom: 1px solid #222; padding-bottom: 2rem; margin-bottom: 3rem; }
+  .meta h1 { font-size: 2rem; font-weight: 400; color: #fff; letter-spacing: -0.5px; margin-bottom: 0.5rem; }
+  .meta .subtitle { color: #666; font-size: 0.95rem; font-style: italic; }
+  .meta .details { margin-top: 1rem; display: flex; gap: 2rem; font-size: 0.8rem; color: #555; text-transform: uppercase; letter-spacing: 0.1em; }
+  .line { margin-bottom: 0.4rem; padding: 0.3rem 0.8rem; border-radius: 3px; transition: background 0.2s; cursor: pointer; font-size: 1.15rem; }
+  .line:hover { background: #1a1a1a; }
+  .line.active { background: #1a1a0a; border-left: 3px solid #f0c040; padding-left: calc(0.8rem - 3px); }
+  .spoken { color: #f5f5f5; font-size: 1.2rem; }
+  .direction { color: #4a9eff; font-size: 0.85rem; font-family: 'Consolas', monospace; font-style: italic; padding: 0.6rem 0.8rem; margin: 1rem 0; border-left: 2px solid #1a3a5a; background: #0d1520; }
+  .delivery { color: #ff6b6b; font-size: 0.8rem; font-family: 'Consolas', monospace; padding: 0.4rem 0.8rem; margin: 0.3rem 0 1.2rem 0; opacity: 0.8; }
+  .pause { text-align: center; color: #333; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; padding: 1rem 0; }
+  .pause::before, .pause::after { content: '———'; color: #222; margin: 0 1rem; }
+  .section { margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1a1a1a; }
+  .section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #444; font-weight: 400; font-family: 'Consolas', monospace; }
+  .section .time { float: right; color: #333; font-size: 0.7rem; }
+  .mg { background: #0a1a0a; border: 1px solid #1a3a1a; border-radius: 4px; padding: 1rem; margin: 1.5rem 0; font-size: 0.85rem; color: #5a9a5a; font-family: 'Consolas', monospace; }
+  .mg::before { content: '▶ MOTION GRAPHIC'; display: block; font-size: 0.65rem; letter-spacing: 0.15em; color: #3a6a3a; margin-bottom: 0.5rem; }
+  .controls { position: fixed; bottom: 2rem; right: 2rem; display: flex; gap: 0.5rem; }
+  .controls button { background: #1a1a1a; color: #888; border: 1px solid #333; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-family: monospace; transition: all 0.2s; }
+  .controls button:hover { background: #222; color: #fff; }
+  .controls button.active-btn { background: #f0c040; color: #000; border-color: #f0c040; }
+  body.teleprompter .direction, body.teleprompter .delivery, body.teleprompter .mg, body.teleprompter .meta .details, body.teleprompter .section h2, body.teleprompter .controls { display: none; }
+  body.teleprompter { font-size: 1.8rem; line-height: 2.2; max-width: 600px; }
+  body.teleprompter .spoken { font-size: 2rem; }
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <h1>Script 2 — The Eight Dollar Chip</h1>
+  <div class="subtitle">Style: product-first — opens with the object, not the problem. Steve Jobs "one more thing" energy but scrappy.</div>
+  <div class="details">
+    <span>Runtime: ~75s</span>
+    <span>Energy: medium, builds</span>
+    <span>Arc: object → context → "why this matters"</span>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The object <span class="time">0:00</span></h2>
+</div>
+
+<div class="direction">OPEN ON: your hand, holding the ESP32 against the white background. Face not visible yet. Just the chip, filling the frame.</div>
+
+<div class="line spoken">"This costs eight dollars."</div>
+
+<div class="pause">beat — camera holds on the chip</div>
+
+<div class="direction">Camera slowly pulls back to reveal your face behind it.</div>
+
+<div class="line spoken">"It has a cryptographic key baked into the silicon</div>
+<div class="line spoken">that nobody — not me, not you, not the manufacturer —</div>
+<div class="line spoken">can ever take out."</div>
+
+<div class="delivery">Hold the chip steady. Don't wave it around. The stillness of the object contrasts with the weight of what you're saying about it.</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"And it makes random numbers</div>
+<div class="line spoken">from actual physical noise inside the hardware."</div>
+
+<div class="line spoken">"Not math pretending to be random.</div>
+<div class="line spoken">Actual... noise. Heat. Electrons. Physics."</div>
+
+<div class="delivery">"Actual... noise" — the pause before noise is you searching for the right word in real-time. Don't rehearse it smooth. The stumble makes it human.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>Why you should care <span class="time">0:18</span></h2>
+</div>
+
+<div class="direction">Set the chip down. Lean forward. Now it's about the world, not the object.</div>
+
+<div class="line spoken">"Here's why that matters."</div>
+
+<div class="line spoken">"On Solana right now... there are games,</div>
+<div class="line spoken">lotteries, raffles, NFT mints...</div>
+<div class="line spoken">where real money — sometimes tens of thousands —</div>
+<div class="line spoken">gets decided by a random number."</div>
+
+<div class="line spoken">"And that number comes from a cloud server."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"A single. Rented. Server."</div>
+
+<div class="delivery">Punch each word. "Single." [beat] "Rented." [beat] "Server." Three sentences, not one. Let each one land separately.</div>
+
+<div class="line spoken">"I know because I build these games.</div>
+<div class="line spoken">I ship lotteries for a living.</div>
+<div class="line spoken">And I was trusting someone else's computer</div>
+<div class="line spoken">to be the most important part of my product."</div>
+
+<div class="delivery">The "I was trusting" admission — let the discomfort show. You're not proud of this. That's what makes you credible.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The network <span class="time">0:38</span></h2>
+</div>
+
+<div class="direction">Camera widens. Your desk visible. 4 ESP32s with green LEDs. You gesture toward them.</div>
+
+<div class="line spoken">"So now there's four of these on my desk."</div>
+
+<div class="line spoken">"Each one generates its own entropy.</div>
+<div class="line spoken">Each one commits before seeing anyone else's.</div>
+<div class="line spoken">And the final number is a combination</div>
+<div class="line spoken">that no single device could've rigged."</div>
+
+<div class="mg">
+Simple animation: 4 nodes, each producing a glowing value independently. Values flow to center, combine, produce one output. Arrows show the commit-reveal timing — locked in, then revealed. Clean, not flashy.
+</div>
+
+<div class="line spoken">"No cloud. No enclave.</div>
+<div class="line spoken">No company you have to trust</div>
+<div class="line spoken">to not peek at the answer early."</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The speed <span class="time">0:55</span></h2>
+</div>
+
+<div class="line spoken">"And it's fast."</div>
+
+<div class="mg">
+Single transaction block appears. Timer: 3.5 seconds. Done. Checkmark. Below in small text: "vs. 2 transactions, 3-8 seconds (Switchboard)" — but muted, not the focus.
+</div>
+
+<div class="line spoken">"One Solana transaction.</div>
+<div class="line spoken">Commit, reveal, finalize — all in one shot.</div>
+<div class="line spoken">Three and a half seconds."</div>
+
+<div class="line spoken">"And we're building streaming —</div>
+<div class="line spoken">where you subscribe once</div>
+<div class="line spoken">and randomness just... flows to you."</div>
+
+<div class="delivery">"just... flows" — open your hand palm-up when you say this, like releasing water. Let the gesture paint the idea.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The close <span class="time">1:08</span></h2>
+</div>
+
+<div class="direction">Pick up one of the ESP32s again. Hold it in front of you. Look at it, then at the camera.</div>
+
+<div class="line spoken">"Eight dollars."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"This is what fair looks like."</div>
+
+<div class="delivery">Bookend with the opening. "Eight dollars" was the first thing you said and the second-to-last. The loop closes. "This is what fair looks like" is the thesis of the entire video in six words. Hold eye contact. No smile. Cut.</div>
+
+<div class="pause">cut to black</div>
+
+<div class="mg">
+DICE logo on white. "Real hardware. Real entropy. Solana." URL. Hold 3 seconds.
+</div>
+
+<!-- ============================================ -->
+<div class="controls">
+  <button onclick="document.body.classList.toggle('teleprompter');this.classList.toggle('active-btn')">Teleprompter</button>
+  <button onclick="this.classList.toggle('active-btn');document.querySelectorAll('.line').forEach(el=>el.onclick=()=>el.classList.toggle('active'))">Mark Lines</button>
+</div>
+
+</body>
+</html>

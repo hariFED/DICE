@@ -1,0 +1,413 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-pixel: var(--font-pixel);
+  --font-heading: var(--font-sans);
+
+  /* shadcn tokens */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Status colors — used ONLY in /explorer pills + form validation. Never as theme accent. */
+  --color-status-ok: var(--status-ok);
+  --color-status-warn: var(--status-warn);
+  --color-status-err: var(--status-err);
+}
+
+/* ── LIGHT MODE (default) ───────────────────────────────────────── */
+:root {
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #0a0a0a;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f5f5f5;
+  --muted-foreground: #525252;
+  --accent: #f5f5f5;
+  --accent-foreground: #0a0a0a;
+  --destructive: #b91c1c;
+  --border: rgba(0, 0, 0, 0.10);
+  --input: rgba(0, 0, 0, 0.14);
+  --ring: rgba(0, 0, 0, 0.40);
+  --chart-1: #0a0a0a;
+  --chart-2: #404040;
+  --chart-3: #737373;
+  --chart-4: #a3a3a3;
+  --chart-5: #d4d4d4;
+  --radius: 0.25rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #0a0a0a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #0a0a0a;
+  --sidebar-border: rgba(0, 0, 0, 0.10);
+  --sidebar-ring: rgba(0, 0, 0, 0.40);
+
+  --status-ok:   #15803d;  /* explorer: finalized */
+  --status-warn: #a16207;  /* explorer: in-progress */
+  --status-err:  #b91c1c;  /* explorer: failed */
+
+  /* ASCII background pattern char color (very subtle) */
+  --ascii-bg: rgba(0, 0, 0, 0.05);
+  --ascii-bg-strong: rgba(0, 0, 0, 0.10);
+}
+
+/* ── DARK MODE ──────────────────────────────────────────────────── */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #0a0a0a;
+  --card-foreground: #fafafa;
+  --popover: #0a0a0a;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #0a0a0a;
+  --secondary: #141414;
+  --secondary-foreground: #fafafa;
+  --muted: #141414;
+  --muted-foreground: #a1a1aa;
+  --accent: #141414;
+  --accent-foreground: #fafafa;
+  --destructive: #f87171;
+  --border: rgba(255, 255, 255, 0.10);
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: rgba(255, 255, 255, 0.40);
+  --chart-1: #fafafa;
+  --chart-2: #d4d4d8;
+  --chart-3: #a1a1aa;
+  --chart-4: #71717a;
+  --chart-5: #52525b;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #fafafa;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #141414;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: rgba(255, 255, 255, 0.10);
+  --sidebar-ring: rgba(255, 255, 255, 0.40);
+
+  --status-ok:   #4ade80;
+  --status-warn: #facc15;
+  --status-err:  #f87171;
+
+  --ascii-bg: rgba(255, 255, 255, 0.04);
+  --ascii-bg-strong: rgba(255, 255, 255, 0.08);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv11";
+  }
+  html {
+    @apply font-mono;
+  }
+  /* Headings use sans for character; body stays mono per the ASCII brief. */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  /* ── Pixel type ────────────────────────────────────────────── */
+
+  .font-pixel {
+    font-family: var(--font-pixel), "Silkscreen", ui-monospace, monospace;
+    letter-spacing: 0;
+  }
+
+  /* ── Dither / halftone textures ────────────────────────────── */
+
+  /* Tight 1px checker — subtle texture for blocks / bands. */
+  .dither-fine {
+    background-image:
+      repeating-conic-gradient(var(--ascii-bg) 0% 25%, transparent 0% 50%);
+    background-size: 3px 3px;
+  }
+  /* Larger 2px dot grid — for display-type overlays. */
+  .dither-dots {
+    background-image: radial-gradient(var(--ascii-bg-strong) 1px, transparent 1px);
+    background-size: 5px 5px;
+  }
+  /* Horizontal-band dither — like old CRT monitor. */
+  .scanlines::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      var(--ascii-bg) 2px,
+      var(--ascii-bg) 3px
+    );
+    mix-blend-mode: overlay;
+    z-index: 1;
+  }
+
+  /* ── ASCII chrome ──────────────────────────────────────────── */
+
+  /* Section dividers like  ── × ── × ──  */
+  .ascii-rule {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    user-select: none;
+  }
+  .ascii-rule::before,
+  .ascii-rule::after {
+    content: "";
+    flex: 1;
+    border-top: 1px dashed var(--border);
+  }
+
+  /* Bracketed inline label — [ LIVE · DEVNET ] */
+  .ascii-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+  }
+  .ascii-label::before { content: "[ "; }
+  .ascii-label::after { content: " ]"; }
+
+  /* Crisp 1px box border with hover accent — replaces all the old GlowCards */
+  .ascii-box {
+    border: 1px solid var(--border);
+    background: var(--background);
+    transition: border-color .15s ease, background-color .15s ease;
+  }
+  .ascii-box:hover {
+    border-color: var(--foreground);
+  }
+
+  /* The signature shaded block strip — used for stat panels, hero bg accents */
+  .ascii-shade {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent 0,
+      transparent 6px,
+      var(--ascii-bg) 6px,
+      var(--ascii-bg) 7px
+    );
+  }
+
+  /* Text-color status pills (used by /explorer only) */
+  .pill-ok   { color: var(--status-ok);   border: 1px solid currentColor; }
+  .pill-warn { color: var(--status-warn); border: 1px solid currentColor; }
+  .pill-err  { color: var(--status-err);  border: 1px solid currentColor; }
+
+  /* ── Blueprint grid — used as bg for isometric illustrations ── */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right,  var(--ascii-bg) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--ascii-bg) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .bg-grid-fine {
+    background-image:
+      linear-gradient(to right,  var(--ascii-bg) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--ascii-bg) 1px, transparent 1px);
+    background-size: 8px 8px;
+  }
+  .bg-iso-grid {
+    background-image:
+      linear-gradient(30deg,  var(--ascii-bg) 1px, transparent 1px),
+      linear-gradient(-30deg, var(--ascii-bg) 1px, transparent 1px);
+    background-size: 28px 16px;
+  }
+
+  /* ── Editorial chrome ─────────────────────────────────────── */
+  .corner-ticks::before,
+  .corner-ticks::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--foreground);
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .corner-ticks::before { top: 0; left: 0; border-right: none; border-bottom: none; }
+  .corner-ticks::after  { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+  /* Chapter marker — big editorial section numbers */
+  .chapter-num {
+    font-family: var(--font-pixel);
+    font-size: clamp(48px, 6vw, 92px);
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+    opacity: 0.15;
+  }
+
+  /* ── Liquid-glass design system ─────────────────────────────── */
+
+  .liquid-glass {
+    background: rgba(255,255,255,0.01);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: none;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  .liquid-glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(180deg,
+      rgba(255,255,255,0.45) 0%,
+      rgba(255,255,255,0.15) 20%,
+      rgba(255,255,255,0) 40%,
+      rgba(255,255,255,0) 60%,
+      rgba(255,255,255,0.15) 80%,
+      rgba(255,255,255,0.45) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .liquid-glass-strong {
+    background: rgba(255,255,255,0.01);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+    border: none;
+    box-shadow: 4px 4px 4px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  .liquid-glass-strong::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(180deg,
+      rgba(255,255,255,0.5) 0%,
+      rgba(255,255,255,0.2) 20%,
+      rgba(255,255,255,0) 40%,
+      rgba(255,255,255,0) 60%,
+      rgba(255,255,255,0.2) 80%,
+      rgba(255,255,255,0.5) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Ticker marquee keyframes */
+  @keyframes marquee-x {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  .animate-marquee {
+    animation: marquee-x var(--marquee-duration, 60s) linear infinite;
+  }
+
+  /* Sticky section progress indicator */
+  .progress-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted-foreground);
+    opacity: 0.3;
+    transition: opacity .3s, transform .3s;
+  }
+  .progress-dot.active {
+    opacity: 1;
+    transform: scale(1.5);
+    background: var(--foreground);
+  }
+
+  /* ── Form inputs (mono-friendly, no green focus ring) ──────── */
+  .input {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.4;
+    transition: border-color .12s, background .12s;
+  }
+  .input::placeholder { color: var(--muted-foreground); opacity: 0.6; }
+  .input:hover  { border-color: var(--ring); }
+  .input:focus  {
+    outline: none;
+    border-color: var(--foreground);
+    box-shadow: 0 0 0 1px var(--foreground);
+  }
+  select.input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23888' stroke-width='1.5' d='M2 4.5l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+}

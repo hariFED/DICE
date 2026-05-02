@@ -27,7 +27,7 @@ pub struct FundEscrow<'info> {
 
 pub fn handler(ctx: Context<FundEscrow>, amount: u64) -> Result<()> {
     let cpi_ctx = CpiContext::new(
-        ctx.accounts.system_program.to_account_info(),
+        anchor_lang::system_program::System::id(),
         Transfer {
             from: ctx.accounts.developer.to_account_info(),
             to: ctx.accounts.escrow.to_account_info(),

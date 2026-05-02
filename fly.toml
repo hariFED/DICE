@@ -1,0 +1,99 @@
+# DICE Coordinator — Fly.io deployment
+#
+# Three logical ports are exposed by the binary:
+#   8080 · HTTP REST API (public, consumed by the Vercel BFF)
+#   8443 · mTLS WebSocket for ESP32 nodes (raw TCP — rustls does the handshake)
+#   9090 · Prometheus metrics (internal only; scraped from within Fly private net)
+#
+# Raw-TCP pass-through on 8443 is critical — client certs must reach our
+# rustls server. That's what Fly does natively and Railway needed a paid
+# add-on for.
+#
+# Certs + the Solana keypair are injected via [[files]] from local paths at
+# deploy time. They never land in the Docker image; Fly puts them directly
+# on the machine filesystem.
+
+app            = "dice-coord"
+primary_region = "iad"   # US-East — close to our primary Neon (us-east-1)
+
+[build]
+  dockerfile = "docker/Dockerfile.coordinator.prod"
+
+[env]
+  DICE_WS_PORT       = "8443"
+  DICE_API_PORT      = "8080"
+  DICE_METRICS_PORT  = "9090"
+  DICE_TLS           = "true"
+  DICE_TLS_CERT_PATH = "/app/certs/coordinator.crt"
+  DICE_TLS_KEY_PATH  = "/app/certs/coordinator.key"
+  DICE_CA_CERT_PATH  = "/app/certs/ca.crt"
+  DICE_KEYPAIR_PATH  = "/app/coordinator-keypair.json"
+  RUST_LOG           = "info,dice_coordinator=debug"
+
+# ─── HTTP REST API (public) ────────────────────────────────────────────────
+[[services]]
+  internal_port    = 8080
+  protocol         = "tcp"
+  auto_stop_machines  = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port       = 80
+    handlers   = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port     = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval     = "30s"
+    timeout      = "5s"
+    grace_period = "20s"
+    method       = "GET"
+    path         = "/api/v1/stats"
+
+# ─── mTLS WebSocket (raw TCP pass-through) ─────────────────────────────────
+[[services]]
+  internal_port    = 8443
+  protocol         = "tcp"
+  auto_stop_machines  = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 8443
+    # No handlers on purpose — we want Fly to pass the raw TCP stream to our
+    # rustls server, which does the mTLS handshake (client-cert verification
+    # against our private CA).
+
+  [[services.tcp_checks]]
+    interval     = "15s"
+    timeout      = "3s"
+    grace_period = "30s"
+
+# ─── Cert + keypair files injected at deploy time ─────────────────────────
+[[files]]
+  guest_path = "/app/certs/ca.crt"
+  local_path = "./certs/ca.crt"
+
+[[files]]
+  guest_path = "/app/certs/coordinator.crt"
+  local_path = "./certs/coordinator.crt"
+
+[[files]]
+  guest_path = "/app/certs/coordinator.key"
+  local_path = "./certs/coordinator.key"
+
+[[files]]
+  guest_path = "/app/coordinator-keypair.json"
+  local_path = "./coordinator-keypair.json"
+
+# ─── VM sizing ────────────────────────────────────────────────────────────
+# 512 MB is plenty for the coord's in-memory state (~hundreds of round
+# entries at peak). Scale up if we see OOMs; scale down once usage is known.
+[[vm]]
+  cpu_kind  = "shared"
+  cpus      = 1
+  memory_mb = 512

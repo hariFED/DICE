@@ -1,0 +1,7 @@
+key,type,encoding,value
+dice,namespace,,
+coordinator_uri,data,string,ws://192.168.31.162:9001
+priv_key_der,file,binary,C:\Users\Abcom\DICE\firmware\tools\prov_output\priv_key.der
+client_cert_pem,file,string,C:\Users\Abcom\DICE\certs\device.crt
+client_key_pem,file,string,C:\Users\Abcom\DICE\certs\device.key
+ca_cert_pem,file,string,C:\Users\Abcom\DICE\certs\ca.crt

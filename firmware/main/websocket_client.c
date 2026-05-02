@@ -222,23 +222,29 @@ bool dice_ws_connect(const char *uri, dice_message_handler_t handler)
     }
 
     /* Configure the WebSocket client.
-     * Field names match esp_websocket_client_config_t in ESP-IDF v5.x. */
+     * Auto-detect transport from URI scheme: ws:// = plain, wss:// = SSL+mTLS. */
+    bool use_ssl = (strncmp(s_ws.uri, "wss://", 6) == 0);
+
     esp_websocket_client_config_t cfg = {
         .uri                = s_ws.uri,
-        /* CA certificate used to verify the coordinator's server cert */
-        .cert_pem           = s_ws.ca_cert,
-        /* Device (client) certificate and key for mutual TLS */
-        .client_cert_pem    = s_ws.client_cert,
-        .client_key_pem     = s_ws.client_key,
-        /* Use binary WebSocket frames for CBOR payload */
-        .transport          = WEBSOCKET_TRANSPORT_OVER_SSL,
+        .transport          = use_ssl ? WEBSOCKET_TRANSPORT_OVER_SSL
+                                      : WEBSOCKET_TRANSPORT_OVER_TCP,
         .task_stack         = 6144,
         .buffer_size        = 1024,
-        /* Disable the built-in auto-reconnect; our task handles backoff */
         .reconnect_timeout_ms = 0,
         .network_timeout_ms   = 10000,
         .ping_interval_sec    = 20,
     };
+
+    /* Only attach TLS certificates when using wss:// */
+    if (use_ssl) {
+        cfg.cert_pem    = s_ws.ca_cert;
+        cfg.client_cert = s_ws.client_cert;
+        cfg.client_key  = s_ws.client_key;
+        ESP_LOGI(TAG, "Using wss:// with mTLS certificates");
+    } else {
+        ESP_LOGI(TAG, "Using ws:// plain WebSocket (development mode)");
+    }
 
     s_ws.client = esp_websocket_client_init(&cfg);
     if (!s_ws.client) {

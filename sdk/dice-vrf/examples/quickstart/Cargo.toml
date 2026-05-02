@@ -1,0 +1,27 @@
+# Standalone package — not part of the DICE monorepo workspace. This makes the
+# template trivially copy-pasteable into any Anchor project without dragging
+# along our workspace-level resolver pins.
+[workspace]
+
+[package]
+name    = "dice-vrf-quickstart"
+version = "0.1.0"
+edition = "2021"
+description = "Plug-and-play integration template for DICE VRF. Copy this file, change 3 things, deploy."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name       = "dice_vrf_quickstart"
+
+[features]
+no-entrypoint = []
+cpi           = ["no-entrypoint"]
+default       = []
+idl-build     = ["anchor-lang/idl-build", "dice/idl-build"]
+
+[dependencies]
+anchor-lang = "0.30"
+# One line — this gives you dice::cpi::request_randomness_auto to call from
+# inside your action handler. The "cpi" feature strips the program entrypoint
+# so linking with your own program doesn't collide.
+dice        = { path = "../../../../programs/dice", features = ["cpi", "no-entrypoint"] }

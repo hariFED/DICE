@@ -1,0 +1,25 @@
+[package]
+name    = "v73-driver"
+version = "0.1.0"
+edition = "2021"
+description = "v7.3 on-chain node-selection test. Registers 5 DeviceRegistry PDAs and calls request_randomness_auto with SlotHashes + DeviceRegistry accounts in remaining_accounts to exercise the Fisher-Yates selection path without needing devices or the coordinator."
+
+[[bin]]
+name = "v73-driver"
+path = "src/main.rs"
+
+[dependencies]
+tokio              = { workspace = true }
+serde              = { workspace = true }
+serde_json         = { workspace = true }
+anyhow             = { workspace = true }
+sha2               = { workspace = true }
+hex                = { workspace = true }
+solana-sdk         = { workspace = true }
+
+clap               = { version = "4", features = ["derive"] }
+reqwest            = { version = "0.12", features = ["json"] }
+base64             = "0.22"
+bincode            = "1"
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }

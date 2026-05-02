@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE — Product Launch</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #e8e8e8; font-family: 'Georgia', serif; line-height: 1.9; padding: 3rem 1.5rem; max-width: 720px; margin: 0 auto; }
+  .meta { border-bottom: 1px solid #222; padding-bottom: 2rem; margin-bottom: 3rem; }
+  .meta h1 { font-size: 2rem; font-weight: 400; color: #fff; margin-bottom: 0.5rem; }
+  .meta .subtitle { color: #666; font-size: 0.95rem; font-style: italic; }
+  .meta .details { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.8rem; color: #555; text-transform: uppercase; letter-spacing: 0.1em; }
+  .line { margin-bottom: 0.4rem; padding: 0.3rem 0.8rem; border-radius: 3px; transition: background 0.2s; cursor: pointer; font-size: 1.15rem; }
+  .line:hover { background: #1a1a1a; }
+  .line.active { background: #1a1a0a; border-left: 3px solid #f0c040; padding-left: calc(0.8rem - 3px); }
+  .spoken { color: #f5f5f5; font-size: 1.2rem; }
+  .direction { color: #4a9eff; font-size: 0.85rem; font-family: 'Consolas', monospace; font-style: italic; padding: 0.6rem 0.8rem; margin: 1rem 0; border-left: 2px solid #1a3a5a; background: #0d1520; }
+  .delivery { color: #ff6b6b; font-size: 0.8rem; font-family: 'Consolas', monospace; padding: 0.4rem 0.8rem; margin: 0.3rem 0 1.2rem 0; opacity: 0.8; }
+  .pause { text-align: center; color: #333; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; padding: 1rem 0; }
+  .pause::before, .pause::after { content: '———'; color: #222; margin: 0 1rem; }
+  .section { margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1a1a1a; }
+  .section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #444; font-weight: 400; font-family: 'Consolas', monospace; }
+  .section .time { float: right; color: #333; font-size: 0.7rem; }
+  .mg { background: #0a1a0a; border: 1px solid #1a3a1a; border-radius: 4px; padding: 1rem; margin: 1.5rem 0; font-size: 0.85rem; color: #5a9a5a; font-family: 'Consolas', monospace; }
+  .mg::before { content: '▶ MOTION GRAPHIC'; display: block; font-size: 0.65rem; letter-spacing: 0.15em; color: #3a6a3a; margin-bottom: 0.5rem; }
+  .controls { position: fixed; bottom: 2rem; right: 2rem; display: flex; gap: 0.5rem; }
+  .controls button { background: #1a1a1a; color: #888; border: 1px solid #333; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-family: monospace; }
+  .controls button:hover { background: #222; color: #fff; }
+  .controls button.active-btn { background: #f0c040; color: #000; border-color: #f0c040; }
+  body.teleprompter .direction, body.teleprompter .delivery, body.teleprompter .mg, body.teleprompter .meta .details, body.teleprompter .meta .inspiration, body.teleprompter .section h2, body.teleprompter .controls { display: none; }
+  body.teleprompter { font-size: 1.8rem; line-height: 2.2; max-width: 600px; }
+  body.teleprompter .spoken { font-size: 2rem; }
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <h1>DICE — Product Launch</h1>
+  <div class="subtitle">Clean. Professional. No jargon. No founder story. Just: what is it, why does it exist, how does it work, what's coming next.</div>
+  <div class="details">
+    <span>Runtime: ~90s</span>
+    <span>Flow: what → why → how → future</span>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>What is it <span class="time">0:00</span></h2>
+</div>
+
+<div class="mg">
+Open on the DICE logo. Clean white. Hold 2 seconds. Then the logo moves to the corner and the speaker appears.
+</div>
+
+<div class="direction">FACE — centered, clean frame, direct to camera. No warm-up. First word is the product.</div>
+
+<div class="line spoken">"DICE is a hardware network</div>
+<div class="line spoken">that produces verifiable randomness for Solana."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"Physical devices. Real entropy.</div>
+<div class="line spoken">Delivered on-chain in a single transaction."</div>
+
+<div class="delivery">Four lines. The audience now knows: it's hardware, it makes randomness, it's on Solana, it's fast. No backstory needed. No "we built this because." Just: this exists. Here's what it does.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>Why it exists <span class="time">0:10</span></h2>
+</div>
+
+<div class="line spoken">"Every on-chain game, every lottery, every NFT mint</div>
+<div class="line spoken">needs a random number it can trust."</div>
+
+<div class="line spoken">"Today, that number comes from cloud servers."</div>
+
+<div class="mg">
+Simple visual: a single server icon with lines going to multiple app icons. Looks fragile. Centralized. One color. Muted.
+</div>
+
+<div class="line spoken">"One operator. One point of failure.</div>
+<div class="line spoken">One place where the entire system has to take</div>
+<div class="line spoken">someone's word for it."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"DICE replaces that with hardware."</div>
+
+<div class="delivery">Clean pivot. No emotion. No "that's not decentralized." Just: here's the problem, here's the replacement. The professionalism IS the confidence.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>How it works <span class="time">0:25</span></h2>
+</div>
+
+<div class="direction">Hold up the ESP32. Let the camera see it clearly. Then set it on the desk next to the other three.</div>
+
+<div class="line spoken">"Each node is an eight dollar microcontroller</div>
+<div class="line spoken">with a cryptographic key permanently embedded in the chip."</div>
+
+<div class="line spoken">"It can't be copied. It can't be extracted.</div>
+<div class="line spoken">It can't be cloned from a backup."</div>
+
+<div class="mg">
+Close-up render of the ESP32-S3. Two callout labels appear simply: "Hardware Key" and "Physical Entropy." No other labels. Clean.
+</div>
+
+<div class="line spoken">"The device generates entropy</div>
+<div class="line spoken">from electrical noise inside the hardware itself."</div>
+
+<div class="line spoken">"Multiple nodes run together.</div>
+<div class="line spoken">Each one commits a value independently.</div>
+<div class="line spoken">No node sees another's value until all are locked in.</div>
+<div class="line spoken">Then they reveal at the same time."</div>
+
+<div class="mg">
+4 nodes → 4 sealed values (lock icons) → all locks open simultaneously → values merge → one output. 4 seconds. Geometric. Satisfying.
+</div>
+
+<div class="line spoken">"The result is a random number</div>
+<div class="line spoken">that no single node, no single operator,</div>
+<div class="line spoken">and no single company could have influenced."</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The numbers <span class="time">0:48</span></h2>
+</div>
+
+<div class="mg">
+Three stats appear one at a time on a dark background, Apple keynote style. Each one holds for 1.5 seconds:
+
+"1 transaction"
+"3.5 seconds"
+"10 lines of code"
+</div>
+
+<div class="line spoken">"One Solana transaction — commit, reveal, finalize — all bundled.</div>
+<div class="line spoken">Three and a half seconds end to end.</div>
+<div class="line spoken">Ten lines of code to integrate."</div>
+
+<div class="line spoken">"And something no other provider on Solana offers —</div>
+<div class="line spoken">streaming randomness.</div>
+<div class="line spoken">Subscribe once. Values arrive continuously."</div>
+
+<div class="mg">
+Stream of values flowing smoothly from device cluster into a simple app interface. Continuous. Clean motion.
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>What's next <span class="time">1:02</span></h2>
+</div>
+
+<div class="direction">This is where the video expands from "VRF product" to "infrastructure platform." Same calm energy. No hype. Just: here's what the same device does next.</div>
+
+<div class="line spoken">"Randomness is the first service.</div>
+<div class="line spoken">It's not the last."</div>
+
+<div class="delivery">Two lines that reframe everything. "First" and "not the last" — the audience recalculates what DICE is.</div>
+
+<div class="line spoken">"The same device, the same key, the same network —</div>
+<div class="line spoken">can verify location without GPS."</div>
+
+<div class="mg">
+The ESP32 node in center. "Location Proof" label lights up next to the already-lit "VRF" label.
+Visual: nodes triangulating each other's positions via Bluetooth signals. Lines between nodes. Position confirmed.
+</div>
+
+<div class="line spoken">"It can sign real-world sensor data —</div>
+<div class="line spoken">temperature, air quality, energy output —</div>
+<div class="line spoken">with a key that proves the reading came from hardware,</div>
+<div class="line spoken">not a spreadsheet."</div>
+
+<div class="mg">
+"Sensor Attestation" lights up. Visual: small sensor icon plugging into the ESP32. A signed data reading flows to the Solana logo. Simple.
+</div>
+
+<div class="line spoken">"And it can act as a distributed hardware signer —</div>
+<div class="line spoken">the security of a fifty thousand dollar module</div>
+<div class="line spoken">from a five dollar chip."</div>
+
+<div class="mg">
+"Hardware Signing" lights up. All four service labels now visible around the device:
+
+VRF .............. (white — live)
+Location Proof ... (grey — next)
+Sensor Data ...... (grey — next)
+Hardware Signing . (grey — next)
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The scale <span class="time">1:22</span></h2>
+</div>
+
+<div class="mg">
+Clean stat card:
+"Solana DePIN"
+"$3.25B market cap"
+"5.7M devices worldwide"
+</div>
+
+<div class="line spoken">"Solana is the home of DePIN.</div>
+<div class="line spoken">Three and a quarter billion dollars in market cap.</div>
+<div class="line spoken">Five point seven million devices deployed globally."</div>
+
+<div class="line spoken">"Most of those devices do one thing.</div>
+<div class="line spoken">DICE does four —</div>
+<div class="line spoken">from the same eight dollar node."</div>
+
+<div class="delivery">This is the line that separates DICE from every other DePIN project. "Most do one thing. DICE does four." Investors compare you to Helium (one thing: connectivity), Hivemapper (one thing: maps), Render (one thing: compute). You're the multi-service play. Let that register.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The close <span class="time">1:32</span></h2>
+</div>
+
+<div class="direction">No device. No graphics. Just you. Clean. Direct.</div>
+
+<div class="line spoken">"This is DICE.</div>
+<div class="line spoken">Hardware infrastructure for Solana.</div>
+<div class="line spoken">Live today. Expanding tomorrow."</div>
+
+<div class="delivery">Three lines. Product name. What it is. Where it's going. That's it. Professional close. No emotion, no callback, no clever line. Just clarity. The Apple approach: end on the product, not the person.</div>
+
+<div class="pause">hold 2 seconds — cut</div>
+
+<div class="mg">
+White screen.
+DICE logo, centered.
+
+Below it, four words spaced evenly:
+
+Randomness    Location    Sensors    Signing
+  (white)      (grey)     (grey)     (grey)
+
+URL underneath.
+One line at the bottom: "DePIN for cryptographic services."
+
+Hold 4 seconds. Fade to black.
+</div>
+
+<!-- ============================================ -->
+<div class="controls">
+  <button onclick="document.body.classList.toggle('teleprompter');this.classList.toggle('active-btn')">Teleprompter</button>
+  <button onclick="this.classList.toggle('active-btn');document.querySelectorAll('.line').forEach(el=>el.onclick=()=>el.classList.toggle('active'))">Mark Lines</button>
+</div>
+
+</body>
+</html>

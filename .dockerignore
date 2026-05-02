@@ -1,0 +1,47 @@
+# Keep the Fly build context small.
+# The coord Dockerfile only needs Rust workspace files + coordinator/programs/sdk/tests-harness.
+# Everything else bloats the upload and slows builds.
+
+# Rust build artifacts
+target/
+
+# Node / frontend (not used by the coord image)
+node_modules/
+frontend/
+marketing/
+
+# Docs + reference + shoot / research / pitch (all dead weight for coord)
+docs/
+research/
+how-it-works/
+packaging/
+pitch_deck/
+shoot/
+build/
+.claude/
+
+# Test logs + output
+test_v7_results/
+*.log
+coordinator.log
+.hypothesis/
+__pycache__/
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets — these are injected via [[files]] / secrets at deploy time,
+# NEVER baked into the image. Belt-and-braces: exclude them from context.
+certs/
+*.key
+*-keypair.json
+.env
+.env.*

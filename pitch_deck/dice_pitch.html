@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DICE — Hardware-Backed VRF Oracle on Solana</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  /* ─── Print sizing — landscape A4, one slide per page ───────────────────── */
+  @page { size: 297mm 210mm; margin: 0; }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", system-ui, sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+  }
+
+  /* ─── Slide frame ────────────────────────────────────────────────────────── */
+  .slide {
+    width: 297mm;
+    height: 210mm;
+    padding: 18mm 22mm;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+    background: radial-gradient(1100px 700px at 80% 0%, rgba(255,255,255,0.05), transparent 60%),
+                radial-gradient(900px 600px at 0% 100%, rgba(255,255,255,0.04), transparent 60%),
+                #050505;
+    border-bottom: 1px solid #111;
+  }
+  .slide:last-child { page-break-after: auto; border-bottom: none; }
+
+  /* Subtle grid texture */
+  .slide::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 56px 56px;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  /* ─── Type system ────────────────────────────────────────────────────────── */
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: #888; font-weight: 600;
+  }
+  h1.deck-title {
+    font-size: 96px; line-height: 0.95; margin: 18px 0 12px;
+    font-weight: 800; letter-spacing: -0.04em;
+    background: linear-gradient(180deg, #fff 0%, #cfcfcf 55%, #777 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  h2.slide-title {
+    font-size: 42px; line-height: 1.05; margin: 0 0 24px;
+    font-weight: 700; letter-spacing: -0.02em; color: #fff;
+  }
+  h2.slide-title .accent {
+    background: linear-gradient(180deg, #fff 0%, #c0c0c0 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .lead { font-size: 20px; color: #d6d6d6; line-height: 1.5; max-width: 880px; }
+  .small { font-size: 13px; color: #888; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+
+  /* ─── Slide 1 (Cover) ────────────────────────────────────────────────────── */
+  .cover {
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .cover .marker {
+    width: 60px; height: 4px;
+    background: linear-gradient(90deg, #fff, #555);
+    margin-bottom: 24px;
+  }
+  .cover .tag-row { display: flex; gap: 10px; margin-top: 32px; }
+  .chip {
+    border: 1px solid #2a2a2a;
+    background: linear-gradient(180deg, #161616, #0c0c0c);
+    color: #ccc; padding: 8px 14px; border-radius: 999px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.04em;
+  }
+  .chip.live { color: #34d399; border-color: #134e3a; }
+  .footer {
+    position: absolute; bottom: 18mm; left: 22mm; right: 22mm;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: #666; letter-spacing: 0.18em; text-transform: uppercase;
+  }
+
+  /* ─── Two-column layouts ─────────────────────────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+
+  /* ─── Cards ─────────────────────────────────────────────────────────────── */
+  .card {
+    border: 1px solid #1d1d1d;
+    background: linear-gradient(180deg, rgba(20,20,20,0.6), rgba(8,8,8,0.6));
+    border-radius: 14px;
+    padding: 22px 22px 20px;
+  }
+  .card .ttl { font-size: 14px; color: #aaa; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .card .big { font-size: 42px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; color: #fff; }
+  .card .sub { font-size: 13px; color: #888; margin-top: 6px; }
+
+  /* ─── Number plates ─────────────────────────────────────────────────────── */
+  .stat {
+    display: flex; flex-direction: column; gap: 4px;
+    border-left: 2px solid #2c2c2c; padding-left: 18px;
+  }
+  .stat .v { font-size: 56px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;
+            background: linear-gradient(180deg, #fff, #999); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .stat .l { font-size: 12px; color: #888; letter-spacing: 0.14em; text-transform: uppercase; }
+
+  /* ─── Architecture row diagram ──────────────────────────────────────────── */
+  .arch { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 12px; }
+  .arch .node {
+    border: 1px solid #1f1f1f; border-radius: 12px;
+    padding: 14px 12px; text-align: center;
+    background: linear-gradient(180deg, #141414, #0a0a0a);
+  }
+  .arch .node .label { font-size: 11px; color: #888; letter-spacing: 0.14em; text-transform: uppercase; }
+  .arch .node .name  { font-size: 16px; font-weight: 600; color: #fff; margin-top: 6px; }
+  .arch .arrow { color: #555; font-size: 22px; align-self: center; text-align: center; }
+
+  /* ─── Comparison table ──────────────────────────────────────────────────── */
+  table.cmp { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+  table.cmp th, table.cmp td {
+    text-align: left; padding: 10px 12px;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  table.cmp th { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #999; font-weight: 600; }
+  table.cmp td { color: #ddd; }
+  table.cmp .us { color: #fff; font-weight: 600; background: rgba(255,255,255,0.025); }
+  table.cmp .check { color: #34d399; }
+  table.cmp .x { color: #555; }
+
+  /* ─── Headline number block ─────────────────────────────────────────────── */
+  .headline-num {
+    font-size: 168px; font-weight: 800; letter-spacing: -0.06em; line-height: 0.9;
+    background: linear-gradient(180deg, #fff 0%, #b8b8b8 50%, #4a4a4a 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  /* ─── Lists ─────────────────────────────────────────────────────────────── */
+  ul.clean { list-style: none; padding: 0; margin: 0; }
+  ul.clean li {
+    padding: 10px 0 10px 22px;
+    position: relative;
+    font-size: 16px; color: #d8d8d8; line-height: 1.45;
+    border-bottom: 1px solid #141414;
+  }
+  ul.clean li::before {
+    content: ""; position: absolute; left: 0; top: 18px;
+    width: 8px; height: 8px; border-radius: 999px;
+    background: linear-gradient(180deg, #fff, #888);
+  }
+  ul.clean li b { color: #fff; }
+
+  /* ─── Quote block ───────────────────────────────────────────────────────── */
+  blockquote.q {
+    border-left: 3px solid #333; padding: 4px 0 4px 18px;
+    color: #aaa; font-style: italic; font-size: 14px; margin: 0;
+  }
+
+  /* ─── Slide number badge ────────────────────────────────────────────────── */
+  .slide-no {
+    position: absolute; top: 18mm; right: 22mm;
+    font-size: 11px; letter-spacing: 0.2em; color: #555; text-transform: uppercase;
+  }
+
+  /* ─── Helpers ───────────────────────────────────────────────────────────── */
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .gap-lg { margin-top: 36px; }
+  .gap-md { margin-top: 22px; }
+  .strike { color: #666; text-decoration: line-through; }
+  .pill {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    border: 1px solid #2a2a2a; color: #ccc;
+  }
+  .pill.green { color: #34d399; border-color: #134e3a; background: rgba(16,185,129,0.06); }
+  .pill.warn  { color: #f5d47a; border-color: #4a3d12; background: rgba(245,212,122,0.06); }
+
+  .logo {
+    font-weight: 800; font-size: 18px; letter-spacing: 0.32em;
+    background: linear-gradient(180deg, #fff, #888);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  /* Print-only fixes */
+  @media print {
+    .slide { box-shadow: none; }
+    body { background: #000; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ───── SLIDE 1 — COVER ─────────────────────────────────────────────────── -->
+<section class="slide cover">
+  <div class="slide-no">01 / 12</div>
+  <div class="logo">D&nbsp;I&nbsp;C&nbsp;E</div>
+  <div class="marker"></div>
+  <div class="eyebrow">The hardware-backed VRF oracle on Solana</div>
+  <h1 class="deck-title">Trust the<br/>device,<br/>not the&nbsp;daemon.</h1>
+  <p class="lead">DICE is the only randomness oracle on Solana whose entropy is rooted in physical, attested hardware. Five ESP32-S3 devices commit-reveal across mTLS, finalised on-chain by an Anchor program. Every random bit traces back to a piece of silicon you can hold in your hand.</p>
+  <div class="tag-row">
+    <span class="chip live">● devnet live</span>
+    <span class="chip">5 ESP32-S3 nodes</span>
+    <span class="chip">commit-reveal v2</span>
+    <span class="chip">0.002 SOL / request</span>
+  </div>
+  <div class="footer">
+    <span>HariHaran · DICE Labs</span>
+    <span>Solana · Cypherpunk Cohort Candidate · 2026</span>
+  </div>
+</section>
+
+<!-- ───── SLIDE 2 — THE PROBLEM ───────────────────────────────────────────── -->
+<section class="slide">
+  <div class="slide-no">02 / 12</div>
+  <div class="eyebrow">The problem</div>
+  <h2 class="slide-title">Every randomness oracle on Solana asks you to <span class="accent">trust a daemon</span>.</h2>
+  <div class="grid-2 gap-md">
+    <div>
+      <ul class="clean">
+        <li><b>Switchboard, ORAO, Kamui</b> — software-only DON. The "decentralisation" is N anonymous Linux processes you can't audit.</li>
+        <li><b>MagicBlock Ephemeral VRF</b> — clever, fast, but still a software guarantee on top of a software rollup.</li>
+        <li><b>Chainlink VRF</b> — not Solana-native; same software-DON pattern.</li>
+        <li><b>The oracle problem is 2,000 years old.</b> The Delphi priestesses had the same job. They were also the same single point of failure.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ttl">What every dApp actually wants</div>
+        <p class="lead" style="font-size:18px; margin:12px 0 0;">A <b>physical chain of custody</b> for entropy: from a hardware RNG, through a tamper-evident path, to an on-chain commitment — auditable end to end.</p>
+        <blockquote class="q gap-md">"The oracle problem refers to the inability of an agent to know if the information coming from an oracle is authentic and unbiased."<br/><span class="small">— <i>Two thousand years of the oracle problem · Insights from Ancient Delphi</i></span></blockquote>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── SLIDE 3 — THE SOLUTION ──────────────────────────────────────────── -->
+<section class="slide">
+  <div class="slide-no">03 / 12</div>
+  <div class="eyebrow">DICE</div>
+  <h2 class="slide-title">A randomness oracle <span class="accent">rooted in silicon</span>.</h2>
+  <div class="grid-3 gap-md">
+    <div class="card">
+      <div class="ttl">01 · Physical entropy</div>
+      <p class="lead" style="font-size:15px; margin:10px 0 0;">Five ESP32-S3 devices, each with a hardware RNG and a secp256k1 device key burned into NVS. Entropy is generated <b>on the chip</b>, not in a process.</p>
+    </div>
+    <div class="card">
+      <div class="ttl">02 · Commit-reveal across mTLS</div>
+      <p class="lead" style="font-size:15px; margin:10px 0 0;">Each device sends a SHA-256 commit, then reveals the entropy + ECDSA signature only after all commits are bound. Front-running is impossible by construction.</p>
+    </div>
+    <div class="card">
+      <div class="ttl">03 · On-chain finality</div>
+      <p class="lead" style="font-size:15px; margin:10px 0 0;">An Anchor program verifies each signature, hashes the entropies, and writes the result + per-node payouts atomically. Devnet program ID <span class="mono small">78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv</span>.</p>
+    </div>
+  </div>
+  <div class="gap-lg">
+    <h3 style="font-size:16px; letter-spacing:0.18em; text-transform:uppercase; color:#aaa; margin:0 0 14px;">The DICE chain of custody</h3>
+    <div class="arch">
+      <div class="node"><div class="label">Layer 1</div><div class="name">ESP32-S3 ×5</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="label">Layer 2</div><div class="name">mTLS coord</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="label">Layer 3</div><div class="name">Solana program</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── SLIDE 4 — THE NUMBER ────────────────────────────────────────────── -->
+<section class="slide" style="display:flex; flex-direction:column; justify-content:center;">
+  <div class="slide-no">04 / 12</div>
+  <div class="eyebrow">Traction · the headline number</div>
+  <div class="row gap-md" style="align-items:flex-end;">
+    <div class="headline-num">98.5%</div>
+    <div style="padding-bottom:34px;">
+      <div class="lead" style="font-size:22px;">pass rate, <b>985 of 1,000</b> sequential v2 rounds</div>
+      <div class="small">Real ESP32-S3 hardware · Solana devnet · Helius RPC · 2026</div>
+    </div>
+  </div>
+  <div class="grid-4 gap-lg">
+    <div class="stat"><div class="v">7.79s</div><div class="l">avg round</div></div>
+    <div class="stat"><div class="v">9.64s</div><div class="l">p95</div></div>
+    <div class="stat"><div class="v">5</div><div class="l">physical nodes</div></div>
+    <div class="stat"><div class="v">229</div><div class="l">unit tests</div></div>
+  </div>
+  <div class="gap-lg row">
+    <span class="pill green">● A4 stress test passing</span>
+    <span class="pill green">● Hardware payout binding live</span>
+    <span class="pill green">● Streaming VRF feed live</span>
+    <span class="pill warn">⚙ mainnet pending</span>
+  </div>
+</section>
+
+<!-- ───── SLIDE 5 — HOW IT WORKS ──────────────────────────────────────────── -->
+<section class="slide">
+  <div class="slide-no">05 / 12</div>
+  <div class="eyebrow">How it works</div>
+  <h2 class="slide-title">A request, end to end, in <span class="accent">one slide</span>.</h2>
+  <div class="grid-2 gap-md">
+    <div>
+      <ul class="clean">
+        <li><b>1 ·</b> dApp calls <span class="mono">request_randomness_auto</span> on a pre-funded DiceChannel PDA.</li>
+        <li><b>2 ·</b> Coordinator selects 4 of 5 active devices via on-chain <span class="mono">select_nodes</span> + SlotHashes randomness.</li>
+        <li><b>3 ·</b> Each device generates entropy on its RNG, signs <span class="mono">SHA-256(entropy)</span>, sends the commit over mTLS.</li>
+        <li><b>4 ·</b> After all commits land on-chain, devices reveal the entropy + ECDSA signature.</li>
+        <li><b>5 ·</b> Program verifies each signature, hashes the entropies, writes the result, splits the fee 70/20/10 in one atomic TX.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ttl">Why each layer matters</div>
+        <ul class="clean" style="margin-top:6px;">
+          <li><b>Hardware:</b> entropy never leaves the chip in plaintext until the reveal phase.</li>
+          <li><b>mTLS:</b> the wire is encrypted; the device cert binds identity to silicon.</li>
+          <li><b>Commit-reveal:</b> the coordinator can't see entropy before the commits are sealed on-chain.</li>
+          <li><b>On-chain finality:</b> every reveal is verified by the Solana program; the result is just <span class="mono">SHA-256(e₁‖e₂‖e₃‖e₄)</span>.</li>
+        </ul>
+        <div class="small gap-md">Bias-free as long as <b>at least one</b> device honestly contributes entropy — not "as long as ⅔ of nodes are honest."</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── SLIDE 6 — COMPETITIVE LANDSCAPE ─────────────────────────────────── -->
+<section class="slide">
+  <div class="slide-no">06 / 12</div>
+  <div class="eyebrow">Competitive landscape</div>
+  <h2 class="slide-title">Everyone else is <span class="accent">software</span>.</h2>
+  <table class="cmp gap-md">
+    <thead>
+      <tr>
+        <th>Provider</th><th>Root of trust</th><th>Latency</th><th>Hackathon / shipped</th><th>Cost narrative</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="us">
+        <td>DICE <span class="pill green" style="margin-left:8px;">us</span></td>
+        <td><span class="check">● hardware (ESP32-S3 + secp256k1 in NVS)</span></td>
+        <td>7.8 s today → ~5 s post v7.5</td>
+        <td>Devnet live · 5 real devices</td>
+        <td>Flat 0.002 SOL · 70 % to operators</td>
+      </tr>
+      <tr>
+        <td>Switchboard VRF</td>
+        <td><span class="x">software DON</span></td>
+        <td>~5 s</td>
+        <td>Mainnet · years of integrations</td>
+        <td>Variable; pull-based</td>
+      </tr>
+      <tr>
+        <td>ORAO VRF</td>
+        <td><span class="x">software DON</span></td>
+        <td>~3-6 s</td>
+        <td>Mainnet</td>
+        <td>Variable</td>
+      </tr>
+      <tr>
+        <td>Kamui</td>
+        <td><span class="x">software DON</span></td>
+        <td>n/a</td>
+        <td>Breakout 2025-04</td>
+        <td>"Cheapest VRF on Solana"</td>
+      </tr>
+      <tr>
+        <td>MagicBlock Ephemeral VRF</td>
+        <td><span class="x">software, ephemeral rollup</span></td>
+        <td>sub-second (rollup)</td>
+        <td>Public beta · 2025</td>
+        <td>Embedded in their stack</td>
+      </tr>
+      <tr>
+        <td>WAIT (VDF)</td>
+        <td><span class="x">software, MinRoot+zkSNARK</span></td>
+        <td>seconds</td>
+        <td>Cypherpunk 2025-09</td>
+        <td>Different primitive</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="gap-md small">
+    Source: Colosseum builder corpus (search/projects), Colosseum Codex archive entry on MagicBlock Ephemeral VRF, public docs.
+  </div>
+</section>
+
+<!-- ───── SLIDE 7 — DIFFERENTIATION / MOAT ────────────────────────────────── -->
+<section class="slide">
+  <div class="slide-no">07 / 12</div>
+  <div class="eyebrow">Defensible moat</div>
+  <h2 class="slide-title">The crypto isn't the moat. <span class="accent">The fleet is.</span></h2>
+  <div class="grid-3 gap-md">
+    <div class="card">
+      <div class="ttl">Operational PKI</div>
+      <p class="lead" style="font-size:15px;">Private step-ca, secp256r1 mTLS certs + secp256k1 device identity, split-key NVS provisioning. Years of cert hygiene to copy.</p>
+    </div>
+    <div class="card">
+      <div class="ttl">Hardware supply chain</div>
+      <p class="lead" style="font-size:15px;">A bonded device manufacturer + provisioning pipeline. New entrants can't ship a 5-node network in a weekend.</p>
+    </div>
+    <div class="card">
+      <div class="ttl">Verifiable boot</div>
+      <p class="lead" style="font-size:15px;">Bounded firmware monitor, signed binaries, factory-reset via PKI revocation. Every device is a known-good silicon block.</p>
+    </div>
+    <div class="card">
+      <div class="ttl">Audit-grade story</div>
+      <p class="lead" style="font-size:15px;">A regulator can trace any random bit back to a specific board, a specific NVS, a specific cert. No software DON can say that.</p>
+    </div>
+    <div class="card">
+      <div class="ttl">Cypherpunk credibility</div>
+      <p class="lead" style="font-size:15px;">Closest analogs in the corpus are <b>TEENet</b>, <b>ASSAP</b>, <b>WeTEE</b>, <b>SUMOTEX</b>. Hardware-rooted trust is a recognised movement.</p>
+    </div>
+    <div class="card">
+      <div class="ttl">Streaming primitive</div>
+      <p class="lead" style="font-size:15px;">RandomnessFeed PDA + crank — passive subscribers (e.g. <b>pulse</b>) read randomness with zero round-trip. No competitor has this shape.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───── SLIDE 8 — BUSINESS MODEL ────────────────────────────────────────── -->
+<section class="slide">
+  <div class="slide-no">08 / 12</div>
+  <div class="eyebrow">Business model</div>
+  <h2 class="slide-title">Per-request economics that <span class="accent">pencil</span> for an operator.</h2>
+  <div class="grid-2 gap-md">
+    <div>
+      <div class="card">
+        <div class="ttl">Fee per round</div>
+        <div class="big" style="font-size:64px; margin-top:6px;">0.002 SOL</div>
+        <div class="sub">≈ $0.30 at $150 SOL · charged per <span class="mono">request_randomness_auto</span></div>
+      </div>
+      <div class="card gap-md">
+        <div class="ttl">Split (atomic, on-chain)</div>
+        <div class="row gap-md" style="margin-top:10px;">
+          <div class="stat"><div class="v">70%</div><div class="l">node operators</div></div>
+          <div class="stat"><div class="v">20%</div><div class="l">treasury</div></div>
+          <div class="stat"><div class="v">10%</div><div class="l">reserve</div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ttl">Operator unit economics (illustrative)</div>
+        <ul class="clean" style="margin-top:6px;">
+          <li>Hardware cost: <b>~$30</b> per ESP32-S3 dev kit + cert provisioning</li>
+          <li>Per round, 4 of 5 nodes earn <b>0.0014 SOL ÷ 4 = 0.00035 SOL</b> each</li>
+          <li>1,000 rounds / day = <b>0.35 SOL / device / day</b> ≈ $52</li>
+          <li>Hardware payback: <b>under 1 day</b> at current devnet throughput</li>
+        </ul>
+      </div>
+      <div class="card gap-md">
+        <div class="ttl">Why this works as a flywheel</div>
+        <p class="lead" style="font-size:15px;">More devices → more parallel rounds → lower latency → more dApp demand → more fees → more operator yield → more devices. Same shape as <b>DeCharge</b>, <b>Kiko</b>, <b>BlockMesh</b> — DePIN winners that already proved the pattern at Colosseum.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── SLIDE 9 — DEMAND / DESIGN PARTNERS ──────────────────────────────── -->
+<section class="slide">
+  <div class="slide-no">09 / 12</div>
+  <div class="eyebrow">Demand exists today</div>
+  <h2 class="slide-title">First-call design partners, all on Solana, <span class="accent">all need a VRF</span>.</h2>
+  <div class="grid-3 gap-md">
+    <div class="card">
+      <div class="ttl">iGaming · already shipping</div>
+      <ul class="clean" style="margin-top:6px;">
+        <li><b>ThroneX</b> · Renaissance + Radar · zero-sum on-chain iGaming</li>
+        <li><b>Gene Lotto</b> · Cypherpunk 2025 · ephemeral-rollup lottery</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ttl">Lottery / raffle apps</div>
+      <ul class="clean" style="margin-top:6px;">
+        <li><b>Solot</b></li>
+        <li><b>Solana Mini Lottery</b></li>
+        <li><b>SOL Raffle</b></li>
+        <li><b>soltice</b> · <b>Jogojogo</b></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ttl">In-house dApps (already wired)</div>
+      <ul class="clean" style="margin-top:6px;">
+        <li><b>coin-toss</b> · v2 callback E2E live</li>
+        <li><b>pulse</b> · streaming VRF subscriber</li>
+        <li><b>dice-roll · lucky-wheel · prediction-market</b></li>
+      </ul>
+    </div>
+  </div>
+  <div class="gap-lg">
+    <div class="card" style="background:linear-gradient(180deg, rgba(40,40,40,0.4), rgba(8,8,8,0.6));">
+      <div class="ttl">The play</div>
+      <p class="lead" style="font-size:17px; margin-top:6px;">Free integration for the first 5 design-partners + their logos on the explorer. We write the migration code from Switchboard ourselves. Each integration becomes a mainnet TX we can tweet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───── SLIDE 10 — POSITIONING / NARRATIVE ──────────────────────────────── -->
+<section class="slide">
+  <div class="slide-no">10 / 12</div>
+  <div class="eyebrow">Positioning</div>
+  <h2 class="slide-title">We do not compete on <span class="accent">cost</span>. We compete on <span class="accent">truth</span>.</h2>
+  <div class="grid-2 gap-md">
+    <div>
+      <ul class="clean">
+        <li><span class="strike">"Cheapest VRF on Solana"</span> — Kamui already owns this lane.</li>
+        <li><span class="strike">"Lowest-latency VRF"</span> — MagicBlock owns this lane via ephemeral rollups.</li>
+        <li><span class="strike">"Most integrations"</span> — Switchboard has years of head-start.</li>
+        <li><b>"The only randomness with a hardware root of trust"</b> — nobody owns this lane.</li>
+        <li><b>"Audit-grade VRF for regulated gambling"</b> — the buyer who actually pays a premium.</li>
+        <li><b>"Cypherpunk randomness"</b> — physical, anti-trust, verifiable. The movement is named after this.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ttl">The one-liner</div>
+        <h3 style="font-size:32px; line-height:1.1; margin:10px 0 0; font-weight:700; letter-spacing:-0.02em;">
+          DICE is the only Solana VRF where every random bit traces back to a piece of silicon you can hold.
+        </h3>
+      </div>
+      <div class="card gap-md">
+        <div class="ttl">Why now</div>
+        <p class="lead" style="font-size:15px;">DePIN is <b>the</b> Colosseum narrative — Kiko, DeCharge, BlockMesh, GEN are all winners. Hardware-rooted trust is the next leg (TEENet, ASSAP, SUMOTEX). DICE is the first to apply that pattern to randomness.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── SLIDE 11 — ROADMAP / 30-DAY PLAN ────────────────────────────────── -->
+<section class="slide">
+  <div class="slide-no">11 / 12</div>
+  <div class="eyebrow">30-day execution plan</div>
+  <h2 class="slide-title">From devnet headline to <span class="accent">mainnet logo</span>.</h2>
+  <div class="grid-4 gap-md">
+    <div class="card">
+      <div class="ttl">Week 1 · engineering</div>
+      <ul class="clean" style="margin-top:6px;">
+        <li>v7.5 ALT-bundle (commits + reveals in one TX)</li>
+        <li>Avg latency <b>9 s → ~5 s</b></li>
+        <li>L3-lite bench published</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ttl">Week 2 · production</div>
+      <ul class="clean" style="margin-top:6px;">
+        <li>Mainnet program deploy</li>
+        <li>Coordinator on Railway w/ TCP proxy for mTLS</li>
+        <li>HSM-protect coordinator key</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ttl">Week 3 · narrative</div>
+      <ul class="clean" style="margin-top:6px;">
+        <li>"Physical attestation > software DON" thesis post</li>
+        <li>Public explorer with live device map</li>
+        <li>Operator earnings calculator</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ttl">Week 4 · partners</div>
+      <ul class="clean" style="margin-top:6px;">
+        <li>Cold outreach: Solot · SOL Raffle · ThroneX</li>
+        <li>First mainnet integration TX (tweetable)</li>
+        <li>Cypherpunk cohort application</li>
+      </ul>
+    </div>
+  </div>
+  <div class="gap-lg row" style="gap:18px;">
+    <div class="stat"><div class="v" style="font-size:38px;">1</div><div class="l">mainnet program</div></div>
+    <div class="stat"><div class="v" style="font-size:38px;">3</div><div class="l">design partners</div></div>
+    <div class="stat"><div class="v" style="font-size:38px;">5s</div><div class="l">avg round target</div></div>
+    <div class="stat"><div class="v" style="font-size:38px;">1</div><div class="l">Cypherpunk app</div></div>
+  </div>
+</section>
+
+<!-- ───── SLIDE 12 — ASK / CONTACT ────────────────────────────────────────── -->
+<section class="slide" style="display:flex; flex-direction:column; justify-content:center;">
+  <div class="slide-no">12 / 12</div>
+  <div class="eyebrow">The ask</div>
+  <h2 class="slide-title">If randomness should be <span class="accent">physical</span>, work with us.</h2>
+  <div class="grid-3 gap-md">
+    <div class="card">
+      <div class="ttl">Design partners</div>
+      <p class="lead" style="font-size:15px;">Free integration + explorer logo for the first 5 dApps that ship a mainnet round on DICE.</p>
+    </div>
+    <div class="card">
+      <div class="ttl">Capital</div>
+      <p class="lead" style="font-size:15px;">Pre-seed for hardware fleet expansion (5 → 50 devices), mainnet ops, second engineer, audit budget.</p>
+    </div>
+    <div class="card">
+      <div class="ttl">Distribution</div>
+      <p class="lead" style="font-size:15px;">Cypherpunk-cohort backing, Solana DevRel intros, regulated-gaming auditors who care about provenance.</p>
+    </div>
+  </div>
+  <div class="gap-lg row" style="justify-content:space-between; align-items:flex-end;">
+    <div>
+      <div class="logo">D&nbsp;I&nbsp;C&nbsp;E</div>
+      <div class="small gap-md">HariHaran · DICE Labs<br/>github · DICE-vrf · 2026</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="eyebrow">Contact</div>
+      <div class="lead" style="font-size:18px; margin-top:6px;">exprmntsv2@gmail.com</div>
+      <div class="small">Solana devnet program: 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv</div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE — Week 1 Update</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #e8e8e8; font-family: 'Georgia', serif; line-height: 1.9; padding: 3rem 1.5rem; max-width: 720px; margin: 0 auto; }
+  .meta { border-bottom: 1px solid #222; padding-bottom: 2rem; margin-bottom: 3rem; }
+  .meta h1 { font-size: 2rem; font-weight: 400; color: #fff; margin-bottom: 0.5rem; }
+  .meta .subtitle { color: #666; font-size: 0.95rem; font-style: italic; }
+  .meta .details { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.8rem; color: #555; text-transform: uppercase; letter-spacing: 0.1em; }
+  .meta .timing-note { margin-top: 1rem; padding: 0.6rem 0.8rem; background: #1a1505; border-left: 3px solid #f0c040; color: #f0c040; font-size: 0.8rem; font-family: 'Consolas', monospace; }
+  .line { margin-bottom: 0.4rem; padding: 0.3rem 0.8rem; border-radius: 3px; transition: background 0.2s; cursor: pointer; font-size: 1.15rem; }
+  .line:hover { background: #1a1a1a; }
+  .line.active { background: #1a1a0a; border-left: 3px solid #f0c040; padding-left: calc(0.8rem - 3px); }
+  .spoken { color: #f5f5f5; font-size: 1.2rem; }
+  .direction { color: #4a9eff; font-size: 0.85rem; font-family: 'Consolas', monospace; font-style: italic; padding: 0.6rem 0.8rem; margin: 1rem 0; border-left: 2px solid #1a3a5a; background: #0d1520; }
+  .delivery { color: #ff6b6b; font-size: 0.8rem; font-family: 'Consolas', monospace; padding: 0.4rem 0.8rem; margin: 0.3rem 0 1.2rem 0; opacity: 0.8; }
+  .pause { text-align: center; color: #333; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; padding: 0.5rem 0; }
+  .pause::before, .pause::after { content: '———'; color: #222; margin: 0 1rem; }
+  .section { margin-top: 2.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1a1a1a; }
+  .section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #444; font-weight: 400; font-family: 'Consolas', monospace; }
+  .section .time { float: right; color: #f0c040; font-size: 0.7rem; font-family: monospace; }
+  .broll { background: #1a0a1a; border: 1px solid #3a1a3a; border-radius: 4px; padding: 1rem; margin: 1.5rem 0; font-size: 0.85rem; color: #9a5a9a; font-family: 'Consolas', monospace; }
+  .broll::before { content: '▶ B-ROLL / CUTAWAY'; display: block; font-size: 0.65rem; letter-spacing: 0.15em; color: #6a3a6a; margin-bottom: 0.5rem; }
+  .controls { position: fixed; bottom: 2rem; right: 2rem; display: flex; gap: 0.5rem; }
+  .controls button { background: #1a1a1a; color: #888; border: 1px solid #333; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-family: monospace; }
+  .controls button:hover { background: #222; color: #fff; }
+  .controls button.active-btn { background: #f0c040; color: #000; border-color: #f0c040; }
+  body.teleprompter .direction, body.teleprompter .delivery, body.teleprompter .broll, body.teleprompter .meta .details, body.teleprompter .meta .timing-note, body.teleprompter .section h2, body.teleprompter .controls { display: none; }
+  body.teleprompter { font-size: 1.8rem; line-height: 2.2; max-width: 600px; }
+  body.teleprompter .spoken { font-size: 2rem; }
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <h1>Week 1 Update</h1>
+  <div class="subtitle">Honest progress recap. Not the launch video. No jargon. No pitch energy. Just: what we did, what tripped us up, what we're doing about it.</div>
+  <div class="details">
+    <span>Runtime: 60 seconds — HARD CAP</span>
+    <span>Energy: calm, factual, builder-to-builder</span>
+  </div>
+  <div class="timing-note">
+    Total spoken: ~135 words. Casual delivery, ~58 seconds at natural pace.
+    Talk like you're updating a friend, not pitching a deck.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>Hi, this is Hari <span class="time">0:00 → 0:12</span></h2>
+</div>
+
+<div class="direction">FACE — warm, casual, looking right into camera like you're catching up with a friend. Slight smile is fine here. This is the only place in the video where you greet anyone.</div>
+
+<div class="line spoken">"Hi — this is Hari,</div>
+<div class="line spoken">one of the cofounders of DICE."</div>
+
+<div class="pause">half-beat — natural breath</div>
+
+<div class="line spoken">"DICE stands for</div>
+<div class="line spoken">Decentralized Infrastructure for Cryptographic Entropy."</div>
+
+<div class="line spoken">"It's a real hardware layer on Solana."</div>
+
+<div class="delivery">Speak the full name once, calmly. The acronym lands first ("DICE"), then the words behind it. The "real" in "real hardware layer" is the load-bearing word — there are software hardware layers, there are simulated hardware layers, but yours is REAL. Stress it gently.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>What we shipped this week <span class="time">0:12 → 0:32</span></h2>
+</div>
+
+<div class="line spoken">"So this is our week one update."</div>
+
+<div class="pause">half-beat</div>
+
+<div class="line spoken">"Over the last few days we finished writing</div>
+<div class="line spoken">and deploying our smart contracts on Solana,</div>
+<div class="line spoken">flashed the firmware onto our ESP32-S3 devices,</div>
+<div class="line spoken">and tested everything in two ways —</div>
+<div class="line spoken">in simulation, and on the real hardware sitting on our desk."</div>
+
+<div class="broll">
+Quick cutaway (2 seconds): the 4 ESP32-S3 devices on the desk, green LEDs glowing. Just a glance — enough to prove they exist. Cut back to face.
+</div>
+
+<div class="line spoken">"Both work."</div>
+
+<div class="delivery">"Both work" — say it flat. Quiet pride. You're not selling, you're reporting. The two-word sentence after a long flowing description is a deliberate breath.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>What landed on devnet <span class="time">0:32 → 0:42</span></h2>
+</div>
+
+<div class="line spoken">"We've already landed our first batch</div>
+<div class="line spoken">of VRF rounds on devnet,</div>
+<div class="line spoken">with real hardware in the loop."</div>
+
+<div class="line spoken">"Zero failed transactions so far."</div>
+
+<div class="delivery">"So far" is the honest hedge — it tells the audience you're not exaggerating. Then the number speaks for itself. Don't dwell.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>What we're pushing on <span class="time">0:42 → 0:52</span></h2>
+</div>
+
+<div class="line spoken">"Right now we're focused on one thing —</div>
+<div class="line spoken">cutting down the round latency."</div>
+
+<div class="line spoken">"Eight seconds is just too slow for live games,</div>
+<div class="line spoken">so we're bundling the commit, reveal, and finalize</div>
+<div class="line spoken">into a single Solana transaction."</div>
+
+<div class="delivery">"Just too slow" — the "just" makes it conversational. You're not declaring "this is unacceptable" like a corporate statement, you're saying "yeah it's not gonna work for what we need." Builder-to-builder honesty.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The Twitter aside + sign-off <span class="time">0:52 → 1:00</span></h2>
+</div>
+
+<div class="direction">FACE — slightly warmer. This is the lighter moment. You're remembering something on the way out the door.</div>
+
+<div class="line spoken">"Oh — and we just opened a Twitter account for DICE.</div>
+<div class="line spoken">Link is below if you want to follow along."</div>
+
+<div class="delivery">"Oh —" is the magic word. It's the conversational signal that you almost forgot to mention this. Makes the Twitter mention feel like a real human afterthought, not a marketing CTA. The single most natural line in the whole video.</div>
+
+<div class="pause">half-beat</div>
+
+<div class="line spoken">"That's week one.</div>
+<div class="line spoken">More next week."</div>
+
+<div class="delivery">Two short sentences. "More next week" is a hard period — don't add a wave, don't add a "thanks for watching." Just stop the camera.</div>
+
+<div class="pause">cut to black — no end card, no logo, no fade</div>
+
+<div class="direction">END. Total: ~58 seconds spoken + 2 seconds of silent cut. Hits the 60-second cap. If you have a brand bumper / logo card, it lives OUTSIDE this 60 seconds — add it in post if needed.</div>
+
+<!-- ============================================ -->
+
+<div class="controls">
+  <button onclick="document.body.classList.toggle('teleprompter');this.classList.toggle('active-btn')">Teleprompter</button>
+  <button onclick="this.classList.toggle('active-btn');document.querySelectorAll('.line').forEach(el=>el.onclick=()=>el.classList.toggle('active'))">Mark Lines</button>
+</div>
+
+</body>
+</html>

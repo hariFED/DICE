@@ -17,6 +17,13 @@ firmware/dependencies/
 firmware/.cache/
 sdkconfig
 sdkconfig.old
+firmware/tools/prov_output/
+
+# Next.js
+.next/
+# TypeScript incremental build cache (regenerates on every tsc run)
+tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 # Python
 __pycache__/
@@ -31,6 +38,13 @@ venv/
 build/reports/*.xml
 build/reports/*.html
 build/state.json
+# Device provisioning output — contains secp256k1 private keys + mTLS certs.
+# NEVER commit.
+build/v7_nvs*
+
+# Runtime logs
+coordinator.log
+coordinator-*.log
 
 # Secrets — NEVER commit these
 coordinator-keypair.json
@@ -51,3 +65,5 @@ Thumbs.db
 .vscode/settings.json
 .idea/
 .claude/
+
+.vercel

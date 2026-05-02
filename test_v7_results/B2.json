@@ -1,0 +1,30 @@
+{
+  "label": "B2",
+  "channel_index": 112,
+  "channel_pda": "6CVAnK9BQHGuWzqbSqhCmGYkMtKvv7qTJLa6EV1gs7Lp",
+  "node_count": 5,
+  "total_rounds": 1,
+  "succeeded": 0,
+  "failed": 1,
+  "total_duration_ms": 62837,
+  "avg_ms": 0,
+  "p50_ms": 0,
+  "p95_ms": 0,
+  "p99_ms": 0,
+  "min_ms": 0,
+  "max_ms": 0,
+  "start_balance_sol": 3.70323448,
+  "end_balance_sol": 3.68168276,
+  "spent_sol": 0.02155172,
+  "rounds": [
+    {
+      "round_index": 0,
+      "round_id": 0,
+      "status": "fail",
+      "duration_ms": 61353,
+      "request_tx": null,
+      "randomness_prefix": null,
+      "error": "round timed out waiting for Finalized"
+    }
+  ]
+}

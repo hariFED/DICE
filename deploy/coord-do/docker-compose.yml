@@ -1,0 +1,62 @@
+# DICE Coordinator · docker-compose for DigitalOcean Droplet
+#
+# Build context = /opt/dice-coord/src (repo root that push.sh rsyncs).
+# Secrets are mounted read-only from /opt/dice-coord/secrets.
+# Env vars come from /opt/dice-coord/secrets/.env (not in git).
+
+services:
+  coord:
+    container_name: dice-coord
+    build:
+      context: /opt/dice-coord/src
+      dockerfile: docker/Dockerfile.coordinator.prod
+    restart: unless-stopped
+
+    env_file:
+      - /opt/dice-coord/secrets/.env
+
+    environment:
+      # Port config — must match docker port map below
+      DICE_WS_PORT: "8443"
+      DICE_API_PORT: "8080"
+      DICE_METRICS_PORT: "9090"
+      # mTLS — always on in production
+      DICE_TLS: "true"
+      DICE_TLS_CERT_PATH: "/app/certs/coordinator.crt"
+      DICE_TLS_KEY_PATH: "/app/certs/coordinator.key"
+      DICE_CA_CERT_PATH: "/app/certs/ca.crt"
+      DICE_KEYPAIR_PATH: "/app/coordinator-keypair.json"
+      RUST_LOG: "info,dice_coordinator=debug"
+
+    volumes:
+      # Read-only secret mounts — keeps certs/keypair off the image
+      - /opt/dice-coord/secrets/ca.crt:/app/certs/ca.crt:ro
+      - /opt/dice-coord/secrets/coordinator.crt:/app/certs/coordinator.crt:ro
+      - /opt/dice-coord/secrets/coordinator.key:/app/certs/coordinator.key:ro
+      - /opt/dice-coord/secrets/coordinator-keypair.json:/app/coordinator-keypair.json:ro
+
+    ports:
+      # Public: 8080 HTTP REST API (consumed by Vercel BFF)
+      - "8080:8080"
+      # Public: 8443 mTLS WebSocket (raw TCP — rustls does the handshake)
+      - "8443:8443"
+      # Private: 9090 Prometheus — bind to loopback only, scrape via SSH tunnel
+      - "127.0.0.1:9090:9090"
+
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -q --spider http://localhost:8080/api/v1/stats || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"

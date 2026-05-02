@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE v7 — Live Test Dashboard</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --card: #141a22;
+    --card2: #1a2230;
+    --text: #e4e9f2;
+    --muted: #8a96a8;
+    --accent: #b4c4db;
+    --green: #4ade80;
+    --yellow: #facc15;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --border: #2a3444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    font-size: 14px;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    gap: 20px;
+  }
+  .title {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+  .subtitle { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  .live-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 6px;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+  .live-dot.stale { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); animation: none; }
+  .live-dot.down { background: var(--red); box-shadow: 0 0 8px var(--red); animation: none; }
+  @keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+  }
+  .stat .n {
+    display: block;
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat .l {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+  .stat.green .n { color: var(--green); }
+  .stat.yellow .n { color: var(--yellow); }
+  .stat.red .n { color: var(--red); }
+  .stat.blue .n { color: var(--blue); }
+
+  .grid2 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 1000px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .panel-head {
+    padding: 12px 18px;
+    background: var(--card2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-head h2 {
+    margin: 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+  }
+  .panel-body { padding: 14px 18px; }
+
+  .progress-wrap {
+    background: var(--card2);
+    border-radius: 6px;
+    height: 24px;
+    overflow: hidden;
+    margin: 8px 0 16px;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), #86efac);
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    color: #052e16;
+    font-weight: 600;
+    font-size: 12px;
+    min-width: 0;
+  }
+  .progress-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 12px;
+    pointer-events: none;
+    color: var(--text);
+  }
+
+  .device-list { display: flex; flex-direction: column; gap: 6px; }
+  .device {
+    display: grid;
+    grid-template-columns: 14px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--card2);
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: "SF Mono", "Cascadia Code", Consolas, Monaco, monospace;
+  }
+  .device .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+  .device .dot.down { background: var(--red); }
+  .device .id { color: var(--accent); word-break: break-all; }
+  .device .meta { color: var(--muted); font-size: 11px; white-space: nowrap; }
+
+  .event-log {
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: "SF Mono", "Cascadia Code", Consolas, Monaco, monospace;
+    font-size: 12px;
+  }
+  .event {
+    padding: 4px 10px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 60px 50px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+  .event:last-child { border-bottom: none; }
+  .event .time { color: var(--muted); }
+  .event .tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .event .tag.ok { background: rgba(74,222,128,0.15); color: var(--green); }
+  .event .tag.fail { background: rgba(248,113,113,0.15); color: var(--red); }
+  .event .tag.info { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .event .msg { color: var(--text); word-break: break-all; }
+
+  .hist {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 80px;
+    margin: 12px 0 0;
+  }
+  .hist .bar {
+    flex: 1;
+    background: linear-gradient(180deg, var(--blue), #3b82f6);
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+    transition: height 0.3s ease;
+    position: relative;
+  }
+  .hist .bar.fail { background: linear-gradient(180deg, var(--red), #dc2626); }
+
+  .tx-latest {
+    font-family: "SF Mono", monospace;
+    font-size: 11px;
+    color: var(--blue);
+    word-break: break-all;
+    display: block;
+    margin-top: 4px;
+  }
+  .tx-latest a { color: var(--blue); text-decoration: none; }
+  .tx-latest a:hover { text-decoration: underline; }
+
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 12px; }
+  .kv dt { color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; font-size: 10px; }
+  .kv dd { margin: 0; font-family: "SF Mono", monospace; color: var(--text); }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .pill.green { background: rgba(74,222,128,0.15); color: var(--green); }
+  .pill.yellow { background: rgba(250,204,21,0.15); color: var(--yellow); }
+  .pill.red { background: rgba(248,113,113,0.15); color: var(--red); }
+  .pill.blue { background: rgba(96,165,250,0.15); color: var(--blue); }
+
+  .footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+  }
+  .refresh-note { color: var(--muted); font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div>
+    <div class="title">DICE v7 — Live Test Dashboard</div>
+    <div class="subtitle">5 ESP32-S3 devices · Rust coordinator · Solana devnet · auto-refresh every 2 s</div>
+  </div>
+  <div id="live-status"><span class="live-dot"></span> <span id="live-text">Connecting...</span></div>
+</header>
+
+<div class="stats">
+  <div class="stat green"><span class="n" id="stat-nodes">—</span><span class="l">Nodes online</span></div>
+  <div class="stat blue"><span class="n" id="stat-rounds">—</span><span class="l">Rounds done</span></div>
+  <div class="stat green"><span class="n" id="stat-ok">—</span><span class="l">Success</span></div>
+  <div class="stat red"><span class="n" id="stat-fail">—</span><span class="l">Failures</span></div>
+  <div class="stat yellow"><span class="n" id="stat-pct">—</span><span class="l">Pass rate</span></div>
+  <div class="stat blue"><span class="n" id="stat-avg">—</span><span class="l">Avg round ms</span></div>
+  <div class="stat yellow"><span class="n" id="stat-elapsed">—</span><span class="l">Elapsed</span></div>
+  <div class="stat blue"><span class="n" id="stat-eta">—</span><span class="l">ETA</span></div>
+</div>
+
+<div class="panel" style="margin-bottom: 20px;">
+  <div class="panel-head">
+    <h2>A4 — 1000-round stress test (v7.1 firmware)</h2>
+    <span id="run-state" class="pill blue">Idle</span>
+  </div>
+  <div class="panel-body">
+    <div class="progress-wrap">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      <div class="progress-text" id="progress-text">waiting for run to start</div>
+    </div>
+    <dl class="kv">
+      <dt>Test</dt><dd id="run-label">A4 (1000 sequential rounds, 4 nodes, channel 800)</dd>
+      <dt>Current round</dt><dd id="run-current">—</dd>
+      <dt>Latest randomness</dt><dd id="run-latest-rand">—</dd>
+      <dt>Latest TX</dt><dd class="tx-latest" id="run-latest-tx">—</dd>
+      <dt>Min / p50 / p95 / p99 / max</dt><dd id="run-latency">—</dd>
+      <dt>Coordinator uptime</dt><dd id="run-uptime">—</dd>
+    </dl>
+    <div class="hist" id="hist"></div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Round events (live)</h2>
+      <span class="refresh-note">most recent first · last 60</span>
+    </div>
+    <div class="panel-body" style="padding: 0;">
+      <div class="event-log" id="event-log">
+        <div class="event"><div class="time">—</div><div class="tag info">info</div><div class="msg">Waiting for A4 run to start...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Devices</h2>
+      <span class="refresh-note" id="device-count-note">0 online</span>
+    </div>
+    <div class="panel-body">
+      <div class="device-list" id="device-list">
+        <div class="device"><div class="dot down"></div><div class="id">—</div><div class="meta">—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  DICE v7 Dashboard · data sources: <code>/api/v1/stats</code>, <code>/nodes</code>, <code>/api/progress</code> (proxied by dashboard server)
+</div>
+
+</div>
+
+<script>
+const API_BASE = window.location.origin;  // same-origin proxy
+
+let lastProgress = null;
+let lastFetchOk = 0;
+
+async function fetchJson(path) {
+  const r = await fetch(path, { cache: "no-store" });
+  if (!r.ok) throw new Error(path + " → " + r.status);
+  return r.json();
+}
+
+function fmtDuration(ms) {
+  if (ms == null) return "—";
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}h ${m % 60}m ${s % 60}s`;
+  if (m > 0) return `${m}m ${s % 60}s`;
+  return `${s}s`;
+}
+
+function renderStats(stats, nodes, progress) {
+  // Top stat cards
+  document.getElementById("stat-nodes").textContent = nodes ? `${nodes.count}/5` : "—";
+
+  if (progress && progress.total > 0) {
+    document.getElementById("stat-rounds").textContent = `${progress.done}/${progress.total}`;
+    document.getElementById("stat-ok").textContent = progress.succeeded;
+    document.getElementById("stat-fail").textContent = progress.failed;
+    const pct = progress.done > 0 ? ((progress.succeeded / progress.done) * 100).toFixed(1) : "—";
+    document.getElementById("stat-pct").textContent = pct + "%";
+    document.getElementById("stat-avg").textContent = progress.avg_ms ? progress.avg_ms.toFixed(0) : "—";
+    document.getElementById("stat-elapsed").textContent = fmtDuration(progress.elapsed_ms);
+    document.getElementById("stat-eta").textContent = progress.eta_ms ? fmtDuration(progress.eta_ms) : "—";
+
+    // Progress bar
+    const fillPct = (progress.done / progress.total) * 100;
+    document.getElementById("progress-fill").style.width = fillPct + "%";
+    document.getElementById("progress-text").textContent =
+      `${progress.done} / ${progress.total}  (${fillPct.toFixed(1)}%)`;
+
+    // Run state
+    const st = document.getElementById("run-state");
+    if (progress.done === 0) {
+      st.className = "pill blue"; st.textContent = "Warming up";
+    } else if (progress.done < progress.total) {
+      st.className = "pill green"; st.textContent = "Running";
+    } else {
+      st.className = "pill green"; st.textContent = "Complete";
+    }
+
+    // KV details
+    document.getElementById("run-current").textContent = progress.current_round_id
+      ? `round_id ${progress.current_round_id}` : "—";
+    document.getElementById("run-latest-rand").textContent = progress.latest_randomness || "—";
+    if (progress.latest_tx) {
+      const tx = progress.latest_tx;
+      document.getElementById("run-latest-tx").innerHTML =
+        `<a href="https://explorer.solana.com/tx/${tx}?cluster=devnet" target="_blank">${tx}</a>`;
+    }
+    if (progress.p50_ms != null) {
+      document.getElementById("run-latency").textContent =
+        `${progress.min_ms} / ${progress.p50_ms} / ${progress.p95_ms} / ${progress.p99_ms} / ${progress.max_ms} ms`;
+    }
+  } else {
+    document.getElementById("progress-text").textContent = "waiting for A4 run to start";
+    document.getElementById("run-state").className = "pill blue";
+    document.getElementById("run-state").textContent = "Idle";
+  }
+
+  if (stats) {
+    document.getElementById("run-uptime").textContent = fmtDuration(stats.uptime_secs * 1000);
+  }
+}
+
+function renderEvents(events) {
+  const el = document.getElementById("event-log");
+  if (!events || events.length === 0) return;
+  el.innerHTML = events.slice().reverse().map(e => {
+    const tag = e.kind === "ok" ? "ok" : e.kind === "fail" ? "fail" : "info";
+    return `<div class="event">
+      <div class="time">${e.time}</div>
+      <div class="tag ${tag}">${tag}</div>
+      <div class="msg">${e.msg}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderDevices(nodes) {
+  const el = document.getElementById("device-list");
+  if (!nodes || nodes.count === 0) {
+    el.innerHTML = `<div class="device"><div class="dot down"></div><div class="id">no devices connected</div><div class="meta">—</div></div>`;
+    document.getElementById("device-count-note").textContent = "0 online";
+    return;
+  }
+  el.innerHTML = nodes.nodes.map(n => `
+    <div class="device">
+      <div class="dot"></div>
+      <div class="id">${n.node_id.slice(0,20)}…</div>
+      <div class="meta">${n.connected_secs}s · ${n.jobs_completed || 0} jobs</div>
+    </div>
+  `).join("");
+  document.getElementById("device-count-note").textContent = `${nodes.count} online`;
+}
+
+function renderHistogram(progress) {
+  const el = document.getElementById("hist");
+  if (!progress || !progress.recent_durations || progress.recent_durations.length === 0) {
+    el.innerHTML = "";
+    return;
+  }
+  const vals = progress.recent_durations.slice(-60);
+  const max = Math.max(...vals, 1);
+  el.innerHTML = vals.map(v => {
+    const pct = (v / max) * 100;
+    const cls = v > 30000 ? "bar fail" : "bar";
+    return `<div class="${cls}" style="height: ${pct}%" title="${v} ms"></div>`;
+  }).join("");
+}
+
+async function tick() {
+  try {
+    const [nodes, stats, progress] = await Promise.all([
+      fetchJson("/proxy/nodes"),
+      fetchJson("/proxy/stats"),
+      fetchJson("/api/progress"),
+    ]);
+    lastFetchOk = Date.now();
+    document.querySelector("#live-status .live-dot").className = "live-dot";
+    document.getElementById("live-text").textContent = "Live · coordinator ok";
+    renderStats(stats, nodes, progress);
+    renderDevices(nodes);
+    renderEvents(progress.events);
+    renderHistogram(progress);
+  } catch (e) {
+    const age = Date.now() - lastFetchOk;
+    if (age > 10000) {
+      document.querySelector("#live-status .live-dot").className = "live-dot down";
+      document.getElementById("live-text").textContent = "Dashboard server unreachable";
+    } else {
+      document.querySelector("#live-status .live-dot").className = "live-dot stale";
+      document.getElementById("live-text").textContent = "Stale · retrying";
+    }
+  }
+}
+
+// Initial fetch + poll every 2s
+tick();
+setInterval(tick, 2000);
+</script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE Script 5 — The Missed Flight</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #e8e8e8; font-family: 'Georgia', serif; line-height: 1.9; padding: 3rem 1.5rem; max-width: 720px; margin: 0 auto; }
+  .meta { border-bottom: 1px solid #222; padding-bottom: 2rem; margin-bottom: 3rem; }
+  .meta h1 { font-size: 2rem; font-weight: 400; color: #fff; margin-bottom: 0.5rem; }
+  .meta .subtitle { color: #666; font-size: 0.95rem; font-style: italic; }
+  .meta .details { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.8rem; color: #555; text-transform: uppercase; letter-spacing: 0.1em; }
+  .meta .inspiration { margin-top: 1.2rem; color: #444; font-size: 0.8rem; font-style: italic; border-left: 2px solid #222; padding-left: 0.8rem; }
+  .line { margin-bottom: 0.4rem; padding: 0.3rem 0.8rem; border-radius: 3px; transition: background 0.2s; cursor: pointer; font-size: 1.15rem; }
+  .line:hover { background: #1a1a1a; }
+  .line.active { background: #1a1a0a; border-left: 3px solid #f0c040; padding-left: calc(0.8rem - 3px); }
+  .spoken { color: #f5f5f5; font-size: 1.2rem; }
+  .direction { color: #4a9eff; font-size: 0.85rem; font-family: 'Consolas', monospace; font-style: italic; padding: 0.6rem 0.8rem; margin: 1rem 0; border-left: 2px solid #1a3a5a; background: #0d1520; }
+  .delivery { color: #ff6b6b; font-size: 0.8rem; font-family: 'Consolas', monospace; padding: 0.4rem 0.8rem; margin: 0.3rem 0 1.2rem 0; opacity: 0.8; }
+  .pause { text-align: center; color: #333; font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; padding: 1rem 0; }
+  .pause::before, .pause::after { content: '———'; color: #222; margin: 0 1rem; }
+  .section { margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1a1a1a; }
+  .section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #444; font-weight: 400; font-family: 'Consolas', monospace; }
+  .section .time { float: right; color: #333; font-size: 0.7rem; }
+  .mg { background: #0a1a0a; border: 1px solid #1a3a1a; border-radius: 4px; padding: 1rem; margin: 1.5rem 0; font-size: 0.85rem; color: #5a9a5a; font-family: 'Consolas', monospace; }
+  .mg::before { content: '▶ MOTION GRAPHIC'; display: block; font-size: 0.65rem; letter-spacing: 0.15em; color: #3a6a3a; margin-bottom: 0.5rem; }
+  .broll { background: #1a0a1a; border: 1px solid #3a1a3a; border-radius: 4px; padding: 1rem; margin: 1.5rem 0; font-size: 0.85rem; color: #9a5a9a; font-family: 'Consolas', monospace; }
+  .broll::before { content: '▶ B-ROLL / CUTAWAY'; display: block; font-size: 0.65rem; letter-spacing: 0.15em; color: #6a3a6a; margin-bottom: 0.5rem; }
+  .controls { position: fixed; bottom: 2rem; right: 2rem; display: flex; gap: 0.5rem; }
+  .controls button { background: #1a1a1a; color: #888; border: 1px solid #333; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-family: monospace; }
+  .controls button:hover { background: #222; color: #fff; }
+  .controls button.active-btn { background: #f0c040; color: #000; border-color: #f0c040; }
+  body.teleprompter .direction, body.teleprompter .delivery, body.teleprompter .mg, body.teleprompter .broll, body.teleprompter .meta .details, body.teleprompter .meta .inspiration, body.teleprompter .section h2, body.teleprompter .controls { display: none; }
+  body.teleprompter { font-size: 1.8rem; line-height: 2.2; max-width: 600px; }
+  body.teleprompter .spoken { font-size: 2rem; }
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <h1>Script 5 — The Missed Flight</h1>
+  <div class="subtitle">Style: human-first, funny cold open, real situation. The chaos IS the authenticity. Dollar Shave Club meets early Airbnb meets two guys who actually built something in their apartment.</div>
+  <div class="details">
+    <span>Runtime: ~80s</span>
+    <span>Energy: warm chaos → real talk → quiet conviction</span>
+    <span>Arc: funny situation → "while I have you" → the real thing → callback close</span>
+  </div>
+  <div class="inspiration">
+    Inspired by: Dollar Shave Club (humor earns the serious moment), Airbnb YC pitch (absurd origin, real product), Stripe (radical simplicity after the hook), Anatoly Yakovenko early Solana talks (builder showing what he built on his desk)
+  </div>
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The situation <span class="time">0:00</span></h2>
+</div>
+
+<div class="direction">FACE — you're already in frame, slightly amused, like you just got off the phone. Casual. The white background feels almost too clean for how unpolished you're about to be.</div>
+
+<div class="line spoken">"So."</div>
+
+<div class="pause">half-beat — slight exhale, almost a laugh</div>
+
+<div class="line spoken">"Today was supposed to be the big shoot.</div>
+<div class="line spoken">Me and my cofounder Nikhil, side by side,</div>
+<div class="line spoken">introducing DICE to the world."</div>
+
+<div class="delivery">Light. Storytelling energy. You're setting up a situation the audience can see coming.</div>
+
+<div class="line spoken">"Nikhil missed his flight."</div>
+
+<div class="delivery">Deadpan. One beat of silence. Then let whatever expression comes naturally — a smile, an eye roll, a shrug. Don't plan it. The real reaction is funnier than anything you rehearse.</div>
+
+<div class="pause">beat — let the audience laugh</div>
+
+<div class="line spoken">"So... it's just me."</div>
+
+<div class="direction">Gesture around at the white background, the empty space next to you.</div>
+
+<div class="line spoken">"Me, a white wall..."</div>
+
+<div class="direction">Reach down and pick up an ESP32. Hold it up.</div>
+
+<div class="line spoken">"...and four tiny computers that I think</div>
+<div class="line spoken">might fix a pretty big problem."</div>
+
+<div class="delivery">"pretty big problem" — understatement on purpose. You're downplaying. The audience leans in because they can tell you're about to NOT downplay.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The pivot — "while I have you" <span class="time">0:18</span></h2>
+</div>
+
+<div class="direction">Set the chip down. Shift. The humor was the door — now you walk them through it. Energy goes from "funny situation" to "ok but actually listen."</div>
+
+<div class="line spoken">"But since you're here... let me tell you</div>
+<div class="line spoken">why Nikhil and I spent the last few months</div>
+<div class="line spoken">obsessing over random numbers."</div>
+
+<div class="delivery">The "but since you're here" is the pivot. It's a classic move — comedian energy into "no but seriously." The audience has already decided they like you from the flight joke. Now they'll listen to anything.</div>
+
+<div class="line spoken">"We build lottery games on Solana.</div>
+<div class="line spoken">Real money. Real players.</div>
+<div class="line spoken">Someone wins thirty, forty, fifty thousand dollars</div>
+<div class="line spoken">based on one random number."</div>
+
+<div class="pause">half-beat</div>
+
+<div class="line spoken">"And that number...</div>
+<div class="line spoken">comes from one rented server,</div>
+<div class="line spoken">run by one company,</div>
+<div class="line spoken">that every game on Solana just... trusts."</div>
+
+<div class="delivery">Each "one" gets quieter. You're counting down to the absurdity. By the time you hit "just... trusts" your voice should be almost a murmur.</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"We talk about decentralization all day.</div>
+<div class="line spoken">But the thing that decides where the money goes...</div>
+<div class="line spoken">is a cloud rental."</div>
+
+<div class="delivery">No "with a blockchain receipt" this time. Just "cloud rental." Shorter. The audience fills in the rest. Less is landing harder in this script because you earned the trust with the humor.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The thing on the desk <span class="time">0:38</span></h2>
+</div>
+
+<div class="direction">Pick up the ESP32 again. But this time — don't hold it up dramatically. Just look at it in your palm, like it's something you carry around. Then show it to the camera casually, the way you'd show a friend something on your phone.</div>
+
+<div class="line spoken">"This is what we built instead."</div>
+
+<div class="broll">
+Close-up of the ESP32 in your palm. Your thumb runs across the chip markings. It looks small. It looks cheap. That's the point.
+</div>
+
+<div class="line spoken">"Eight dollar chip.</div>
+<div class="line spoken">Has its own cryptographic key</div>
+<div class="line spoken">baked into the silicon at the factory.</div>
+<div class="line spoken">Can't pull it out. Can't copy it.</div>
+<div class="line spoken">Can't boot up a clone and pretend to be it."</div>
+
+<div class="delivery">"Can't pull it out. Can't copy it. Can't boot up a clone" — rhythm matters here. Three short swings. Like you're closing doors.</div>
+
+<div class="line spoken">"It makes random numbers from actual physics.</div>
+<div class="line spoken">Electrical noise inside the hardware.</div>
+<div class="line spoken">Not math pretending to be random.</div>
+<div class="line spoken">Actual noise."</div>
+
+<div class="direction">Set it down. Camera widens to show all 4 devices on desk, green LEDs pulsing.</div>
+
+<div class="line spoken">"Four of these talk to each other.</div>
+<div class="line spoken">Each one commits a value nobody else can see.</div>
+<div class="line spoken">Then they all reveal at the same time.</div>
+<div class="line spoken">The result is a number that nobody —</div>
+<div class="line spoken">not me, not Nikhil, not anyone —</div>
+<div class="line spoken">could've rigged."</div>
+
+<div class="delivery">"not me, not Nikhil" — naming yourselves here is intentional. It says: we built it, and even WE can't cheat it. That's the trust model in human language.</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The receipts <span class="time">0:58</span></h2>
+</div>
+
+<div class="mg">
+Quick split screen. Left: two transaction blocks, timer counting 5... 6... 7... Right: one block, 3.5 seconds, checkmark. 3 seconds total. No labels. Obvious.
+</div>
+
+<div class="line spoken">"One Solana transaction. Three and a half seconds.</div>
+<div class="line spoken">Ten lines of code to integrate."</div>
+
+<div class="delivery">Fast. You're stacking proof now, not telling a story. The audience is already sold on WHY — now you're showing them it actually works.</div>
+
+<div class="line spoken">"And we're shipping something</div>
+<div class="line spoken">nobody else on Solana has —</div>
+<div class="line spoken">streaming randomness.</div>
+<div class="line spoken">You subscribe once. Values keep flowing."</div>
+
+<div class="mg">
+River of glowing values flowing from the 4 devices into a game interface. Continuous. Alive.
+</div>
+
+<!-- ============================================ -->
+<div class="section">
+  <h2>The callback <span class="time">1:08</span></h2>
+</div>
+
+<div class="direction">Slight smile comes back. The warmth from the opening returns. You're closing the loop.</div>
+
+<div class="line spoken">"Look — Nikhil's gonna land eventually."</div>
+
+<div class="delivery">Warm. The audience remembers the opening. They smile. You've got them.</div>
+
+<div class="line spoken">"And when he does, he's gonna find out</div>
+<div class="line spoken">we did the whole launch without him."</div>
+
+<div class="pause">half-beat — let them laugh</div>
+
+<div class="direction">Drop the smile. Look right into the camera. The shift from warm to serious in 1 second is what makes this ending hit.</div>
+
+<div class="line spoken">"But what he's also gonna find...</div>
+<div class="line spoken">is that the games we've been building together</div>
+<div class="line spoken">are actually fair now."</div>
+
+<div class="pause">beat</div>
+
+<div class="line spoken">"For real this time."</div>
+
+<div class="delivery">"For real this time" — four words that carry the weight of everything. It implies: before, it wasn't real. Before, we were trusting something we shouldn't have. Now we're not. Said quiet. Said like a promise to a friend, not a pitch to a judge. This is the line Nikhil hears when he watches this on the plane WiFi.</div>
+
+<div class="pause">hold 2 seconds — cut</div>
+
+<div class="mg">
+Black screen. 1 second.
+Then white. DICE logo, clean.
+Below: "Real hardware. Real entropy. Solana."
+Smaller: your URL.
+Even smaller, in grey, almost hidden: "Nikhil, check your phone."
+Hold 4 seconds. Fade.
+</div>
+
+<div class="delivery">The "Nikhil, check your phone" easter egg on the end card. Tiny. Most viewers won't even notice it. But the ones who do will screenshot it and share it. That's how things go viral — not from the main message, but from the human detail people discover and feel clever for finding.</div>
+
+<!-- ============================================ -->
+
+<div class="controls">
+  <button onclick="document.body.classList.toggle('teleprompter');this.classList.toggle('active-btn')">Teleprompter</button>
+  <button onclick="this.classList.toggle('active-btn');document.querySelectorAll('.line').forEach(el=>el.onclick=()=>el.classList.toggle('active'))">Mark Lines</button>
+</div>
+
+</body>
+</html>

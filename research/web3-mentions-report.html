@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DICE Project - External Mentions &amp; Media Coverage Report</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --surface2: #1a1a1a;
+    --border: #1e1e1e;
+    --text: #d4d4d4;
+    --text-dim: #777;
+    --accent: #00ff88;
+    --accent-dim: #00cc66;
+    --warn: #ff6b35;
+    --red: #ff4444;
+    --blue: #4da6ff;
+    --purple: #b388ff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 0;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #0d1117 0%, #0a0f0d 50%, #0d1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 2rem;
+    text-align: center;
+  }
+  .header h1 {
+    font-size: 2.2rem;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+  .header .subtitle {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+  }
+  .header .date {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    opacity: 0.7;
+  }
+
+  /* Key finding banner */
+  .banner {
+    background: linear-gradient(90deg, rgba(255,107,53,0.08), rgba(255,107,53,0.02));
+    border-left: 3px solid var(--warn);
+    padding: 1.2rem 1.5rem;
+    margin: 2rem auto;
+    max-width: 900px;
+    border-radius: 0 6px 6px 0;
+  }
+  .banner strong { color: var(--warn); }
+  .banner p { font-size: 0.9rem; }
+
+  /* Container */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+  }
+
+  /* Sections */
+  .section {
+    margin-top: 3rem;
+  }
+  .section-title {
+    font-size: 1.35rem;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #333; }
+  .card h3 {
+    font-size: 1rem;
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+  .card .meta {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 0.6rem;
+  }
+  .card .meta span {
+    margin-right: 1rem;
+  }
+  .card p {
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+  .card .dice-angle {
+    background: rgba(0,255,136,0.06);
+    border-left: 2px solid var(--accent);
+    padding: 0.6rem 0.8rem;
+    margin-top: 0.75rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.83rem;
+  }
+  .card .dice-angle strong { color: var(--accent); }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 0.4rem;
+    margin-bottom: 0.3rem;
+  }
+  .tag-vrf { background: rgba(0,255,136,0.12); color: var(--accent); }
+  .tag-tee { background: rgba(77,166,255,0.12); color: var(--blue); }
+  .tag-sw { background: rgba(179,136,255,0.12); color: var(--purple); }
+  .tag-gap { background: rgba(255,107,53,0.12); color: var(--warn); }
+  .tag-dead { background: rgba(255,68,68,0.12); color: var(--red); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+  }
+  th {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    background: var(--surface2);
+    color: var(--accent);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 0.55rem 0.8rem;
+    border-bottom: 1px solid #151515;
+    vertical-align: top;
+  }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+
+  /* Links */
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Narrative angles */
+  .narrative {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 640px) {
+    .narrative { grid-template-columns: 1fr; }
+  }
+  .narrative-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .narrative-card h4 {
+    color: var(--accent);
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+  }
+  .narrative-card p {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+
+  /* Tier labels */
+  .tier {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-right: 0.5rem;
+  }
+  .tier-1 { background: var(--accent); color: #000; }
+  .tier-2 { background: var(--blue); color: #000; }
+  .tier-3 { background: var(--text-dim); color: #000; }
+
+  /* Recommendations */
+  .rec-timeline {
+    border-left: 2px solid var(--border);
+    padding-left: 1.5rem;
+    margin-top: 1rem;
+  }
+  .rec-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+  .rec-item::before {
+    content: '';
+    position: absolute;
+    left: -1.75rem;
+    top: 0.35rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .rec-item.later::before { background: var(--blue); }
+  .rec-item.long::before { background: var(--purple); }
+  .rec-item h4 {
+    font-size: 0.9rem;
+    color: #fff;
+    margin-bottom: 0.25rem;
+  }
+  .rec-item .week {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .rec-item p {
+    font-size: 0.84rem;
+    color: var(--text-dim);
+    margin-top: 0.25rem;
+  }
+
+  /* Stats bar */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .stat-box .num {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-box .label {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.2rem;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>DICE Project</h1>
+  <div class="subtitle">External Mentions &amp; Media Coverage Report</div>
+  <div class="subtitle" style="color:#fff;margin-top:0.3rem;">Hardware-Backed VRF Oracle on Solana</div>
+  <div class="date">Generated April 4, 2026 &middot; Repository: github.com/hariFED/DICE (private)</div>
+</div>
+
+<div class="container">
+
+  <!-- Key Finding -->
+  <div class="banner">
+    <p><strong>Key Finding:</strong> Zero direct external mentions of DICE were found anywhere on the public internet. This is expected &mdash; private repo, no website, no socials. However, the oracle/VRF space on Solana has only 3&ndash;4 players, and DICE&rsquo;s hardware-backed approach is <strong>genuinely differentiated</strong> from all of them.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-box">
+      <div class="num">0</div>
+      <div class="label">Direct Mentions</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">4</div>
+      <div class="label">VRF Competitors</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">20+</div>
+      <div class="label">Target VCs Identified</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">6</div>
+      <div class="label">Podcast Targets</div>
+    </div>
+  </div>
+
+  <!-- Competitive Landscape -->
+  <div class="section">
+    <h2 class="section-title">Competitive Landscape</h2>
+
+    <div class="card">
+      <h3>Switchboard (SWTCH)</h3>
+      <div class="meta">
+        <span class="tag tag-tee">TEE-Based</span>
+        <span class="tag tag-vrf">VRF</span>
+        <span>Funding: <strong>$11M</strong> (Lemniscap, Tribe Capital, RockawayX)</span>
+      </div>
+      <p>Intel SGX TEE-based randomness (v3). Launched "Surge" with sub-100ms price feeds. First Solana oracle on Jito restaking. Pricing: ~0.002 SOL per VRF request.</p>
+      <div class="dice-angle">
+        <strong>DICE Angle:</strong> Switchboard relies on Intel SGX (centralized hardware vendor). DICE&rsquo;s distributed ESP32-S3 nodes offer a fundamentally different trust model &mdash; no dependency on Intel&rsquo;s TEE security assumptions.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>ORAO Network</h3>
+      <div class="meta">
+        <span class="tag tag-sw">Software-Only</span>
+        <span class="tag tag-vrf">VRF</span>
+        <span>Funding: <strong>Undisclosed</strong></span>
+      </div>
+      <p>Multi-node VRF oracle using EDDSA with Byzantine Quorum consensus. Sub-second fulfillment. Pricing: 0.001 SOL (cheaper than DICE).</p>
+      <div class="dice-angle">
+        <strong>DICE Angle:</strong> ORAO is software-only with no hardware entropy. DICE&rsquo;s ESP32-S3 hardware RNG provides a fundamentally stronger entropy guarantee than any software-based approach.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>MagicBlock (Ephemeral VRF)</h3>
+      <div class="meta">
+        <span class="tag tag-sw">Software Plugin</span>
+        <span class="tag tag-vrf">VRF</span>
+        <span>Funding: <strong>$10.5M</strong> (a16z CSX, Lightspeed Faction)</span>
+      </div>
+      <p>VRF plugin for Solana using Ephemeral Rollups. Primarily gaming infrastructure. Angel investors include Anatoly Yakovenko, Mert Mumtaz, Tristan Yver.</p>
+      <div class="dice-angle">
+        <strong>DICE Angle:</strong> MagicBlock&rsquo;s VRF is one plugin within a larger gaming platform. DICE is purpose-built for randomness with dedicated hardware, offering a more specialized and secure solution.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Pyth Entropy</h3>
+      <div class="meta">
+        <span class="tag tag-gap">Not on Solana</span>
+        <span class="tag tag-vrf">Commit-Reveal</span>
+      </div>
+      <p>Two-party commit-reveal protocol using hash chains. Currently only available on EVM chains, not yet on Solana mainnet.</p>
+      <div class="dice-angle">
+        <strong>DICE Angle:</strong> Pyth Entropy uses a similar commit-reveal design but relies on a centralized provider. DICE distributes commit-reveal across hardware nodes &mdash; and is actually on Solana.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Chainlink VRF</h3>
+      <div class="meta">
+        <span class="tag tag-dead">Not on Solana</span>
+        <span class="tag tag-vrf">VRF</span>
+      </div>
+      <p>The 800-lb gorilla of oracles with VRF across multiple EVM chains. No native Solana VRF. DICE is Solana-native by design.</p>
+    </div>
+  </div>
+
+  <!-- Relevant Articles -->
+  <div class="section">
+    <h2 class="section-title">Relevant Blog Posts &amp; Technical Articles</h2>
+
+    <div class="card">
+      <h3>Adevar Labs &mdash; &ldquo;On-Chain Randomness on Solana&rdquo; (Part 1)</h3>
+      <div class="meta">
+        <span>Author: Salah Ismail</span>
+        <span>Jan 13, 2026</span>
+      </div>
+      <p>The most comprehensive technical analysis of Solana randomness solutions. Covers Switchboard VRF v2/v3, ORAO VRF, and Pyth Entropy. <strong>Does NOT mention DICE.</strong></p>
+      <div class="dice-angle">
+        <strong>Outreach:</strong> Contact Adevar Labs about including DICE as a hardware-backed alternative in Part 2. Their security audit practice could also be a partnership opportunity.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Solana Foundation &mdash; Developer Course: VRF</h3>
+      <div class="meta">
+        <span>Official Solana developer education</span>
+      </div>
+      <p>Only covers Switchboard and ORAO. Getting DICE included in Solana Foundation&rsquo;s official developer resources would be a major credibility milestone.</p>
+    </div>
+  </div>
+
+  <!-- Related Mentions -->
+  <div class="section">
+    <h2 class="section-title">Related Ecosystem Events</h2>
+
+    <div class="card">
+      <h3>Drift Protocol $285M Oracle Exploit (2025)</h3>
+      <div class="meta"><span class="tag tag-gap">Oracle Security</span></div>
+      <p>Solana&rsquo;s largest perpetual futures exchange was drained through oracle manipulation and compromised admin keys. Oracle security is top-of-mind in the ecosystem.</p>
+      <div class="dice-angle">
+        <strong>Narrative:</strong> DICE&rsquo;s hardware-backed, tamper-resistant approach is a direct answer to oracle manipulation risks.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>DePIN Market Momentum: $744M+ Invested</h3>
+      <div class="meta"><span class="tag tag-vrf">DePIN</span></div>
+      <p>Over $744M invested in 165+ DePIN startups (Jan 2024 &ndash; Jul 2025). Average FDV of $760M for new DePIN projects. Borderless Capital raised a $100M DePIN Fund III.</p>
+      <div class="dice-angle">
+        <strong>Narrative:</strong> DICE&rsquo;s hardware node network can be framed as DePIN infrastructure for randomness, tapping into the DePIN investment wave.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Switchboard&rsquo;s 0.002 SOL Pricing Milestone</h3>
+      <div class="meta"><span class="tag tag-vrf">Pricing</span></div>
+      <p>Switchboard announced a 50x fee reduction to under 0.002 SOL per VRF request. DICE matches this exact price point while offering hardware-backed entropy guarantees.</p>
+    </div>
+
+    <div class="card">
+      <h3>Multicoin Capital&rsquo;s 5th Solana Thesis</h3>
+      <div class="meta"><span class="tag tag-vrf">Investor Thesis</span></div>
+      <p>Frames Solana as &ldquo;Internet Capital Markets&rdquo; requiring credible neutrality. Oracle infrastructure is foundational. DICE&rsquo;s hardware-backed randomness is a credible neutrality primitive.</p>
+    </div>
+  </div>
+
+  <!-- Target VCs -->
+  <div class="section">
+    <h2 class="section-title">Target VCs for Outreach</h2>
+
+    <h3 style="color:#fff;font-size:0.9rem;margin-bottom:0.75rem;"><span class="tier tier-1">Tier 1</span> DePIN / Oracle-Focused (Highest Relevance)</h3>
+    <table>
+      <thead><tr><th>Firm</th><th>Relevance</th><th>Portfolio</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Borderless Capital</strong></td><td>$100M DePIN Fund III; backed by Solana Foundation</td><td>Helium, IoTeX</td></tr>
+        <tr><td><strong>Multicoin Capital</strong></td><td>Cited Pyth as &ldquo;breakout DeFi app&rdquo;; oracle thesis</td><td>Pyth, Solana core</td></tr>
+        <tr><td><strong>Lightspeed Faction</strong></td><td>Led MagicBlock&rsquo;s $7.5M seed (VRF competitor)</td><td>MagicBlock</td></tr>
+        <tr><td><strong>Lemniscap</strong></td><td>Led Switchboard&rsquo;s $3.5M seed</td><td>Switchboard</td></tr>
+        <tr><td><strong>Tribe Capital / RockawayX</strong></td><td>Co-led Switchboard&rsquo;s $7.5M Series A</td><td>Switchboard</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:#fff;font-size:0.9rem;margin:1.5rem 0 0.75rem;"><span class="tier tier-2">Tier 2</span> Solana Infrastructure Generalists</h3>
+    <table>
+      <thead><tr><th>Firm</th><th>Relevance</th><th>Portfolio</th></tr></thead>
+      <tbody>
+        <tr><td><strong>a16z crypto / CSX</strong></td><td>Invested in MagicBlock; runs Solana accelerator</td><td>MagicBlock</td></tr>
+        <tr><td><strong>Solana Ventures</strong></td><td>$1M-$4.5M checks; 78+ DePIN projects</td><td>Various</td></tr>
+        <tr><td><strong>Robot Ventures</strong></td><td>MagicBlock seed participant</td><td>MagicBlock</td></tr>
+        <tr><td><strong>Delphi Digital</strong></td><td>MagicBlock seed; research-driven</td><td>MagicBlock</td></tr>
+        <tr><td><strong>Hack VC</strong></td><td>Led Exabits $15M DePIN seed</td><td>Exabits</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:#fff;font-size:0.9rem;margin:1.5rem 0 0.75rem;"><span class="tier tier-3">Tier 3</span> DePIN / Hardware-Focused</h3>
+    <table>
+      <thead><tr><th>Firm</th><th>Relevance</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Entree Capital</strong></td><td>$300M fund (Dec 2025) targeting AI + DePIN at pre-seed to Series A</td></tr>
+        <tr><td><strong>Framework Ventures</strong></td><td>Led Daylight $15M (DePIN energy)</td></tr>
+        <tr><td><strong>Dragonfly Capital</strong></td><td>Co-led DoubleZero $28M (DePIN networking)</td></tr>
+        <tr><td><strong>Pantera Capital</strong></td><td>Broad DePIN exposure</td></tr>
+        <tr><td><strong>Lattice Fund / EV3 / Placeholder</strong></td><td>DePIN seed-stage focus</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Target Angels -->
+  <div class="section">
+    <h2 class="section-title">Target Angel Investors</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Role</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Anatoly Yakovenko</strong></td><td>Solana co-founder</td><td>Angel in MagicBlock (VRF competitor); cares deeply about Solana infra</td></tr>
+        <tr><td><strong>Raj Gokal</strong></td><td>Solana co-founder &amp; COO</td><td>Known DePIN angel; ecosystem champion</td></tr>
+        <tr><td><strong>Mert Mumtaz</strong></td><td>CEO, Helius</td><td>Angel in MagicBlock; prominent Solana infra voice</td></tr>
+        <tr><td><strong>Chris Hermida</strong></td><td>Co-founder, Switchboard</td><td>Deep oracle expertise; may be interested in hardware oracle concept</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Target Podcasts -->
+  <div class="section">
+    <h2 class="section-title">Target Podcasts</h2>
+
+    <div class="card">
+      <h3><span class="tier tier-1">Tier 1</span> Lightspeed (Blockworks)</h3>
+      <div class="meta">Hosts: Danny Kay, Carlos Garcia, Jack Kubinec</div>
+      <p>Already interviewed Switchboard founders on oracle infrastructure. The episode <em>&ldquo;Solving Crypto&rsquo;s Oracle Problem&rdquo;</em> is the exact template for a DICE appearance. Pitch: &ldquo;hardware vs. TEE &mdash; a fundamentally different approach to Solana randomness.&rdquo;</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="tier tier-1">Tier 1</span> Solfate Podcast</h3>
+      <div class="meta">Hosts: Nick &amp; James</div>
+      <p>Builder-focused, lower barrier to entry. Interviews Solana infrastructure founders regularly. Best candidate for a first podcast appearance.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="tier tier-1">Tier 1</span> Validated (Solana Foundation)</h3>
+      <p>Official Solana podcast. Inclusion signals ecosystem endorsement.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="tier tier-2">Tier 2</span> Bankless &middot; Bell Curve &middot; Unchained &middot; Unlayered</h3>
+      <p>Major crypto podcasts with Solana coverage. Unchained discussed the Drift $285M oracle exploit &mdash; oracle security is topical.</p>
+    </div>
+  </div>
+
+  <!-- Target Influencers -->
+  <div class="section">
+    <h2 class="section-title">Target Influencers &amp; Media</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Platform</th><th>Relevance</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Mert Mumtaz</strong> (@0xMert_)</td><td>X &middot; 200K+</td><td>CEO of Helius; vocal on Solana infra quality</td></tr>
+        <tr><td><strong>Chris Hermida</strong></td><td>X &middot; 10K+</td><td>Switchboard co-founder; oracle thought leader</td></tr>
+        <tr><td><strong>Salah Ismail</strong></td><td>Adevar Labs blog</td><td>Wrote definitive Solana randomness analysis</td></tr>
+        <tr><td><strong>Anatoly Yakovenko</strong></td><td>X &middot; 500K+</td><td>Solana creator; tweets about infra</td></tr>
+        <tr><td><strong>Danny Kay / Carlos Garcia</strong></td><td>Lightspeed podcast</td><td>Blockworks research; cover Solana infra deeply</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:#fff;font-size:0.9rem;margin:1.5rem 0 0.75rem;">Key Media Outlets</h3>
+    <table>
+      <thead><tr><th>Outlet</th><th>Coverage</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Blockworks / Lightspeed Newsletter</strong></td><td>Weekly Solana ecosystem news; covered Switchboard raise</td></tr>
+        <tr><td><strong>SolanaFloor</strong></td><td>Dedicated Solana news; Switchboard funding + Jito coverage</td></tr>
+        <tr><td><strong>Adevar Labs Blog</strong></td><td>Deep technical analysis of Solana randomness</td></tr>
+        <tr><td><strong>The Block / Decrypt / DL News</strong></td><td>Broad crypto coverage with Solana sections</td></tr>
+        <tr><td><strong>Solana Compass</strong></td><td>Podcast transcription &amp; analysis; excellent SEO</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Hackathon Opportunities -->
+  <div class="section">
+    <h2 class="section-title">Conference &amp; Hackathon Opportunities</h2>
+    <div class="card">
+      <h3>Colosseum (Solana Accelerator + Hackathon)</h3>
+      <div class="meta"><span class="tag tag-vrf">High Priority</span></div>
+      <p>10,000+ participants, 1,412 submissions in recent hackathon. Raised $60M fund. Offers pre-seed funding to accelerator participants. Explicitly values DePIN projects: <em>&ldquo;projects within DePIN are unlocking novel markets at a higher rate than any other category in crypto.&rdquo;</em></p>
+    </div>
+    <div class="card">
+      <h3>Solana Breakpoint</h3>
+      <p>Infrastructure track winner Autonom was an oracle project. VRF is an established hackathon category on Solana.</p>
+    </div>
+  </div>
+
+  <!-- Narrative Angles -->
+  <div class="section">
+    <h2 class="section-title">Narrative Angles for Media</h2>
+    <div class="narrative">
+      <div class="narrative-card">
+        <h4>Hardware vs. Software Randomness</h4>
+        <p>First hardware-backed VRF on Solana. Contrast with Switchboard&rsquo;s Intel SGX dependency and ORAO&rsquo;s software-only approach.</p>
+      </div>
+      <div class="narrative-card">
+        <h4>Post-Drift Oracle Security</h4>
+        <p>The $285M Drift exploit put oracle security in the spotlight. DICE&rsquo;s tamper-resistant hardware is a direct answer.</p>
+      </div>
+      <div class="narrative-card">
+        <h4>DePIN for Randomness</h4>
+        <p>Frame the ESP32-S3 node network as DePIN infrastructure, tapping into the $744M+ DePIN investment trend.</p>
+      </div>
+      <div class="narrative-card">
+        <h4>Commit-Reveal Done Right</h4>
+        <p>Pyth Entropy uses commit-reveal but isn&rsquo;t on Solana. DICE brings it to Solana with hardware entropy backing.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  <div class="section">
+    <h2 class="section-title">Recommended Action Plan</h2>
+
+    <div class="rec-timeline">
+      <div class="rec-item">
+        <div class="week">Week 1&ndash;2: Immediate</div>
+        <h4>Make GitHub repository public</h4>
+        <p>No external discovery can occur while the codebase is invisible. Publish at minimum a README with architecture overview.</p>
+      </div>
+      <div class="rec-item">
+        <h4>Create a project website / landing page</h4>
+        <p>There is no discoverable web presence for DICE. A minimal site explaining the hardware-backed VRF concept is essential before any outreach.</p>
+      </div>
+      <div class="rec-item">
+        <h4>Publish a technical blog post</h4>
+        <p>Medium or dev.to explaining DICE&rsquo;s approach. Frame as a response to the Adevar Labs Solana randomness article.</p>
+      </div>
+      <div class="rec-item">
+        <h4>Post on Solana StackExchange</h4>
+        <p>Answer the &ldquo;How to generate random numbers on-chain?&rdquo; thread, introducing hardware-backed VRF as a new approach.</p>
+      </div>
+
+      <div class="rec-item later">
+        <div class="week">Week 3&ndash;6: Short-term Outreach</div>
+        <h4>Contact Adevar Labs (Salah Ismail)</h4>
+        <p>Pitch DICE for inclusion in Part 2 of their Solana randomness series.</p>
+      </div>
+      <div class="rec-item later">
+        <h4>Apply to Colosseum accelerator</h4>
+        <p>DePIN + infrastructure track. Includes pre-seed funding and mentorship.</p>
+      </div>
+      <div class="rec-item later">
+        <h4>Pitch Solfate Podcast</h4>
+        <p>Lower barrier to entry than Lightspeed. Builder-focused, interviews infra founders regularly.</p>
+      </div>
+      <div class="rec-item later">
+        <h4>Build Twitter/X presence</h4>
+        <p>Create project account. Engage with @0xMert_, @rajgokal, @switchboardxyz on infrastructure topics.</p>
+      </div>
+
+      <div class="rec-item long">
+        <div class="week">Month 2&ndash;3: Medium-term Strategy</div>
+        <h4>Pitch Lightspeed Podcast</h4>
+        <p>The Switchboard oracle episode is the template. Pitch: &ldquo;hardware vs. TEE &mdash; a different approach to Solana randomness.&rdquo;</p>
+      </div>
+      <div class="rec-item long">
+        <h4>Target DePIN-focused VCs</h4>
+        <p>Borderless Capital ($100M fund), Entree Capital ($300M fund), Hack VC. Lead with the DePIN narrative.</p>
+      </div>
+      <div class="rec-item long">
+        <h4>Target Solana ecosystem angels</h4>
+        <p>Anatoly, Raj Gokal, and Mert Mumtaz have all invested in MagicBlock (VRF competitor). Hardware differentiation is the key pitch.</p>
+      </div>
+      <div class="rec-item long">
+        <h4>Submit to Solana Foundation developer resources</h4>
+        <p>Getting listed alongside Switchboard and ORAO in the official VRF course would be a major credibility milestone.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Report compiled using web search across 20+ query variations targeting Twitter/X, Reddit, GitHub, CoinDesk, The Block, Decrypt, Blockworks, Medium, Podcasts, StackExchange, Crunchbase, and VC portfolio pages.
+  <br>All findings verified against publicly accessible sources as of April 4, 2026.
+</div>
+
+</body>
+</html>

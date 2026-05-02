@@ -1,14 +1,28 @@
 idf_component_register(
-    SRCS "app_main.c" "entropy.c" "crypto.c" "websocket_client.c" "heartbeat.c" "commit_reveal.c"
+    SRCS
+        "app_main.c"
+        "entropy.c"
+        "crypto.c"
+        "websocket_client.c"
+        "heartbeat.c"
+        "commit_reveal.c"
+        "captive_portal.c"
+        "led_status.c"
+        "base58.c"
+        "factory_reset.c"
+        "payout_binding.c"
     INCLUDE_DIRS "."
     REQUIRES
         esp_wifi
         nvs_flash
-        esp_tls
-        esp_websocket_client
+        esp-tls
+        esp_http_server
         mbedtls
         esp_timer
         freertos
         esp_adc
+        esp_event
+        esp_netif
+        driver
         dice_protocol
 )

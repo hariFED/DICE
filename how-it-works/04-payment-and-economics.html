@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DICE VRF — Payment Model &amp; Economics</title>
+<style>
+:root{--bg:#0a0a0a;--s:#111;--s2:#1a1a1a;--b:#1e1e1e;--t:#d4d4d4;--d:#777;--a:#00ff88;--bl:#4da6ff;--w:#ff6b35;--r:#ff4444;--y:#ffd866;--p:#b388ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--t);line-height:1.6;padding:0}
+.hdr{background:linear-gradient(135deg,#0d1117,#060d08 50%,#0d1117);border-bottom:1px solid var(--b);padding:3rem 2rem;text-align:center}
+.hdr h1{font-size:2.2rem;color:var(--a);letter-spacing:-0.02em}
+.hdr .sub{color:var(--d);font-size:0.95rem;margin-top:0.3rem}
+.ct{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem}
+.sec{margin-top:3rem}
+.sec h2{font-size:1.35rem;color:var(--a);border-bottom:1px solid var(--b);padding-bottom:0.5rem;margin-bottom:1.5rem}
+.sec h3{font-size:1rem;color:#fff;margin:1.5rem 0 0.75rem}
+.card{background:var(--s);border:1px solid var(--b);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{margin-top:0;margin-bottom:0.5rem}
+.card p{font-size:0.88rem}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.85rem}
+th{text-align:left;padding:0.55rem 0.75rem;background:var(--s2);color:var(--a);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--b)}
+td{padding:0.5rem 0.75rem;border-bottom:1px solid #151515;vertical-align:top}
+tr:hover td{background:rgba(255,255,255,0.015)}
+a{color:var(--bl);text-decoration:none}
+.big{font-size:2.5rem;font-weight:700;color:var(--a)}
+.note{background:rgba(0,255,136,0.05);border-left:2px solid var(--a);padding:0.6rem 0.8rem;margin:0.75rem 0;border-radius:0 4px 4px 0;font-size:0.85rem}
+.note strong{color:var(--a)}
+.warn{background:rgba(255,107,53,0.05);border-left:2px solid var(--w);padding:0.6rem 0.8rem;margin:0.75rem 0;border-radius:0 4px 4px 0;font-size:0.85rem}
+.warn strong{color:var(--w)}
+.split{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.5rem 0}
+.split-box{background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:1rem;text-align:center}
+.split-box .pct{font-size:2rem;font-weight:700}
+.split-box .lbl{font-size:0.72rem;color:var(--d);text-transform:uppercase;letter-spacing:0.06em;margin-top:0.25rem}
+.split-box .amt{font-size:0.85rem;margin-top:0.3rem}
+pre{background:var(--s2);padding:1rem;border-radius:6px;overflow-x:auto;font-size:0.82rem;color:var(--a);margin:1rem 0;border:1px solid var(--b)}
+.flow{display:flex;align-items:center;justify-content:center;gap:0.5rem;flex-wrap:wrap;margin:1.5rem 0}
+.flow-step{background:var(--s);border:1px solid var(--b);border-radius:6px;padding:0.6rem 1rem;text-align:center;font-size:0.8rem}
+.flow-arrow{color:var(--a);font-size:1.2rem}
+.cmp-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1rem 0}
+.cmp-box{background:var(--s);border:1px solid var(--b);border-radius:8px;padding:1rem;text-align:center}
+.cmp-box.highlight{border-color:var(--a)}
+.cmp-box .name{font-size:0.85rem;color:#fff;font-weight:600;margin-bottom:0.3rem}
+.cmp-box .price{font-size:1.8rem;font-weight:700;color:var(--a)}
+.cmp-box .unit{font-size:0.7rem;color:var(--d)}
+.ft{text-align:center;padding:2rem;color:var(--d);font-size:0.72rem;border-top:1px solid var(--b);margin-top:3rem}
+@media(max-width:640px){.split,.cmp-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="hdr">
+<h1>Payment Model &amp; Economics</h1>
+<div class="sub">How DICE VRF pricing, fees, and node economics work</div>
+</div>
+<div class="ct">
+
+<div class="sec">
+<h2>The Price: 0.002 SOL Per Request</h2>
+<div class="card">
+<div class="big" style="text-align:center">0.002 SOL</div>
+<p style="text-align:center;margin-top:0.5rem;color:var(--d)">~$0.30 at $150/SOL &middot; 2,000,000 lamports &middot; Fixed protocol fee</p>
+</div>
+<p>Every randomness request costs exactly 0.002 SOL. This fee is paid by the developer (or their user) when calling <code>request_randomness</code>. The fee is locked in an on-chain escrow PDA and distributed after the round completes.</p>
+</div>
+
+<div class="sec">
+<h2>Fee Distribution: 70 / 20 / 10</h2>
+<div class="split">
+<div class="split-box"><div class="pct" style="color:var(--a)">70%</div><div class="lbl">Node Operators</div><div class="amt">0.0014 SOL<br><span style="color:var(--d)">Split equally among contributing nodes</span></div></div>
+<div class="split-box"><div class="pct" style="color:var(--bl)">20%</div><div class="lbl">Protocol Treasury</div><div class="amt">0.0004 SOL<br><span style="color:var(--d)">Development, operations, growth</span></div></div>
+<div class="split-box"><div class="pct" style="color:var(--p)">10%</div><div class="lbl">Reserve Fund</div><div class="amt">0.0002 SOL<br><span style="color:var(--d)">Insurance, audits, emergencies</span></div></div>
+</div>
+<div class="note"><strong>Example:</strong> A round with 4 nodes: each node earns 0.0014 / 4 = <strong>0.00035 SOL</strong> per round. At 30 rounds/hour/node, that's <strong>0.0105 SOL/hour</strong> (~$1.58/hour at $150/SOL).</div>
+</div>
+
+<div class="sec">
+<h2>On-Chain Payment Flow</h2>
+<div class="flow">
+<div class="flow-step">Developer calls<br><code>request_randomness</code></div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step">0.002 SOL locked<br>in Escrow PDA</div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step">VRF round<br>executes (~1.7s)</div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step"><code>claim_rewards</code><br>distributes funds</div>
+</div>
+<pre>
+// On-chain escrow PDA seeds:
+seeds = [b"escrow", requester.as_ref(), &sequence.to_le_bytes()]
+
+// Distribution (from constants.rs):
+PROTOCOL_FEE_LAMPORTS = 2_000_000    // 0.002 SOL
+FEE_SPLIT_NODE_BPS   = 7_000         // 70%
+FEE_SPLIT_TREASURY   = 2_000         // 20%
+FEE_SPLIT_RESERVE    = 1_000         // 10%
+</pre>
+</div>
+
+<div class="sec">
+<h2>Cost Comparison</h2>
+<div class="cmp-row">
+<div class="cmp-box highlight"><div class="name">DICE VRF</div><div class="price">0.002</div><div class="unit">SOL per request</div><p style="font-size:0.75rem;color:var(--d);margin-top:0.5rem">Hardware-backed<br>Solana-native<br>Commit-reveal</p></div>
+<div class="cmp-box"><div class="name">Switchboard VRF</div><div class="price">~0.002</div><div class="unit">SOL per request</div><p style="font-size:0.75rem;color:var(--d);margin-top:0.5rem">TEE-based (Intel SGX)<br>Solana-native<br>Single-shot</p></div>
+<div class="cmp-box"><div class="name">Chainlink VRF</div><div class="price">~$0.25</div><div class="unit">per request (EVM)</div><p style="font-size:0.75rem;color:var(--d);margin-top:0.5rem">Software oracles<br>EVM only<br>Not on Solana</p></div>
+</div>
+</div>
+
+<div class="sec">
+<h2>Node Operator Economics</h2>
+<table>
+<thead><tr><th>Metric</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Hardware cost (one-time)</td><td><strong>~$8</strong> (ESP32-S3-N16R8 DevKit)</td></tr>
+<tr><td>Electricity</td><td>~$0.50/month (120mA @ 5V, 24/7)</td></tr>
+<tr><td>Revenue per round</td><td>0.00035 SOL (with 4 nodes)</td></tr>
+<tr><td>Rounds per hour (sustained)</td><td>~30 per node</td></tr>
+<tr><td>Revenue per hour</td><td>0.0105 SOL (~$1.58)</td></tr>
+<tr><td>Revenue per day</td><td>0.252 SOL (~$37.80)</td></tr>
+<tr><td>Revenue per month</td><td>7.56 SOL (~$1,134)</td></tr>
+<tr><td>Hardware ROI</td><td><strong>&lt; 1 hour</strong></td></tr>
+</tbody>
+</table>
+<div class="warn"><strong>Note:</strong> Revenue assumes continuous demand at 30 rounds/hour. Actual revenue depends on network utilization. Early node operators earn more as the network grows.</div>
+</div>
+
+<div class="sec">
+<h2>v2.0 Channel Design: 18x Cheaper</h2>
+<table>
+<thead><tr><th>Metric</th><th>v1.0 (Per-round PDAs)</th><th>v2.0 (Reusable Channel)</th></tr></thead>
+<tbody>
+<tr><td>PDAs per round</td><td>16 (request + escrow + 7 commits + 7 reveals)</td><td>1 (reusable channel)</td></tr>
+<tr><td>Coordinator cost/round</td><td>~0.031 SOL (rent deposits)</td><td>~0.00003 SOL (TX fees only)</td></tr>
+<tr><td>Developer cost/request</td><td>~0.005 SOL (rent + fee)</td><td>0.002 SOL (fee only)</td></tr>
+<tr><td>Setup cost</td><td>None (per-round)</td><td>~0.003 SOL (one-time channel rent)</td></tr>
+<tr><td>Node count</td><td>Fixed 7</td><td>Developer chooses 4-50</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="sec">
+<h2>For Judges: Why This Pricing Works</h2>
+<div class="card">
+<h3>Competitive positioning</h3>
+<p>0.002 SOL matches Switchboard's VRF pricing exactly, but with a fundamentally different security model (hardware TRNG vs Intel SGX TEE). Chainlink VRF is not on Solana. ORAO is cheaper (0.001 SOL) but software-only with no hardware entropy guarantee.</p>
+</div>
+<div class="card">
+<h3>Sustainable economics</h3>
+<p>The 70/20/10 split ensures node operators are incentivized (70%), the protocol can fund development (20%), and there's a safety reserve (10%). At scale with 100 nodes handling 10,000 requests/day, the protocol earns 4 SOL/day in treasury revenue.</p>
+</div>
+<div class="card">
+<h3>DePIN alignment</h3>
+<p>Node hardware costs $8 — dramatically cheaper than any DePIN competitor (Helium $200-500, DIMO $99, Hivemapper $300). ROI is under 1 hour at sustained utilization. This makes the node network highly scalable.</p>
+</div>
+</div>
+
+</div>
+<div class="ft">DICE VRF Oracle &middot; Hardware-Backed Verifiable Random Functions on Solana</div>
+</body>
+</html>

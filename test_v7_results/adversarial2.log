@@ -1,0 +1,40 @@
+adversarial-driver
+  payer: 3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9
+  channel_index: 200
+
+[E1] unauthorized request_randomness_auto (wrong signer): pass
+[E3] submit_commit_v2 with wrong device_id for pubkey: FAIL — got unexpected error
+[E18] init_feed with publish_interval_slots = 0: pass
+[E19] init_feed bound to another authority's channel: FAIL — got unexpected error
+[G2] init_channel with max_nodes=3 (< MIN=4): pass
+[G3] request_randomness_auto with node_count=1: pass
+[G4] request_randomness_auto with node_count=50 (> channel.max_nodes): pass
+[G1] init_channel with max_nodes=50: pass
+[G6] init_feed with publish_interval_slots = 216_000 (MAX): pass
+[E18b] init_feed with publish_interval_slots > MAX (216_001): pass
+
+── summary ────────────────────────────────────
+  ✅ [E1] unauthorized request_randomness_auto (wrong signer) — expected: AccountNotInitialized / ConstraintSeeds — pass
+         observed: RPC error: {"code":-32002,"data":{"accounts":null,"err":{"InstructionError":[0,{"Custom":3012}]},"fee":5000,"innerInstructions":null,"loadedAccountsDataSize":551335,"loadedAddresses":null,"logs":["Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]","Program log: Instruction: RequestRandomnessAuto","Program log: AnchorError caused by account: channel. Error Code: AccountNotInitialized. Error Number: 3012. Error Message: The program expected this account to be already initialized.","P
+  ❌ [E3] submit_commit_v2 with wrong device_id for pubkey — expected: InvalidDeviceId (6013) — FAIL — got unexpected error
+         observed: RPC error: {"code":-32002,"data":{"accounts":null,"err":{"InstructionError":[0,{"Custom":6009}]},"fee":5000,"innerInstructions":null,"loadedAccountsDataSize":552875,"loadedAddresses":null,"logs":["Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]","Program log: Instruction: SubmitCommitV2","Program log: AnchorError thrown in programs/dice/src/instructions/submit_commit_v2.rs:40. Error Code: RoundAlreadyFinalized. Error Number: 6009. Error Message: Round has already been finalized."
+  ✅ [E18] init_feed with publish_interval_slots = 0 — expected: FeedInvalidInterval — pass
+         observed: RPC error: {"code":-32002,"data":{"accounts":null,"err":{"InstructionError":[0,{"Custom":6018}]},"fee":5000,"innerInstructions":null,"loadedAccountsDataSize":552953,"loadedAddresses":null,"logs":["Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]","Program log: Instruction: InitFeed","Program 11111111111111111111111111111111 invoke [2]","Program 11111111111111111111111111111111 success","Program log: AnchorError thrown in programs/dice/src/instructions/init_feed.rs:50. Error Code: 
+  ❌ [E19] init_feed bound to another authority's channel — expected: has_one = authority constraint violation (ConstraintHasOne) — FAIL — got unexpected error
+         observed: RPC error: {"code":-32002,"data":{"accounts":null,"err":{"InstructionError":[0,{"Custom":2001}]},"fee":5000,"innerInstructions":null,"loadedAccountsDataSize":552953,"loadedAddresses":null,"logs":["Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]","Program log: Instruction: InitFeed","Program 11111111111111111111111111111111 invoke [2]","Program 11111111111111111111111111111111 success","Program log: AnchorError caused by account: bound_channel. Error Code: ConstraintHasOne. Error 
+  ✅ [E21] v1 claim_rewards is deprecated (returns V1ClaimRewardsDeprecated) — expected: V1ClaimRewardsDeprecated — pass (unit test covered)
+         observed: handler returns err!(DiceError::V1ClaimRewardsDeprecated) unconditionally — verified by dice lib test suite
+  ✅ [G2] init_channel with max_nodes=3 (< MIN=4) — expected: InvalidNodeCount — pass
+         observed: RPC error: {"code":-32002,"data":{"accounts":null,"err":{"InstructionError":[0,{"Custom":6008}]},"fee":5000,"innerInstructions":null,"loadedAccountsDataSize":551335,"loadedAddresses":null,"logs":["Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]","Program log: Instruction: InitChannel","Program 11111111111111111111111111111111 invoke [2]","Program 11111111111111111111111111111111 success","Program log: AnchorError thrown in programs/dice/src/instructions/init_channel.rs:32. Error 
+  ✅ [G3] request_randomness_auto with node_count=1 — expected: InvalidNodeCount — pass
+         observed: RPC error: {"code":-32002,"data":{"accounts":null,"err":{"InstructionError":[0,{"Custom":6008}]},"fee":5000,"innerInstructions":null,"loadedAccountsDataSize":552953,"loadedAddresses":null,"logs":["Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]","Program log: Instruction: RequestRandomnessAuto","Program log: AnchorError thrown in programs/dice/src/instructions/request_randomness_auto.rs:41. Error Code: InvalidNodeCount. Error Number: 6008. Error Message: Invalid node count: must 
+  ✅ [G4] request_randomness_auto with node_count=50 (> channel.max_nodes) — expected: InvalidNodeCount — pass
+         observed: RPC error: {"code":-32002,"data":{"accounts":null,"err":{"InstructionError":[0,{"Custom":6008}]},"fee":5000,"innerInstructions":null,"loadedAccountsDataSize":552953,"loadedAddresses":null,"logs":["Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]","Program log: Instruction: RequestRandomnessAuto","Program log: AnchorError thrown in programs/dice/src/instructions/request_randomness_auto.rs:41. Error Code: InvalidNodeCount. Error Number: 6008. Error Message: Invalid node count: must 
+  ✅ [G1] init_channel with max_nodes=50 — expected: (accepted) — pass
+         observed: TX 5XWRvWYPNhYF3mqYQ51iCcUfzsKe2j2ZJis4v5h7vDKwArpoGTn7icNzUb7idpMpcvY1gAyzdge2JTTxdRMqUFry — upper bound accepted
+  ✅ [G6] init_feed with publish_interval_slots = 216_000 (MAX) — expected: (accepted) — pass
+         observed: TX 3WJvPPBSq54ibNPMuubA9DyP6xggDsAYGp8s8wQEUqmWHy3hKm7gUBfZSn6Gm8iYjRUp8afCAXETUkCR7kbnrFCV
+  ✅ [E18b] init_feed with publish_interval_slots > MAX (216_001) — expected: FeedInvalidInterval — pass
+         observed: RPC error: {"code":-32002,"data":{"accounts":null,"err":{"InstructionError":[0,{"Custom":6018}]},"fee":5000,"innerInstructions":null,"loadedAccountsDataSize":552953,"loadedAddresses":null,"logs":["Program 78Qv6cyKkRZN2YngiLSSBCe2iyRc6jgtCs3incCaMRcv invoke [1]","Program log: Instruction: InitFeed","Program 11111111111111111111111111111111 invoke [2]","Program 11111111111111111111111111111111 success","Program log: AnchorError thrown in programs/dice/src/instructions/init_feed.rs:50. Error Code: 
+  9/11 passed
+  wrote: test_v7_results/adversarial2.json

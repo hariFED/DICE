@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DICE Expansion Research: Beyond VRF</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --surface2: #1a1a1a;
+    --surface3: #222;
+    --border: #1e1e1e;
+    --text: #d4d4d4;
+    --dim: #777;
+    --accent: #00ff88;
+    --accent2: #00cc66;
+    --blue: #4da6ff;
+    --purple: #b388ff;
+    --warn: #ff6b35;
+    --red: #ff4444;
+    --yellow: #ffd866;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ---- Header ---- */
+  .header {
+    background: linear-gradient(135deg, #0d1117, #060d08 50%, #0d1117);
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+  }
+  .header h1 { font-size: 2.2rem; color: var(--accent); letter-spacing: -0.02em; }
+  .header .sub { color: var(--dim); font-size: 0.95rem; margin-top: 0.3rem; }
+  .header .meta { color: var(--dim); font-size: 0.78rem; margin-top: 0.6rem; opacity: 0.7; }
+
+  /* ---- Container ---- */
+  .container { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+  /* ---- Executive Banner ---- */
+  .exec-banner {
+    background: linear-gradient(90deg, rgba(0,255,136,0.06), rgba(0,255,136,0.01));
+    border-left: 3px solid var(--accent);
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.9rem;
+  }
+  .exec-banner strong { color: var(--accent); }
+
+  /* ---- Ranking Table ---- */
+  .rank-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin: 1.5rem 0 2rem;
+  }
+  .rank-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 80px 80px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    gap: 1rem;
+    transition: border-color 0.2s;
+  }
+  .rank-row:hover { border-color: #333; }
+  .rank-num {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: center;
+  }
+  .rank-row.skip .rank-num { color: var(--red); }
+  .rank-name { font-weight: 600; color: #fff; font-size: 0.9rem; }
+  .rank-why { font-size: 0.78rem; color: var(--dim); margin-top: 0.15rem; }
+  .effort-tag, .impact-tag {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+  .effort-low { background: rgba(0,255,136,0.12); color: var(--accent); }
+  .effort-med { background: rgba(255,216,102,0.12); color: var(--yellow); }
+  .effort-high { background: rgba(255,107,53,0.12); color: var(--warn); }
+  .effort-vhigh { background: rgba(255,68,68,0.12); color: var(--red); }
+  .impact-high { background: rgba(0,255,136,0.12); color: var(--accent); }
+  .impact-med { background: rgba(77,166,255,0.12); color: var(--blue); }
+  .impact-low { background: rgba(119,119,119,0.12); color: var(--dim); }
+
+  @media (max-width: 640px) {
+    .rank-row { grid-template-columns: 30px 1fr; }
+    .rank-row .effort-tag, .rank-row .impact-tag { display: none; }
+  }
+
+  /* ---- Sections ---- */
+  .section { margin-top: 3rem; }
+  .section-title {
+    font-size: 1.35rem;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-subtitle {
+    font-size: 1rem;
+    color: #fff;
+    margin: 1.5rem 0 0.75rem;
+  }
+
+  /* ---- Cards ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #333; }
+  .card h3 {
+    font-size: 1rem;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card p { font-size: 0.88rem; }
+  .card .note {
+    background: rgba(0,255,136,0.05);
+    border-left: 2px solid var(--accent);
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.82rem;
+  }
+  .card .note strong { color: var(--accent); }
+  .card .warn-note {
+    background: rgba(255,68,68,0.05);
+    border-left: 2px solid var(--red);
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.82rem;
+  }
+  .card .warn-note strong { color: var(--red); }
+
+  /* ---- Tags ---- */
+  .tag {
+    display: inline-block;
+    padding: 0.18rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .tag-green { background: rgba(0,255,136,0.12); color: var(--accent); }
+  .tag-blue { background: rgba(77,166,255,0.12); color: var(--blue); }
+  .tag-purple { background: rgba(179,136,255,0.12); color: var(--purple); }
+  .tag-warn { background: rgba(255,107,53,0.12); color: var(--warn); }
+  .tag-red { background: rgba(255,68,68,0.12); color: var(--red); }
+  .tag-dim { background: rgba(119,119,119,0.12); color: var(--dim); }
+
+  /* ---- Tables ---- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    font-size: 0.84rem;
+  }
+  th {
+    text-align: left;
+    padding: 0.55rem 0.75rem;
+    background: var(--surface2);
+    color: var(--accent);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #151515;
+    vertical-align: top;
+  }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+
+  /* ---- Links ---- */
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---- Capabilities Grid ---- */
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  @media (max-width: 640px) { .cap-grid { grid-template-columns: 1fr; } }
+  .cap-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.85rem;
+  }
+  .cap-box h4 { color: var(--accent); font-size: 0.8rem; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .cap-box p { font-size: 0.8rem; color: var(--dim); }
+
+  /* ---- Matrix Viz ---- */
+  .matrix {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem 2.5rem;
+    margin: 1.5rem 0;
+    min-height: 340px;
+  }
+  .matrix-label {
+    position: absolute;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+    font-weight: 600;
+  }
+  .matrix-label.top { top: 0.75rem; left: 50%; transform: translateX(-50%); }
+  .matrix-label.bottom { bottom: 0.75rem; left: 50%; transform: translateX(-50%); }
+  .matrix-label.left { left: 0.5rem; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+  .matrix-label.right { right: 0.5rem; top: 50%; transform: translateY(-50%) rotate(90deg); }
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0.5rem;
+    height: 280px;
+  }
+  .matrix-quad {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 6px;
+    padding: 0.75rem;
+  }
+  .quad-tl { background: rgba(0,255,136,0.04); border: 1px dashed rgba(0,255,136,0.15); }
+  .quad-tr { background: rgba(255,216,102,0.04); border: 1px dashed rgba(255,216,102,0.15); }
+  .quad-bl { background: rgba(77,166,255,0.04); border: 1px dashed rgba(77,166,255,0.15); }
+  .quad-br { background: rgba(119,119,119,0.04); border: 1px dashed rgba(119,119,119,0.15); }
+  .matrix-item {
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+  }
+  .mi-green { background: rgba(0,255,136,0.15); color: var(--accent); }
+  .mi-yellow { background: rgba(255,216,102,0.15); color: var(--yellow); }
+  .mi-blue { background: rgba(77,166,255,0.15); color: var(--blue); }
+  .mi-dim { background: rgba(119,119,119,0.15); color: var(--dim); }
+  .mi-purple { background: rgba(179,136,255,0.15); color: var(--purple); }
+
+  /* ---- Roadmap ---- */
+  .roadmap { border-left: 2px solid var(--border); padding-left: 1.5rem; margin-top: 1rem; }
+  .phase { margin-bottom: 2rem; position: relative; }
+  .phase::before {
+    content: '';
+    position: absolute;
+    left: -1.75rem;
+    top: 0.25rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .phase.p0::before { background: var(--accent); }
+  .phase.p1::before { background: var(--blue); }
+  .phase.p2::before { background: var(--purple); }
+  .phase.p3::before { background: var(--dim); }
+  .phase h4 { font-size: 0.95rem; color: #fff; margin-bottom: 0.25rem; }
+  .phase .when {
+    font-size: 0.7rem;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+  }
+  .phase ul {
+    list-style: none;
+    padding: 0;
+  }
+  .phase li {
+    font-size: 0.84rem;
+    padding: 0.2rem 0;
+    color: var(--dim);
+  }
+  .phase li::before {
+    content: '\2192';
+    margin-right: 0.5rem;
+    color: var(--accent);
+  }
+  .phase.p1 li::before { color: var(--blue); }
+  .phase.p2 li::before { color: var(--purple); }
+  .phase.p3 li::before { color: var(--dim); }
+
+  /* ---- Comparison tables ---- */
+  .vs-table td:first-child { color: #fff; font-weight: 600; }
+
+  /* ---- Revenue Grid ---- */
+  .rev-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  @media (max-width: 768px) { .rev-grid { grid-template-columns: 1fr; } }
+  .rev-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .rev-box .service { font-size: 0.78rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; }
+  .rev-box .price { font-size: 1.1rem; font-weight: 700; color: var(--accent); margin: 0.25rem 0; }
+  .rev-box .model { font-size: 0.75rem; color: var(--dim); }
+
+  /* ---- Sensor Table ---- */
+  .sensor-tag {
+    display: inline-block;
+    padding: 0.12rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    font-weight: 600;
+  }
+  .st-t1 { background: rgba(0,255,136,0.1); color: var(--accent); }
+  .st-t2 { background: rgba(77,166,255,0.1); color: var(--blue); }
+  .st-t3 { background: rgba(179,136,255,0.1); color: var(--purple); }
+
+  /* ---- Footer ---- */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--dim);
+    font-size: 0.72rem;
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+
+  /* ---- Hardware Advantage Cards ---- */
+  .hw-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  @media (max-width: 768px) { .hw-grid { grid-template-columns: 1fr; } }
+  .hw-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .hw-card h4 { color: var(--accent); font-size: 0.82rem; margin-bottom: 0.35rem; }
+  .hw-card p { font-size: 0.8rem; color: var(--dim); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>DICE Expansion Research</h1>
+  <div class="sub">Beyond VRF &mdash; What Else Can Hardware Oracle Nodes Do?</div>
+  <div class="meta">April 4, 2026 &middot; Strategic product/service expansion research for DICE on Solana</div>
+</div>
+
+<div class="container">
+
+  <!-- Executive Summary -->
+  <div class="exec-banner">
+    <strong>Core Insight:</strong> DICE has built a vertically integrated hardware-to-smart-contract stack. The same infrastructure &mdash; cheap microcontroller nodes with cryptographic signing, persistent WebSocket, coordinator job dispatch, and on-chain settlement &mdash; is a general-purpose <strong>distributed execution network</strong>. The VRF product proves the plumbing works. The question is what else to pump through it.
+  </div>
+
+  <!-- Priority Ranking -->
+  <div class="section">
+    <h2 class="section-title">Priority Ranking</h2>
+    <div class="rank-grid">
+      <div class="rank-row">
+        <div class="rank-num">1</div>
+        <div><div class="rank-name">Keeper / Crank-Turner Network</div><div class="rank-why">Clockwork is dead. Tuk Tuk is Helium-centric. Gap is wide open. Zero firmware changes needed.</div></div>
+        <div><span class="effort-tag effort-low">Low Effort</span></div>
+        <div><span class="impact-tag impact-high">High Impact</span></div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-num">2</div>
+        <div><div class="rank-name">Decentralized Notary &amp; Timestamping</div><div class="rank-why">Generalize commit-reveal to &ldquo;witness and timestamp this data hash.&rdquo; Almost zero firmware work.</div></div>
+        <div><span class="effort-tag effort-low">Low Effort</span></div>
+        <div><span class="impact-tag impact-med">Med Impact</span></div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-num">3</div>
+        <div><div class="rank-name">Data Feed Oracles (Niche Feeds)</div><div class="rank-why">Don&rsquo;t fight Pyth/Switchboard on price feeds. Target long-tail: sensor data, uptime, latency.</div></div>
+        <div><span class="effort-tag effort-med">Med Effort</span></div>
+        <div><span class="impact-tag impact-high">High Impact</span></div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-num">4</div>
+        <div><div class="rank-name">Protocol Watchtower / Health Monitor</div><div class="rank-why">Subscription monitoring. Nodes already have uptime + signing. Real demand from protocol teams.</div></div>
+        <div><span class="effort-tag effort-low">Low Effort</span></div>
+        <div><span class="impact-tag impact-med">Med Impact</span></div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-num">5</div>
+        <div><div class="rank-name">DePIN Sensor Network</div><div class="rank-why">Add $2 BME280 sensor = hardware-attested weather feed. 10&ndash;50x cheaper than Helium/DIMO nodes.</div></div>
+        <div><span class="effort-tag effort-med">Med Effort</span></div>
+        <div><span class="impact-tag impact-high">High Impact</span></div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-num">6</div>
+        <div><div class="rank-name">Threshold Signing / MPC Service</div><div class="rank-why">Massive TAM but 6&ndash;12 months of specialized crypto engineering. Enormous defensible moat.</div></div>
+        <div><span class="effort-tag effort-vhigh">V. High</span></div>
+        <div><span class="impact-tag impact-high">High Impact</span></div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-num">7</div>
+        <div><div class="rank-name">Proof-of-Location Network</div><div class="rank-why">WiFi-based first (free), GPS-enhanced later ($3 module). Unique and defensible.</div></div>
+        <div><span class="effort-tag effort-high">High Effort</span></div>
+        <div><span class="impact-tag impact-med">Med Impact</span></div>
+      </div>
+      <div class="rank-row skip">
+        <div class="rank-num">8</div>
+        <div><div class="rank-name">dVPN / Bandwidth Market</div><div class="rank-why">Bad hardware fit. ESP32 WiFi throughput too limited. Crowded market. Skip.</div></div>
+        <div><span class="effort-tag effort-med">Med Effort</span></div>
+        <div><span class="impact-tag impact-low">Low Impact</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Capabilities -->
+  <div class="section">
+    <h2 class="section-title">Current DICE Technical Capabilities</h2>
+    <div class="cap-grid">
+      <div class="cap-box">
+        <h4>Hardware (per node ~$8)</h4>
+        <p>ESP32-S3-N16R8: 240 MHz dual-core, 16 MB flash, 8 MB PSRAM. Hardware SHA-256/AES/ECC. 3-source entropy (TRNG + ADC + timing). WiFi 802.11 b/g/n. Secure Boot v2 + flash encryption. ~40 unused GPIO pins.</p>
+      </div>
+      <div class="cap-box">
+        <h4>Coordinator (Rust)</h4>
+        <p>WebSocket hub with mTLS. Node selection + round management state machine. PostgreSQL. REST API + Prometheus metrics. Solana JSON-RPC client. Job dispatch pipeline.</p>
+      </div>
+      <div class="cap-box">
+        <h4>Smart Contract (Anchor)</h4>
+        <p>8 instructions, 6 account types. Commit-reveal verification. Fee split: 70% nodes / 20% treasury / 10% reserve. On-chain VRF proof verification.</p>
+      </div>
+      <div class="cap-box">
+        <h4>Protocol</h4>
+        <p>CBOR wire format. 4&ndash;7 nodes per round, min 4 reveals. 25s heartbeat. Cryptographic identity per device (secp256k1 + mTLS cert).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Opportunity 1: Keeper -->
+  <div class="section">
+    <h2 class="section-title">Opportunity 1: Keeper / Crank-Turner Network</h2>
+    <div class="card">
+      <h3><span class="tag tag-green">Highest ROI</span> <span class="tag tag-green">Zero Firmware Changes</span></h3>
+      <p><strong>Clockwork shut down in October 2023</strong>, leaving Solana without its primary on-chain automation engine. <strong>Tuk Tuk</strong> (Helium team) partially fills the gap but is Helium-centric, has no dedicated node network, and no hardware-backed execution guarantees.</p>
+      <p style="margin-top:0.75rem;">DICE nodes are always-on, always-connected, cryptographically attested devices that already receive job assignments, sign transactions, and have heartbeat monitoring. A keeper network is &ldquo;when condition X, execute transaction Y&rdquo; &mdash; the coordinator already does exactly this for VRF rounds.</p>
+    </div>
+
+    <h3 class="section-subtitle">What Needs to Be Built</h3>
+    <table>
+      <thead><tr><th>Component</th><th>Work</th><th>Difficulty</th></tr></thead>
+      <tbody>
+        <tr><td>Coordinator: generic job queue</td><td>Extend state machine for arbitrary job types</td><td>Medium</td></tr>
+        <tr><td>Coordinator: trigger evaluation</td><td>Poll Solana state or subscribe to account changes</td><td>Medium</td></tr>
+        <tr><td>Smart contract: keeper registry</td><td>New program or extend DICE program</td><td>Medium</td></tr>
+        <tr><td>Smart contract: payment/escrow</td><td>Protocol pays keeper nodes for executions</td><td>Low</td></tr>
+        <tr><td><strong>Firmware</strong></td><td><strong>None needed</strong></td><td><strong>None</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="section-subtitle">DICE Keepers vs. Tuk Tuk</h3>
+    <table class="vs-table">
+      <thead><tr><th>Feature</th><th>Tuk Tuk</th><th>DICE Keepers</th></tr></thead>
+      <tbody>
+        <tr><td>Node network</td><td>Anyone with an RPC URL</td><td>Dedicated hardware fleet</td></tr>
+        <tr><td>Attestation</td><td>None</td><td>Hardware-backed cryptographic identity</td></tr>
+        <tr><td>Uptime guarantee</td><td>Best-effort</td><td>Monitored, heartbeat-verified</td></tr>
+        <tr><td>Anti-censorship</td><td>Single operator can refuse</td><td>Multiple attested nodes compete</td></tr>
+        <tr><td>MEV protection</td><td>None built-in</td><td>Coordinator can batch + Jito bundle</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="section-subtitle">Target Customers</h3>
+    <p style="font-size:0.88rem;color:var(--dim);">Lending protocols (Solend, MarginFi, Kamino) for liquidation triggers. DEXs (Drift, Phoenix) for order matching. Yield protocols for auto-compounding. DAO tooling for proposal execution. Token vesting for scheduled unlocks. Any protocol that previously relied on Clockwork.</p>
+  </div>
+
+  <!-- Opportunity 2: Notary -->
+  <div class="section">
+    <h2 class="section-title">Opportunity 2: Decentralized Notary &amp; Timestamping</h2>
+    <div class="card">
+      <h3><span class="tag tag-green">Near-Free to Build</span> <span class="tag tag-green">Zero Firmware Changes</span></h3>
+      <p>Instead of &ldquo;generate random number,&rdquo; the service becomes &ldquo;witness and timestamp this data hash.&rdquo; Multiple nodes receive data (commit), sign attestations (reveal), coordinator aggregates on-chain (settlement). This is a direct generalization of existing commit-reveal.</p>
+      <p style="margin-top:0.75rem;"><strong>What it provides:</strong> Proof of existence (hash timestamped by N attested nodes), multi-witness attestation, tamper-evident on-chain record, consensus timestamps.</p>
+      <div class="note">
+        <strong>Use cases:</strong> Legal/compliance timestamping, DAO governance proofs, supply chain event attestation, content authenticity (anti-deepfake), insurance condition verification, academic proof of prior art.
+      </div>
+    </div>
+  </div>
+
+  <!-- Opportunity 3: Data Feeds -->
+  <div class="section">
+    <h2 class="section-title">Opportunity 3: Data Feed / Oracle Services</h2>
+    <div class="card">
+      <h3><span class="tag tag-warn">Avoid Head-On Competition</span></h3>
+      <p>Going head-to-head with Pyth ($2.3B TVS) or Switchboard ($1.2B TVS) on crypto price feeds would be suicidal. They have billions in TVS, institutional publishers, years of battle-testing, and token incentives.</p>
+      <div class="warn-note">
+        <strong>Do NOT compete on:</strong> Crypto price feeds, forex pairs, or any data Pyth/Switchboard already cover well.
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-green">Hardware-Attested Niche Feeds</span></h3>
+      <p>Switchboard&rsquo;s &ldquo;anything from any API&rdquo; model has a trust problem for non-financial data. Switchboard nodes run in cloud TEEs. DICE nodes are <strong>physical devices in known locations</strong> with hardware entropy and tamper-evident security. Adding a $2&ndash;5 sensor creates a data feed that a cloud VM literally cannot produce.</p>
+    </div>
+
+    <h3 class="section-subtitle">Sensor Expansion Tiers</h3>
+    <table>
+      <thead><tr><th>Tier</th><th>Sensor</th><th>Cost</th><th>Data Feed</th><th>Use Case</th></tr></thead>
+      <tbody>
+        <tr><td><span class="sensor-tag st-t2">Tier 2</span></td><td>BME280 (I2C)</td><td>$2</td><td>Temp, humidity, pressure</td><td>Weather derivatives, agriculture DeFi</td></tr>
+        <tr><td><span class="sensor-tag st-t2">Tier 2</span></td><td>BH1750 (I2C)</td><td>$1</td><td>Light intensity (lux)</td><td>Solar energy verification</td></tr>
+        <tr><td><span class="sensor-tag st-t2">Tier 2</span></td><td>INA219 (I2C)</td><td>$2</td><td>Current/voltage</td><td>Energy metering, DePIN energy markets</td></tr>
+        <tr><td><span class="sensor-tag st-t3">Tier 3</span></td><td>NEO-6M (UART)</td><td>$3</td><td>GPS coordinates</td><td>Proof-of-location, geofenced contracts</td></tr>
+        <tr><td><span class="sensor-tag st-t3">Tier 3</span></td><td>SDS011 (UART)</td><td>$15</td><td>PM2.5 / PM10 air quality</td><td>Carbon credit verification, env. DAOs</td></tr>
+        <tr><td><span class="sensor-tag st-t3">Tier 3</span></td><td>MH-Z19B (UART)</td><td>$15</td><td>CO2 concentration</td><td>Environmental compliance, carbon markets</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Opportunity 4: DePIN -->
+  <div class="section">
+    <h2 class="section-title">Opportunity 4: DePIN Sensor Network</h2>
+    <div class="card">
+      <h3><span class="tag tag-purple">DePIN Narrative</span> <span class="tag tag-green">10&ndash;50x Cheaper</span></h3>
+      <p>DICE nodes at $10&ndash;15 (with sensor) are dramatically cheaper than any DePIN competitor hardware.</p>
+    </div>
+    <table>
+      <thead><tr><th>Project</th><th>Hardware</th><th>Cost</th><th>Data</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Helium</strong></td><td>LoRa/WiFi/5G hotspots</td><td>$200&ndash;500</td><td>Wireless coverage</td></tr>
+        <tr><td><strong>Hivemapper</strong></td><td>Dashcams</td><td>$300&ndash;650</td><td>Street imagery</td></tr>
+        <tr><td><strong>DIMO</strong></td><td>OBD-II dongles</td><td>$99</td><td>Vehicle diagnostics</td></tr>
+        <tr><td><strong>WeatherXM</strong></td><td>Weather stations</td><td>$200&ndash;400</td><td>Weather data</td></tr>
+        <tr><td style="color:var(--accent)"><strong>DICE Sensors</strong></td><td>ESP32-S3 + I2C modules</td><td style="color:var(--accent)"><strong>$10&ndash;25</strong></td><td>Environmental, energy, location</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="section-subtitle">DePIN Verticals</h3>
+    <div class="cap-grid">
+      <div class="cap-box"><h4>Weather Oracle Network</h4><p>BME280 on every node = distributed weather network. Buyers: insurance protocols, agriculture DeFi, prediction markets.</p></div>
+      <div class="cap-box"><h4>Indoor Air Quality</h4><p>SDS011 + BME280 = indoor environmental monitoring. No existing DePIN covers this niche.</p></div>
+      <div class="cap-box"><h4>WiFi Coverage Mapping</h4><p>Zero additional hardware needed. Map WiFi density, signal strength across locations.</p></div>
+      <div class="cap-box"><h4>Power Grid Monitoring</h4><p>INA219 current sensor = residential power tracking. Complement to Starpower energy DePIN.</p></div>
+    </div>
+  </div>
+
+  <!-- Opportunity 5: Watchtower -->
+  <div class="section">
+    <h2 class="section-title">Opportunity 5: Protocol Watchtower</h2>
+    <div class="card">
+      <h3><span class="tag tag-green">Low Effort</span> <span class="tag tag-blue">Subscription Revenue</span></h3>
+      <p>No decentralized, hardware-attested monitoring service exists for protocol health, RPC quality, oracle freshness, or bridge liveness on Solana. Each DICE node can independently poll endpoints, check account data, verify oracle feeds, and sign health reports.</p>
+      <div class="note">
+        <strong>Use cases:</strong> &ldquo;Alert if lending pool utilization exceeds 95%.&rdquo; &ldquo;Prove RPC provider X had &gt;99.9% uptime.&rdquo; &ldquo;Monitor Pyth SOL/USD feed freshness.&rdquo; &ldquo;Check Wormhole guardian liveness.&rdquo;
+      </div>
+    </div>
+  </div>
+
+  <!-- Opportunity 6: Proof-of-Location -->
+  <div class="section">
+    <h2 class="section-title">Opportunity 6: Proof-of-Location</h2>
+    <div class="card">
+      <h3><span class="tag tag-purple">Unique &amp; Defensible</span></h3>
+      <p><strong>WiFi-based (free):</strong> Nodes scan visible WiFi BSSIDs + RSSI, sign fingerprint with ECDSA key. Multiple nodes cross-verify co-location. WiFi BSSID databases resolve to approximate coordinates.</p>
+      <p style="margin-top:0.5rem;"><strong>GPS-enhanced ($3&ndash;5):</strong> NEO-6M GPS module provides coordinates signed by device key, cross-verified against WiFi fingerprint for anti-spoofing.</p>
+      <div class="note">
+        <strong>Use cases:</strong> Geofenced smart contracts, supply chain checkpoints, insurance location proofs, location-based gaming, jurisdictional compliance.
+      </div>
+    </div>
+  </div>
+
+  <!-- Opportunity 7: MPC -->
+  <div class="section">
+    <h2 class="section-title">Opportunity 7: Threshold Signing / MPC</h2>
+    <div class="card">
+      <h3><span class="tag tag-warn">Very High Effort</span> <span class="tag tag-green">Enormous Moat</span></h3>
+      <p>N-of-M nodes collaborate to produce a single signature without any node ever holding the full private key. Hardware-backed key shares in encrypted NVS, protected by eFuse + Secure Boot. No single node or coordinator can extract the key.</p>
+      <div class="warn-note">
+        <strong>Challenge:</strong> Implementing FROST (ed25519) or GG20 (ECDSA) on ESP32 is 6&ndash;12 months of specialized cryptographic work. But the defensible moat is enormous &mdash; hardware-protected key shares + physical distribution is uniquely defensible.
+      </div>
+    </div>
+    <table class="vs-table">
+      <thead><tr><th>Feature</th><th>Cloud MPC (Web3Auth etc.)</th><th>DICE MPC</th></tr></thead>
+      <tbody>
+        <tr><td>Key share storage</td><td>TEE enclaves in data centers</td><td>Hardware-encrypted NVS on physical devices</td></tr>
+        <tr><td>Operator access</td><td>Cloud provider could theoretically extract</td><td>eFuse + Secure Boot prevents extraction</td></tr>
+        <tr><td>Geographic distribution</td><td>Data center regions (3&ndash;4)</td><td>Anywhere nodes are deployed</td></tr>
+        <tr><td>Hardware attestation</td><td>Intel SGX (vendor trust)</td><td>ESP32 Secure Boot (simpler model)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- dVPN: Skip -->
+  <div class="section">
+    <h2 class="section-title" style="color:var(--red);">Opportunity 8: dVPN &mdash; Skip</h2>
+    <div class="card">
+      <h3><span class="tag tag-red">Bad Fit</span></h3>
+      <p>ESP32-S3 WiFi throughput (~10&ndash;20 Mbps) is too limited. Deeper Network already has 200K purpose-built nodes. The VPN use case doesn&rsquo;t leverage DICE&rsquo;s cryptographic signing strengths. Revenue potential too low to justify standalone product.</p>
+      <p style="margin-top:0.5rem;color:var(--dim);font-size:0.85rem;"><strong>Possible niche:</strong> Encrypted DNS relay (lightweight, ESP32 can handle it), bundled as a minor feature alongside other services.</p>
+    </div>
+  </div>
+
+  <!-- Hardware Advantages -->
+  <div class="section">
+    <h2 class="section-title">Hardware Advantages: What ESP32 Does That Cloud Cannot</h2>
+    <div class="hw-grid">
+      <div class="hw-card">
+        <h4>Physical Entropy</h4>
+        <p>Hardware TRNG (ring oscillator quantum noise) + floating ADC + timing jitter. Provably grounded in physics, not software CSPRNG.</p>
+      </div>
+      <div class="hw-card">
+        <h4>Tamper Resistance</h4>
+        <p>Secure Boot v2 + flash encryption = one-way lock. No SSH, no OS, no shell, no login. Firmware immutable after eFuse burn. Keys can&rsquo;t be extracted.</p>
+      </div>
+      <div class="hw-card">
+        <h4>10&ndash;20x Cheaper at Scale</h4>
+        <p>1,000 nodes for 5 years: ~$38K total (DICE) vs $300K&ndash;900K (cloud VMs). $8 one-time + $0.50/mo electricity.</p>
+      </div>
+      <div class="hw-card">
+        <h4>Physical Presence</h4>
+        <p>Exists in homes/offices, not data centers. Enables geographic proof, WiFi fingerprinting, local network measurement, sensor data.</p>
+      </div>
+      <div class="hw-card">
+        <h4>Minimal Attack Surface</h4>
+        <p>No OS, no shell, no file system, no package manager. Only: WiFi stack + TLS + application firmware. One WebSocket connection.</p>
+      </div>
+      <div class="hw-card">
+        <h4>Permanent Identity</h4>
+        <p>ECDSA keypair provisioned at factory, protected by flash encryption. Cannot be cloned, copied, or migrated to another device.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue Models -->
+  <div class="section">
+    <h2 class="section-title">Revenue Models</h2>
+    <div class="rev-grid">
+      <div class="rev-box">
+        <div class="service">VRF (Current)</div>
+        <div class="price">0.002 SOL</div>
+        <div class="model">Per request</div>
+      </div>
+      <div class="rev-box">
+        <div class="service">Keeper</div>
+        <div class="price">5K lamports</div>
+        <div class="model">Per execution</div>
+      </div>
+      <div class="rev-box">
+        <div class="service">Notary</div>
+        <div class="price">0.002 SOL</div>
+        <div class="model">Per attestation</div>
+      </div>
+      <div class="rev-box">
+        <div class="service">Sensor Feed</div>
+        <div class="price">0.001 SOL</div>
+        <div class="model">Per update consumed</div>
+      </div>
+      <div class="rev-box">
+        <div class="service">Watchtower</div>
+        <div class="price">$20/mo</div>
+        <div class="model">Per endpoint subscription</div>
+      </div>
+      <div class="rev-box">
+        <div class="service">MPC Signing</div>
+        <div class="price">0.02 SOL</div>
+        <div class="model">Per threshold signature</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Bundled Revenue Strategy</h3>
+      <p>Highest revenue comes from bundling services on the same hardware. A &ldquo;DICE Node Premium&rdquo; simultaneously provides VRF + keeper execution + sensor data + health monitoring. Node operators earn from all four, dramatically improving ROI, which drives network growth.</p>
+      <div class="note">
+        <strong>Token recommendation:</strong> Avoid a token in the near term. SOL-denominated fees are simpler, more credible, and avoid regulatory complexity. Consider a token only when the network has 1,000+ nodes and multiple active data verticals.
+      </div>
+    </div>
+  </div>
+
+  <!-- Effort vs. Impact Matrix -->
+  <div class="section">
+    <h2 class="section-title">Effort vs. Impact Matrix</h2>
+    <div class="matrix">
+      <div class="matrix-label top">HIGH IMPACT</div>
+      <div class="matrix-label bottom">LOW IMPACT</div>
+      <div class="matrix-label left">LOW EFFORT</div>
+      <div class="matrix-label right">HIGH EFFORT</div>
+      <div class="matrix-grid">
+        <div class="matrix-quad quad-tl">
+          <div class="matrix-item mi-green">Keeper Network</div>
+          <div class="matrix-item mi-green">Notary / Timestamp</div>
+          <div class="matrix-item mi-blue">Watchtower</div>
+        </div>
+        <div class="matrix-quad quad-tr">
+          <div class="matrix-item mi-yellow">Data Feed Oracles</div>
+          <div class="matrix-item mi-yellow">DePIN Sensor</div>
+          <div class="matrix-item mi-purple">MPC / Threshold</div>
+        </div>
+        <div class="matrix-quad quad-bl">
+          <div style="font-size:0.75rem;color:var(--dim);font-style:italic;">(empty &mdash; ideal zone)</div>
+        </div>
+        <div class="matrix-quad quad-br">
+          <div class="matrix-item mi-dim">Proof-of-Location</div>
+          <div class="matrix-item mi-dim" style="text-decoration:line-through;opacity:0.5;">dVPN</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Competitive Landscape -->
+  <div class="section">
+    <h2 class="section-title">Competitive Landscape</h2>
+
+    <h3 class="section-subtitle">Oracle Services</h3>
+    <table>
+      <thead><tr><th>Provider</th><th>Model</th><th>Hardware</th><th>VRF</th><th>Keeper</th><th>Custom Feeds</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Pyth</strong></td><td>Pull</td><td>None</td><td>Entropy (EVM)</td><td>No</td><td>No</td></tr>
+        <tr><td><strong>Switchboard</strong></td><td>Push/Pull</td><td>TEE (Intel SGX)</td><td>Yes (SRS)</td><td>No</td><td>Yes (any API)</td></tr>
+        <tr><td><strong>Chainlink</strong></td><td>Push</td><td>None</td><td>Yes (EVM)</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td><strong>ORAO</strong></td><td>Pull</td><td>None</td><td>Yes</td><td>No</td><td>No</td></tr>
+        <tr style="color:var(--accent)"><td><strong>DICE (proposed)</strong></td><td>Multiple</td><td>ESP32-S3 physical</td><td>Yes</td><td>Yes</td><td>Yes (sensors)</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="section-subtitle">Keeper / Automation</h3>
+    <table>
+      <thead><tr><th>Provider</th><th>Status</th><th>Node Type</th><th>Cost/Execution</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Clockwork</strong></td><td><span class="tag tag-red">Dead</span></td><td>Cloud VMs</td><td>~5K lamports</td></tr>
+        <tr><td><strong>Tuk Tuk</strong></td><td><span class="tag tag-green">Active</span></td><td>Anyone with RPC</td><td>~5K lamports</td></tr>
+        <tr><td><strong>Chainlink Automation</strong></td><td><span class="tag tag-blue">EVM Only</span></td><td>DON nodes</td><td>Variable</td></tr>
+        <tr style="color:var(--accent)"><td><strong>DICE Keepers</strong></td><td><span class="tag tag-warn">Proposed</span></td><td>Hardware nodes</td><td>~5&ndash;10K lamports</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Recommended Roadmap -->
+  <div class="section">
+    <h2 class="section-title">Recommended Roadmap</h2>
+    <div class="roadmap">
+      <div class="phase p0">
+        <div class="when">P0 &mdash; Q2&ndash;Q3 2026: &ldquo;Generalized Attestation Platform&rdquo;</div>
+        <h4>Prove DICE nodes can do more than VRF</h4>
+        <ul>
+          <li>Coordinator: Generic job dispatch (VRF, KEEPER, NOTARY job types)</li>
+          <li>Smart contract: Keeper registry + execution payment</li>
+          <li>Smart contract: Notary program (hash + multi-sig + timestamp)</li>
+          <li>SDK: Keeper + Notary client libraries</li>
+          <li>Target: First paying keeper customers (2&ndash;3 DeFi protocols)</li>
+          <li><strong>Firmware changes: None</strong></li>
+        </ul>
+      </div>
+      <div class="phase p1">
+        <div class="when">P1 &mdash; Q3&ndash;Q4 2026: &ldquo;Hardware Oracle Network&rdquo;</div>
+        <h4>Data that cloud oracles literally cannot produce</h4>
+        <ul>
+          <li>Firmware: I2C/SPI sensor abstraction + BME280 driver</li>
+          <li>Coordinator: Sensor data aggregation + outlier detection</li>
+          <li>Smart contract: Attested sensor feed accounts</li>
+          <li>Watchtower: Subscription-based protocol monitoring</li>
+          <li>Hardware kit: &ldquo;DICE Sensor Node&rdquo; (ESP32-S3 + BME280, ~$15)</li>
+          <li>Target: $5K&ndash;10K/month combined revenue</li>
+        </ul>
+      </div>
+      <div class="phase p2">
+        <div class="when">P2 &mdash; 2027: &ldquo;DePIN Scale&rdquo;</div>
+        <h4>Grow to 1,000+ nodes, expand sensor capabilities</h4>
+        <ul>
+          <li>Multiple sensor module support (air quality, energy, GPS)</li>
+          <li>Data marketplace for aggregated sensor feeds</li>
+          <li>WiFi-based proof-of-location (no additional hardware)</li>
+          <li>Token economics research + community proposal</li>
+          <li>Partnerships with Starpower, WeatherXM</li>
+        </ul>
+      </div>
+      <div class="phase p3">
+        <div class="when">P3 &mdash; 2027+: &ldquo;Cryptographic Infrastructure&rdquo;</div>
+        <h4>Build the hard, defensible technology moat</h4>
+        <ul>
+          <li>FROST threshold signing on ESP32</li>
+          <li>Distributed key generation protocol</li>
+          <li>Hardware-backed MPC signing service</li>
+          <li>Enterprise custody integrations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Research compiled April 4, 2026 using web search across oracle infrastructure, DePIN, keeper networks, MPC, IoT+blockchain, and Solana ecosystem sources.
+  <br>Market data, TVS figures, and project statuses reflect best available information at date of compilation.
+</div>
+
+</body>
+</html>

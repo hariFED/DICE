@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::hash::hashv;
-use anchor_lang::solana_program::instruction::{AccountMeta, Instruction as SolInstruction};
+// Anchor 1.0: AccountMeta + Pubkey come from prelude. hashv stays in
+// anchor_lang's solana_program facade.
+use solana_program::hash::hashv;
+use anchor_lang::solana_program::instruction::Instruction as SolInstruction;
 use anchor_lang::solana_program::program::invoke;
 
 use crate::constants::{MIN_NODES_REQUIRED, SEED_REQUEST, SEED_RESULT};
@@ -53,7 +55,7 @@ const DICE_CALLBACK_DISCRIMINATOR: [u8; 8] = {
     [128, 131, 129, 45, 53, 113, 215, 151]
 };
 
-pub fn handler<'info>(ctx: Context<'_, '_, 'info, 'info, FinalizeRandomness<'info>>) -> Result<()> {
+pub fn handler<'info>(ctx: Context<'info, FinalizeRandomness<'info>>) -> Result<()> {
     let clock = Clock::get()?;
 
     // Capture keys before mutable borrows
@@ -199,7 +201,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, 'info, 'info, FinalizeRandomness<'inf
         // The callback program itself must also be in the account_infos
         account_infos.push(callback_program_info.clone());
 
-        invoke(&ix, &account_infos).map_err(|_| error!(DiceError::CallbackFailed))?;
+        // Anchor 1.0: invoke() takes &[AccountInfo] strictly, no &Vec coercion.
+        invoke(&ix, &account_infos[..]).map_err(|_| error!(DiceError::CallbackFailed))?;
 
         msg!("CPI callback invoked: program={}", callback_program_id);
     }
@@ -214,7 +217,7 @@ mod tests {
     #[test]
     fn verify_callback_discriminator() {
         // Ensure the hardcoded discriminator matches the SHA-256 computation.
-        let hash = anchor_lang::solana_program::hash::hashv(&[b"global:dice_callback"]);
+        let hash = solana_program::hash::hashv(&[b"global:dice_callback"]);
         let expected: [u8; 8] = hash.to_bytes()[..8].try_into().unwrap();
         assert_eq!(DICE_CALLBACK_DISCRIMINATOR, expected);
     }

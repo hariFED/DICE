@@ -1,0 +1,20 @@
+stress-driver v1
+  payer: 3df8FZoosdv3mrYwWS82TEqQps97qAdmnnijUNhz6tp9
+  start balance: 8.808263 SOL
+  channel_index: 907, rounds: 50, node_count: 4
+  channel PDA: BULVJypyU5SUAbxNX3pftBP4KjcXzcuutEqB8oz5iiMz
+  init_channel (max_nodes=7)
+    TX: WeayrDZYinpdtzaNHAygFMDvizgNrTTZYHpXMrFzRyYfu87oXStb7oSVURNNiHLvrNrd6LSQzzfjk98FdE4fpYf
+  pre-funding channel with 0.1200 SOL (120000000 lamports)
+    TX: 21CCh2ycanhWc4MZuQnHyv6qSDsg4g7nWAxWSJjGUYeqjCTXxpnZHUVN4CUF4hzYeVXaaCGegp43UyNVAkhuurVs
+  required channel balance for 50 rounds: 100000000 lamports
+
+── running 50 rounds ─────────────────────────────
+[   1/50] FAIL in 62090ms — round timed out waiting for Finalized
+[   2/50] FAIL in 61738ms — round timed out waiting for Finalized
+[   3/50] FAIL in 61636ms — round timed out waiting for Finalized
+[   4/50] FAIL in 62223ms — round timed out waiting for Finalized
+[   5/50] FAIL in 62078ms — round timed out waiting for Finalized
+[   6/50] FAIL in 61597ms — round timed out waiting for Finalized
+[   7/50] FAIL in 61386ms — round timed out waiting for Finalized
+[   8/50] FAIL in 61637ms — round timed out waiting for Finalized
