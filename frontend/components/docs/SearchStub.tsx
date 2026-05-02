@@ -47,7 +47,7 @@ export function DocsSearchStub() {
 
   return (
     <div className="relative">
-      <div className="relative flex items-center gap-2 rounded-sm border border-border bg-background px-2.5 py-1.5">
+      <div className="liquid-glass relative flex items-center gap-2 rounded-full px-3.5 py-2">
         <span className="text-muted-foreground font-mono text-xs">›</span>
         <input
           ref={inputRef}
@@ -70,13 +70,13 @@ export function DocsSearchStub() {
           className="flex-1 bg-transparent font-mono text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
           aria-label="Search documentation"
         />
-        <kbd className="rounded-sm border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+        <kbd className="rounded-full border border-white/10 bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
           /
         </kbd>
       </div>
 
       {open && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-80 overflow-y-auto border border-border bg-background py-1 shadow-lg">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-80 overflow-y-auto rounded-xl liquid-glass py-1 shadow-lg">
           {results.slice(0, 10).map((d) => (
             <button
               key={d.href}

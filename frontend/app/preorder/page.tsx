@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Header } from "@/components/shared/Header"
 import { Footer } from "@/components/shared/Footer"
@@ -105,14 +104,7 @@ export default function PreOrderPage() {
   return (
     <main className="relative min-h-screen flex flex-col">
       <Header />
-      <section className="flex-1 mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        {/* Breadcrumb */}
-        <nav className="mb-6 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-          <Link href="/" className="hover:text-foreground">home</Link>
-          <span className="mx-2 text-muted-foreground/40">/</span>
-          <span className="text-foreground">preorder</span>
-        </nav>
-
+      <section className="flex-1 mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 pt-28 pb-12 md:pb-16">
         {/* Header with stepper */}
         <div className="border-b border-border pb-8 mb-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">

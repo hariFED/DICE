@@ -28,7 +28,6 @@ export const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Explorer", href: "/explorer" },
   { label: "Docs", href: "/docs" },
-  { label: "Pre-order", href: "/preorder" },
 ] as const
 
 // discord is intentionally absent — no server exists yet. Shipping a "#" link
