@@ -77,8 +77,8 @@ export function Esp32Exploded() {
       ref={sectionRef}
       className="relative border-b border-border overflow-hidden"
     >
-      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-20 md:py-32">
-        {/* Section header */}
+      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-20 md:py-28">
+        {/* Section header — above the blueprint box */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
           <div className="lg:col-span-3">
             <span className="chapter-num">03</span>
@@ -98,13 +98,11 @@ export function Esp32Exploded() {
           </div>
         </div>
 
-        {/* Exploded blueprint */}
+        {/* Blueprint box — diagram only */}
         <div className="relative bg-grid border border-border overflow-hidden">
           {/* corner ticks */}
           <span className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50">FIG_003 · DICE-S3 · exploded</span>
           <span className="absolute top-3 right-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50">Scale 1:1 · dimetric 2:1</span>
-          <span className="absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50">REV_C · 2026</span>
-          <span className="absolute bottom-3 right-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50">[ scroll to separate ]</span>
 
           <motion.svg
             viewBox="0 0 1000 800"
@@ -314,23 +312,11 @@ export function Esp32Exploded() {
               sub="provisioning"
             />
           </motion.svg>
+
+          <span className="absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50">REV_C · 2026</span>
+          <span className="absolute bottom-3 right-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50">[ scroll to separate ]</span>
         </div>
 
-        {/* Below the blueprint — 3 text callouts summarizing the structure */}
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-[13px] text-muted-foreground">
-          <div>
-            <p className="font-pixel text-foreground text-lg mb-1">STACK.01</p>
-            <p>RF cap. Shields the antenna trace from mechanical damage. Perforated for airflow.</p>
-          </div>
-          <div>
-            <p className="font-pixel text-foreground text-lg mb-1">STACK.02</p>
-            <p>Main PCB. ESP32-S3 with in-chip hardware RNG, signing, WiFi. Six passives.</p>
-          </div>
-          <div>
-            <p className="font-pixel text-foreground text-lg mb-1">STACK.03</p>
-            <p>Base plate. USB-C cutout, shield ground, mounting posts for enclosure.</p>
-          </div>
-        </div>
       </div>
     </section>
   )

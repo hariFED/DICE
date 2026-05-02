@@ -1,10 +1,35 @@
 "use client"
 
-import Link from "next/link"
 import { motion } from "framer-motion"
-import { DottedSphereGlobe } from "@/components/landing/DottedSphereGlobe"
-import { BracketLink } from "@/components/shared/BracketButton"
+import dynamic from "next/dynamic"
+import Link from "next/link"
 import { BRAND } from "@/lib/constants"
+
+const NetworkGlobe = dynamic(
+  () =>
+    import("@/components/landing/NetworkGlobe").then((mod) => ({
+      default: mod.NetworkGlobe,
+    })),
+  {
+    ssr: false,
+    loading: () => <GlobePlaceholder />,
+  },
+)
+
+/** CSS-only shimmer placeholder shown while the globe chunk loads. */
+function GlobePlaceholder() {
+  return (
+    <div className="absolute inset-[-10%] w-[120%] h-[120%] flex items-center justify-center">
+      <div
+        className="w-[70%] aspect-square rounded-full opacity-40 animate-pulse"
+        style={{
+          background:
+            "radial-gradient(circle at 40% 40%, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 50%, transparent 70%)",
+        }}
+      />
+    </div>
+  )
+}
 
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -20,45 +45,28 @@ const fadeUp = {
 }
 
 /**
- * Landing hero — device-first / passive-income pivot.
+ * Landing hero — device-first / passive-income pivot (Story-C framing).
  *
- *   left  : chapter marker · wordmark · D.I.C.E. · headline · pillars · CTAs
- *   right : rotating dotted sphere · node strip
+ *   left  : chapter marker · D.I.C.E. acronym · headline · subline · pillars · CTAs
+ *   right : 3D NetworkGlobe with arcs + data transfer
  *
- * Marketing direction (2026-04-25): lead with the device, not the protocol.
- * Mining-rig energy: "buy the box, plug in, earn while it lives." No specific
- * numbers in the hero — those drift, invite arguments, and overpromise.
- * Concrete latency / fee / success-rate metrics live in /explorer where they
- * update against the real network.
+ * Copy direction (per `frontend/PRELAUNCH_NARRATIVE.md`):
+ *   - Mine VRF. While you sleep. (mining metaphor, no specific numbers)
+ *   - Pre-register CTA (no payment yet — captures intent, not money)
+ *   - Pillars describe character, not metrics; concrete numbers live in /explorer
+ *
+ * Visual direction (merged from `ui-revamp`):
+ *   - NetworkGlobe replaces DottedSphereGlobe — richer entropy-mesh story
+ *   - Liquid-glass CTAs match the global glass design system
+ *   - Gradient on "Solana" (Solana brand colors) anchors the chain origin
  */
 export function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-border">
+    <section className="relative overflow-clip border-b border-border">
       {/* faint blueprint grid bg */}
       <div className="absolute inset-0 bg-grid opacity-60 pointer-events-none" aria-hidden />
 
-      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-14 md:py-20">
-        {/* Top meta strip */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-          className="mb-12 md:mb-20 grid grid-cols-2 md:grid-cols-12 gap-4 items-baseline font-mono text-[11px] uppercase tracking-wider text-muted-foreground border-b border-dashed border-border pb-4"
-        >
-          <span className="col-span-1 md:col-span-2 font-pixel text-foreground text-xs">00 / HERO</span>
-          <span className="hidden md:flex md:col-span-3 items-center gap-1.5">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-ok)] animate-pulse" />
-            online · devnet
-          </span>
-          <span className="hidden md:block md:col-span-3">
-            <span className="text-muted-foreground/50">from</span>{" "}
-            <span className="text-foreground">{BRAND.parent}</span>
-          </span>
-          <span className="hidden md:block md:col-span-4 text-right text-muted-foreground/60 font-pixel">
-            {new Date().toISOString().slice(0, 16).replace("T", " ")} UTC
-          </span>
-        </motion.div>
-
+      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 pt-20 md:pt-30 pb-14">
         {/* Main — copy left, globe right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
           {/* LEFT — copy */}
@@ -93,7 +101,9 @@ export function Hero() {
               </div>
             </motion.div>
 
-            {/* Headline */}
+            {/* Headline — Story-C: "Mine VRF. While you sleep." with a small
+                Solana-gradient sub-line so the chain origin still anchors the
+                hero without diluting the mining metaphor in the main line. */}
             <motion.h1
               custom={1}
               variants={fadeUp}
@@ -106,6 +116,17 @@ export function Hero() {
               <br />
               <span className="italic font-light">While you</span>{" "}
               sleep.
+              <br />
+              <span className="text-muted-foreground text-[60%] font-light">on </span>
+              <span
+                className="text-[60%] font-light bg-clip-text text-transparent"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to right, #9945FF, #14F195)",
+                }}
+              >
+                Solana.
+              </span>
             </motion.h1>
 
             {/* Subline */}
@@ -117,10 +138,10 @@ export function Hero() {
               className="mt-8 max-w-[52ch] font-mono text-[14px] md:text-[15px] text-muted-foreground leading-[1.65]"
             >
               A real <span className="text-foreground">box on your shelf</span> mining verifiable randomness for Solana.
-              One-time purchase. No fans. No diminishing returns. No electricity tax.
+              No fans. No diminishing returns. No electricity tax.
             </motion.p>
 
-            {/* Pillars */}
+            {/* Pillars — no specific numbers; concrete metrics live in /explorer */}
             <motion.ul
               custom={3}
               variants={fadeUp}
@@ -151,19 +172,31 @@ export function Hero() {
               </li>
             </motion.ul>
 
-            {/* CTAs — pre-order leads */}
+            {/* CTAs — desktop only (mobile CTAs appear below globe). Glass
+                styling from ui-revamp; labels per PRELAUNCH_NARRATIVE.md
+                (pre-REGISTER, not pre-order — no payment yet). */}
             <motion.div
               custom={4}
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="mt-12 flex flex-wrap items-center gap-3"
+              className="mt-10 hidden lg:flex flex-wrap items-center gap-3"
             >
-              <BracketLink href="/preorder" variant="primary">Pre-order_Your_Node</BracketLink>
-              <BracketLink href="/docs" variant="ghost">How_It_Earns</BracketLink>
+              <Link
+                href="/preorder"
+                className="liquid-glass-strong rounded-full px-5 py-2.5 font-mono text-[12px] uppercase tracking-wider text-foreground inline-flex items-center gap-2 hover:bg-white/5 transition-colors"
+              >
+                [ › Pre-register_your_node ]
+              </Link>
+              <Link
+                href="/docs"
+                className="liquid-glass rounded-full px-5 py-2.5 font-mono text-[12px] uppercase tracking-wider text-foreground inline-flex items-center gap-2 hover:bg-white/5 transition-colors"
+              >
+                [ › How_it_earns ]
+              </Link>
               <Link
                 href="/explorer"
-                className="ml-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors border-b border-dashed border-border hover:border-foreground"
+                className="font-mono text-[12px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors ml-2"
               >
                 or see the network live →
               </Link>
@@ -182,19 +215,41 @@ export function Hero() {
               <span className="font-pixel text-foreground">LIVE</span>
             </div>
 
-            <div className="relative aspect-square w-full max-w-[560px] mx-auto corner-ticks">
-              <DottedSphereGlobe size={560} className="w-full h-auto" />
+            <div className="relative aspect-square w-full mx-auto" style={{ maxWidth: "640px" }}>
+              <NetworkGlobe className="absolute inset-[-10%] w-[120%] h-[120%]" />
 
               {/* Axis labels */}
-              <span className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">N · 90°</span>
-              <span className="absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">S · 90°</span>
-              <span className="absolute top-1/2 right-3 -translate-y-1/2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">180° E</span>
+              <span className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60 z-10">N · 90°</span>
+              <span className="absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60 z-10">S · 90°</span>
+              <span className="absolute top-1/2 right-3 -translate-y-1/2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60 z-10">180° E</span>
             </div>
 
             <div className="mt-4 flex items-baseline justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               <span className="truncate">sf · nyc · ldn · par · ber · tyo · sgp · hkg · syd · dxb · bom · sao · bue · del</span>
               <span className="font-pixel text-foreground ml-3 shrink-0">GLOBAL</span>
             </div>
+          </motion.div>
+
+          {/* CTAs — mobile only (below globe), same labels as desktop */}
+          <motion.div
+            custom={4}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="mt-6 flex lg:hidden flex-wrap items-center gap-3"
+          >
+            <Link
+              href="/preorder"
+              className="liquid-glass-strong rounded-full px-5 py-2.5 font-mono text-[12px] uppercase tracking-wider text-foreground inline-flex items-center gap-2 hover:bg-white/5 transition-colors"
+            >
+              [ › Pre-register_your_node ]
+            </Link>
+            <Link
+              href="/docs"
+              className="liquid-glass rounded-full px-5 py-2.5 font-mono text-[12px] uppercase tracking-wider text-foreground inline-flex items-center gap-2 hover:bg-white/5 transition-colors"
+            >
+              [ › How_it_earns ]
+            </Link>
           </motion.div>
         </div>
       </div>

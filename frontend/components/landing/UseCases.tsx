@@ -77,11 +77,11 @@ export function UseCases() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-border">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {CASES.map((c, i) => (
             <div
               key={c.n}
-              className="group relative py-10 px-6 md:px-8 border-b md:border-b-0 md:border-r border-border last:border-r-0 transition-colors hover:bg-foreground hover:text-background"
+              className="group relative bg-grid border border-border p-6 md:p-8 overflow-hidden transition-colors hover:bg-foreground hover:text-background"
             >
               <div className="flex items-start justify-between mb-6">
                 <p className="font-pixel text-[36px] leading-none">{c.n}</p>

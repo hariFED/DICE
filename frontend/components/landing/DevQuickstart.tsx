@@ -70,7 +70,7 @@ export function DevQuickstart() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Code panel */}
-          <div className="lg:col-span-8 relative border border-border bg-muted/20">
+          <div className="lg:col-span-8 relative border border-border bg-grid overflow-hidden">
             {/* Tab strip */}
             <div className="flex items-center justify-between border-b border-border font-mono text-[11px] uppercase tracking-wider">
               <div className="flex">
@@ -110,7 +110,7 @@ export function DevQuickstart() {
 
           {/* Side panel */}
           <div className="lg:col-span-4 flex flex-col gap-4">
-            <div className="border border-border p-6">
+            <div className="border border-border bg-grid p-6 overflow-hidden">
               <p className="font-pixel text-[11px] text-muted-foreground mb-3">
                 RETURN SHAPE
               </p>
@@ -123,7 +123,7 @@ export function DevQuickstart() {
               </ul>
             </div>
 
-            <div className="border border-border p-6">
+            <div className="border border-border bg-grid p-6 overflow-hidden">
               <p className="font-pixel text-[11px] text-muted-foreground mb-3">
                 PRICING
               </p>

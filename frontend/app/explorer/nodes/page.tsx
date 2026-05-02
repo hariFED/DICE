@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { useNodes } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import { CornerBox } from "@/components/shared/CornerBox"
 import { AsciiBar } from "@/components/shared/AsciiBar"
+import { TableRowSkeleton } from "@/components/shared/Skeleton"
 
 const CITY_MAP: Record<string, string> = {
   "node-01": "San Francisco",
@@ -52,7 +52,7 @@ type SortKey = "node_id" | "latency_ms" | "uptime_secs" | "jobs_completed"
 type SortDir = "asc" | "desc"
 
 export default function NodesPage() {
-  const { data: nodesData } = useNodes()
+  const { data: nodesData, isLoading } = useNodes()
   const [sortKey, setSortKey] = useState<SortKey>("node_id")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
 
@@ -98,12 +98,12 @@ export default function NodesPage() {
 
   return (
     <div className="pb-12 space-y-6">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
+      <div className="space-y-4">
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Nodes</h1>
-        <div className="flex gap-2 text-xs font-mono">
-          <Link href="/explorer" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1 uppercase tracking-wider"><span className="mr-1"> </span>overview</Link>
-          <Link href="/explorer/rounds" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1 uppercase tracking-wider"><span className="mr-1"> </span>rounds</Link>
-          <Link href="/explorer/nodes" className="border border-foreground bg-foreground text-background px-3 py-1 uppercase tracking-wider"><span className="mr-1">▸</span>nodes</Link>
+        <div className="flex gap-2 text-xs font-mono overflow-x-auto">
+          <Link href="/explorer" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1.5 uppercase tracking-wider whitespace-nowrap"><span className="mr-1"> </span>overview</Link>
+          <Link href="/explorer/rounds" className="border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors px-3 py-1.5 uppercase tracking-wider whitespace-nowrap"><span className="mr-1"> </span>rounds</Link>
+          <Link href="/explorer/nodes" className="border border-foreground bg-foreground text-background px-3 py-1.5 uppercase tracking-wider whitespace-nowrap"><span className="mr-1">▸</span>nodes</Link>
         </div>
       </div>
 
@@ -116,8 +116,8 @@ export default function NodesPage() {
           </p>
           <p className="ascii-label text-[10px]">{pct.toFixed(0)} pct</p>
         </div>
-        <div className="text-sm">
-          <AsciiBar value={pct / 100} width={48} />
+        <div className="text-sm overflow-x-auto">
+          <AsciiBar value={pct / 100} width={24} />
         </div>
       </CornerBox>
 
@@ -131,20 +131,21 @@ export default function NodesPage() {
               <th className="text-left px-3 py-2 ascii-label text-[10px]">location</th>
               <th className="text-left px-3 py-2 ascii-label text-[10px]">status</th>
               <th className="text-left px-3 py-2"><SortHeader column="latency_ms" label="latency" /></th>
-              <th className="text-left px-3 py-2"><SortHeader column="uptime_secs" label="uptime" /></th>
-              <th className="text-left px-3 py-2"><SortHeader column="jobs_completed" label="jobs" /></th>
+              <th className="text-left px-3 py-2 hidden md:table-cell"><SortHeader column="uptime_secs" label="uptime" /></th>
+              <th className="text-left px-3 py-2 hidden md:table-cell"><SortHeader column="jobs_completed" label="jobs" /></th>
             </tr>
           </thead>
           <tbody>
-            {sorted.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <TableRowSkeleton key={i} cols={6} />
+              ))
+            ) : sorted.length === 0 ? (
               <tr><td colSpan={6} className="text-center text-muted-foreground py-10">— no nodes connected —</td></tr>
             ) : (
               sorted.map((node, i) => (
-                <motion.tr
+                <tr
                   key={node.node_id}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.02 }}
                   className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                 >
                   <td className="px-3 py-2.5 text-foreground">{truncateId(node.node_id)}</td>
@@ -155,9 +156,9 @@ export default function NodesPage() {
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-foreground tabular-nums">{node.latency_ms}ms</td>
-                  <td className="px-3 py-2.5 text-muted-foreground">{formatUptime(node.uptime_secs)}</td>
-                  <td className="px-3 py-2.5 text-foreground tabular-nums">{node.jobs_completed}</td>
-                </motion.tr>
+                  <td className="px-3 py-2.5 text-muted-foreground hidden md:table-cell">{formatUptime(node.uptime_secs)}</td>
+                  <td className="px-3 py-2.5 text-foreground tabular-nums hidden md:table-cell">{node.jobs_completed}</td>
+                </tr>
               ))
             )}
           </tbody>

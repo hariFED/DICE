@@ -4,11 +4,29 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { NAV_LINKS, SITE } from "@/lib/constants"
+import { NAV_LINKS } from "@/lib/constants"
 import { cn } from "@/lib/utils"
-import { ThemeToggle } from "@/components/shared/ThemeToggle"
-import { BracketLink } from "@/components/shared/BracketButton"
 import { Logo } from "@/components/shared/Logo"
+
+/* ── Arrow-up-right icon ─────────────────────────────────────── */
+function ArrowUpRight({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M7 17L17 7" />
+      <path d="M7 7h10v10" />
+    </svg>
+  )
+}
 
 export function Header() {
   const pathname = usePathname()
@@ -19,19 +37,19 @@ export function Header() {
       initial={{ y: -10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="sticky top-0 z-50 w-full bg-background/85 backdrop-blur border-b border-dashed border-border"
+      className="fixed top-6 left-0 right-0 z-50 px-8 lg:px-16"
     >
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo — iso cube + wordmark + version chip */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <Logo size={26} />
-          <span className="hidden sm:inline font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70 border border-border rounded-sm px-1.5 py-0.5 leading-none">
-            v7.7 · devnet
-          </span>
+      <div className="mx-auto flex max-w-7xl items-center justify-between">
+        {/* ── Left: Logo in liquid-glass circle ─────────────────── */}
+        <Link
+          href="/"
+          className="liquid-glass flex h-12 w-12 items-center justify-center rounded-full shrink-0"
+        >
+          <Logo size={22} showWordmark={false} className="text-white" />
         </Link>
 
-        {/* Desktop nav — bracketed items */}
-        <nav className="hidden md:flex items-center gap-1 font-mono text-xs uppercase tracking-wider">
+        {/* ── Center: Glass pill nav (desktop) ─────────────────── */}
+        <nav className="hidden md:flex items-center liquid-glass rounded-full px-1.5 py-1.5">
           {NAV_LINKS.map((link) => {
             const isActive = pathname === link.href
             return (
@@ -39,37 +57,42 @@ export function Header() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "relative px-3 py-1 transition-colors",
-                  isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  "px-3 py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap",
+                  isActive
+                    ? "text-white"
+                    : "text-white/70 hover:text-white/90"
                 )}
               >
-                <span className={cn("transition-opacity", isActive ? "opacity-100" : "opacity-0")}>›</span>
-                <span className="px-1">{link.label}</span>
+                {link.label}
               </Link>
             )
           })}
+
+          {/* CTA button inside the pill */}
+          <Link
+            href="/preorder"
+            className="ml-1 flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-medium text-black whitespace-nowrap transition-opacity duration-200 hover:opacity-90"
+          >
+            Pre-order
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
         </nav>
 
-        {/* Right cluster */}
-        <div className="flex items-center gap-2">
-          <ThemeToggle className="hidden sm:inline-flex" />
-          <BracketLink href={SITE.launchAppUrl} variant="primary" className="hidden md:inline-flex">
-            Launch_App
-          </BracketLink>
+        {/* ── Right: Spacer to balance logo (desktop) / hamburger (mobile) ── */}
+        <div className="hidden md:block h-12 w-12 shrink-0" />
 
-          {/* Mobile hamburger */}
-          <button
-            type="button"
-            className="md:hidden font-mono px-2 py-1 text-foreground"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? "[ ✕ ]" : "[ ≡ ]"}
-          </button>
-        </div>
+        {/* Mobile hamburger */}
+        <button
+          type="button"
+          className="md:hidden liquid-glass flex h-12 w-12 items-center justify-center rounded-full text-white/80 text-lg"
+          onClick={() => setMobileOpen((o) => !o)}
+          aria-label="Toggle menu"
+        >
+          {mobileOpen ? "✕" : "≡"}
+        </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* ── Mobile menu ────────────────────────────────────────── */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -77,9 +100,9 @@ export function Header() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden overflow-hidden border-t border-dashed border-border bg-background"
+            className="md:hidden overflow-hidden mt-3 rounded-2xl bg-black/90 backdrop-blur-xl border border-white/10"
           >
-            <nav className="flex flex-col gap-0.5 px-4 py-3 font-mono text-sm">
+            <nav className="flex flex-col gap-0.5 px-3 py-3">
               {NAV_LINKS.map((link) => {
                 const isActive = pathname === link.href
                 return (
@@ -88,21 +111,24 @@ export function Header() {
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
-                      "px-2 py-2 transition-colors",
-                      isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                      "px-4 py-3 rounded-xl text-sm font-medium transition-colors duration-200",
+                      isActive
+                        ? "text-white bg-white/[0.08]"
+                        : "text-white/60 hover:text-white/90 hover:bg-white/[0.04]"
                     )}
                   >
-                    <span className="text-muted-foreground mr-2">{isActive ? "▸" : " "}</span>
                     {link.label}
                   </Link>
                 )
               })}
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <ThemeToggle />
-                <BracketLink href={SITE.launchAppUrl} variant="primary">
-                  Launch_App
-                </BracketLink>
-              </div>
+              <Link
+                href="/preorder"
+                onClick={() => setMobileOpen(false)}
+                className="mt-2 flex items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black"
+              >
+                Pre-order
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
             </nav>
           </motion.div>
         )}
